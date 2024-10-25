@@ -16,14 +16,19 @@ jobs:
   check_changes:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pull-requests: read
     outputs:
       sdk_node: ${{ steps.filter.outputs.sdk_node }}
       sdk_dotnet: ${{ steps.filter.outputs.sdk_dotnet }}
       sdk_go: ${{ steps.filter.outputs.sdk_go }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: dorny/paths-filter@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Filter changed files
+        uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
@@ -38,6 +43,8 @@ jobs:
     needs: check_changes
     if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: sdk-node
@@ -59,6 +66,8 @@ jobs:
     needs: [check_changes, build-node]
     if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         node-version: [18.x, 20.x, 21.x]
@@ -88,6 +97,8 @@ jobs:
     needs: check_changes
     if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
     runs-on: windows-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: sdk-dotnet
@@ -107,6 +118,8 @@ jobs:
     needs: [check_changes, build-dotnet]
     if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
     runs-on: windows-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: sdk-dotnet
@@ -131,6 +144,8 @@ jobs:
     needs: check_changes
     if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: sdk-go
@@ -150,6 +165,8 @@ jobs:
     needs: [check_changes, build-go]
     if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: sdk-go
