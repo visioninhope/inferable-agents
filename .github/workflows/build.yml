@@ -13,7 +13,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      sdk_node: ${{ steps.filter.outputs.sdk_node }}
+      sdk_dotnet: ${{ steps.filter.outputs.sdk_dotnet }}
+      sdk_go: ${{ steps.filter.outputs.sdk_go }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sdk_node:
+              - 'sdk-node/**'
+            sdk_dotnet:
+              - 'sdk-dotnet/**'
+            sdk_go:
+              - 'sdk-go/**'
+
   build-node:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,7 +54,8 @@ jobs:
         run: npm run build
 
   test-node:
-    needs: build-node
+    needs: [check_changes, build-node]
+    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -61,6 +83,8 @@ jobs:
           INFERABLE_CONSUME_SECRET: ${{ secrets.INFERABLE_CONSUME_SECRET }}
 
   build-dotnet:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
     runs-on: windows-latest
     defaults:
       run:
@@ -78,7 +102,8 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
   test-dotnet:
-    needs: build-dotnet
+    needs: [check_changes, build-dotnet]
+    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
     runs-on: windows-latest
     defaults:
       run:
@@ -101,6 +126,8 @@ jobs:
           INFERABLE_CONSUME_SECRET: ${{ secrets.INFERABLE_CONSUME_SECRET }}
 
   build-go:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -118,7 +145,8 @@ jobs:
         run: go build -v ./...
 
   test-go:
-    needs: build-go
+    needs: [check_changes, build-go]
+    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:

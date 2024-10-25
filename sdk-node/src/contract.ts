@@ -12,6 +12,9 @@ const machineHeaders = {
   "x-sentinel-unmask-keys": z.string().optional(),
 };
 
+// Alphanumeric, underscore, hyphen, no whitespace. From 6 to 128 characters.
+const userDefinedIdRegex = /^[a-zA-Z0-9_-]{6,128}$/;
+
 export const blobSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -1178,6 +1181,34 @@ export const definition = {
     }),
     responses: {
       201: z.object({ id: z.string() }),
+      401: z.undefined(),
+    },
+    pathParams: z.object({
+      clusterId: z.string(),
+    }),
+  },
+  upsertPromptTemplate: {
+    method: "PUT",
+    path: "/clusters/:clusterId/prompt-templates",
+    headers: z.object({ authorization: z.string() }),
+    body: z.object({
+      id: z.string().regex(userDefinedIdRegex),
+      name: z.string(),
+      prompt: z.string(),
+      attachedFunctions: z.array(z.string()),
+      structuredOutput: z.object({}).passthrough().optional(),
+    }),
+    responses: {
+      201: z.object({
+        id: z.string(),
+        clusterId: z.string(),
+        name: z.string(),
+        prompt: z.string(),
+        attachedFunctions: z.array(z.string()),
+        structuredOutput: z.unknown().nullable(),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      }),
       401: z.undefined(),
     },
     pathParams: z.object({
