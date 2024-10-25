@@ -12,7 +12,7 @@
     <Description>Client library for interacting with the Inferable API</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://inferable.ai</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/inferablehq/inferable-dotnet</RepositoryUrl>
+    <RepositoryUrl>https://github.com/inferablehq/inferable/sdk-dotnet</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

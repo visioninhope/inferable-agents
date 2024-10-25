@@ -90,4 +90,4 @@ Contributions to the Inferable .NET Client are welcome. Please ensure that your 
 
 ## Support
 
-For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable-dotnet/issues).
+For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues).
