@@ -18,7 +18,7 @@ To install the Inferable .NET Client, use the following command in your project:
 dotnet add package Inferable
 ```
 
-## Usage
+## Quick Start
 
 ### Initializing the Client
 

@@ -1,119 +1,38 @@
 <p align="center">
-  <img src="https://a.inferable.ai/logo.png?v=2" width="200" style="border-radius: 10px" />
+  <img src="https://a.inferable.ai/logo-2.png" width="200" style="border-radius: 10px" />
 </p>
 
-# Typescript SDK
+# Inferable AI SDKs
 
-[![npm version](https://badge.fury.io/js/inferable.svg)](https://badge.fury.io/js/inferable)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/)
-[![Downloads](https://img.shields.io/npm/dm/inferable)](https://www.npmjs.com/package/inferable)
 
-This is the official Inferable AI SDK for Typescript.
+This is the official monorepo for Inferable AI open-source components, supporting multiple programming languages.
 
-## Installation
+## Available SDKs
 
-### npm
+- [Node.js / TypeScript SDK](./sdk-node/README.md) [![npm version](https://badge.fury.io/js/inferable.svg)](https://badge.fury.io/js/inferable) [![Downloads](https://img.shields.io/npm/dm/inferable)](https://www.npmjs.com/package/inferable)
+- [Go SDK](./sdk-go/README.md)
+- [.NET SDK](./sdk-dotnet/README.md)
 
-```bash
-npm install inferable
-```
-
-### yarn
-
-```bash
-yarn add inferable
-```
-
-### pnpm
-
-```bash
-pnpm add inferable
-```
+Each SDK directory contains its own README with specific installation instructions, quick start guide, and usage examples.
 
 ## Quick Start
 
-### 1. Initializing Inferable
+For language-specific quick start guides, please refer to the README in each SDK's directory:
 
-Create a file named i.ts which will be used to initialize Inferable. This file will export the Inferable instance.
-
-```typescript
-// d.ts
-
-import { Inferable } from "inferable";
-
-// Initialize the Inferable client with your API secret.
-// Get yours at https://console.inferable.ai.
-export const d = new Inferable({
-  apiSecret: "YOUR_API_SECRET",
-});
-```
-
-### 2. Hello World Function
-
-In a separate file, register a "sayHello" [function](https://docs.inferable.ai/pages/functions). This file will import the Inferable instance from `i.ts` and register the [function](https://docs.inferable.ai/pages/functions) with the [control-plane](https://docs.inferable.ai/pages/control-plane).
-
-```typescript
-// service.ts
-
-import { i } from "./i";
-
-// Define a simple function that returns "Hello, World!"
-const sayHello = async ({ to }: { to: string }) => {
-  return `Hello, ${to}!`;
-};
-
-// Register the service (using the 'default' service)
-const sayHello = i.default.register({
-  name: "sayHello",
-  func: sayHello,
-  schema: {
-    input: z.object({
-      to: z.string(),
-    }),
-  },
-});
-
-// Start the 'default' service
-i.default.start();
-```
-
-### 3. Running the Service
-
-To run the service, simply run the file with the [function](https://docs.inferable.ai/pages/functions) definition. This will start the `default` [service](https://docs.inferable.ai/pages/services) and make it available to the Inferable agent.
-
-```bash
-tsx service.ts
-```
-
-### 4. Trigger a run
-
-The following code will create an [Inferable run](https://docs.inferable.ai/pages/runs) with the prompt "Say hello to John" and the `sayHello` function attached.
-
-> You can inspect the progress of the run:
->
-> - in the [playground UI](https://app.inferable.ai/) via `inf app`
-> - in the [CLI](https://www.npmjs.com/package/@inferable/cli) via `inf runs list`
-
-```typescript
-const run = await i.run({
-  message: "Say hello to John",
-  functions: [sayHello],
-  // Alternatively, subscribe an Inferable function as a result handler which will be called when the run is complete.
-  //result: { handler: YOUR_HANDLER_FUNCTION }
-});
-
-console.log("Started Run", {
-  result: run.id,
-});
-
-console.log("Run result", {
-  result: await run.poll(),
-});
-```
-
-> Runs can also be triggered via the [API](https://docs.inferable.ai/pages/invoking-a-run-api), [CLI](https://www.npmjs.com/package/@inferable/cli) or [playground UI](https://app.inferable.ai/).
+- [Node.js / TypeScript Quick Start](./sdk-node/README.md#quick-start)
+- [Go Quick Start](./sdk-go/README.md#quick-start)
+- [.NET Quick Start](./sdk-dotnet/README.md#quick-start)
 
 ## Documentation
 
-- [Inferable documentation](https://docs.inferable.ai/) contains all the information you need to get started with Inferable.
+For comprehensive documentation on using Inferable AI, please visit our [official documentation](https://docs.inferable.ai/).
+
+## Contributing
+
+We welcome contributions to all our SDKs. Please read our [contributing guidelines](./CONTRIBUTING.md) before submitting any pull requests.
+
+## License
+
+All SDKs in this repository are licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
