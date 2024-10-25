@@ -16,10 +16,6 @@ describe("retrying", () => {
   it("should not retry a function when attempts is 1", async () => {
     const productId = Math.random().toString();
 
-    const randomFailingFunctionName = `failingFunction${Math.random()
-      .toString()
-      .replace(".", "")}`;
-
     const result = await client.createCall({
       query: {
         waitTime: 20,
@@ -29,7 +25,7 @@ describe("retrying", () => {
       },
       body: {
         service: service.definition.name,
-        function: randomFailingFunctionName,
+        function: "failingFunction",
         input: { id: productId },
       },
     });
