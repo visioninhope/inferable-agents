@@ -1,0 +1,53 @@
+name: Publish .NET SDK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-dotnet:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: sdk-dotnet
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Test
+        run: dotnet test --no-restore
+      - name: Pack
+        run: dotnet pack --configuration Release --no-restore --output ./output
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v1
+        with:
+          nuget-api-key: ${{ secrets.NUGET_API_KEY }}
+          nuget-version: latest
+      - name: Publish
+        run: dotnet nuget push output\*.nupkg -s https://api.nuget.org/v3/index.json
+      - name: Extract version from NuGet package
+        id: extract_version
+        shell: pwsh
+        run: |
+          $nupkg = Get-ChildItem -Path ./output -Filter *.nupkg | Select-Object -First 1
+          if ($nupkg) {
+            $version = $nupkg.Name -replace '^[a-zA-Z0-9.-]+\.([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?)\.nupkg$', '$1'
+            echo "version=$version" >> $GITHUB_OUTPUT
+          } else {
+            Write-Error "No .nupkg file found."
+          }
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.extract_version.outputs.version }}
+          release_name: ${{ steps.extract_version.outputs.version }}

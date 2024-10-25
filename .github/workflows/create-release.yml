@@ -1,0 +1,49 @@
+name: Create GitHub Release
+
+on:
+  workflow_run:
+    workflows:
+      - "Publish Go SDK"
+      - "Publish Node.js SDK"
+      - "Publish .NET SDK"
+    types:
+      - completed
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: generate_notes
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ steps.get_latest_tag.outputs.latest_tag }}^)
+          RELEASE_NOTES=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..${{ steps.get_latest_tag.outputs.latest_tag }})
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
+          release_name: Release ${{ steps.get_latest_tag.outputs.latest_tag }}
+          body: |
+            ${{ steps.generate_notes.outputs.release_notes }}
+          draft: false
+          prerelease: false
