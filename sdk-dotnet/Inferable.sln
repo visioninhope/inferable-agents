@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inferable", "src\Inferable.csproj", "{499B888C-EAB2-4DB8-AC24-5F7CA338E9E9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F255EE36-6482-46E4-B791-236CC3CDC49D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inferable.Tests", "tests\Inferable.Tests\Inferable.Tests.csproj", "{15B3556B-12FE-4452-8FE1-4738802E1E5D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{499B888C-EAB2-4DB8-AC24-5F7CA338E9E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{499B888C-EAB2-4DB8-AC24-5F7CA338E9E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{499B888C-EAB2-4DB8-AC24-5F7CA338E9E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{499B888C-EAB2-4DB8-AC24-5F7CA338E9E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15B3556B-12FE-4452-8FE1-4738802E1E5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15B3556B-12FE-4452-8FE1-4738802E1E5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15B3556B-12FE-4452-8FE1-4738802E1E5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15B3556B-12FE-4452-8FE1-4738802E1E5D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{15B3556B-12FE-4452-8FE1-4738802E1E5D} = {F255EE36-6482-46E4-B791-236CC3CDC49D}
+	EndGlobalSection
+EndGlobal

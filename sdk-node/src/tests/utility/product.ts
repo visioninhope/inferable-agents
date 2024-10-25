@@ -72,7 +72,9 @@ export const productService = () => {
 
   service.register({
     name: "failingFunction",
-    func: succeedsOnSecondAttempt,
+    func: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    },
     schema: {
       input: z.object({
         id: z.string(),

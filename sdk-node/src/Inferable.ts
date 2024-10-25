@@ -2,13 +2,15 @@ import debug from "debug";
 import path from "path";
 import { z } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
+import { createApiClient } from "./create-client";
 import { InferableError } from "./errors";
-import { FunctionRegistration } from "./types";
+import * as links from "./links";
 import { machineId } from "./machine-id";
 import { Service } from "./service";
 import {
   FunctionConfig,
   FunctionInput,
+  FunctionRegistration,
   FunctionRegistrationInput,
   JsonSchemaInput,
   RegisteredService,
@@ -20,8 +22,6 @@ import {
   validateFunctionSchema,
   validateServiceName,
 } from "./util";
-import * as links from "./links";
-import { createApiClient } from "./create-client";
 
 // Custom json formatter
 debug.formatters.J = (json) => {
@@ -43,9 +43,9 @@ type RunInput = {
     Parameters<ReturnType<typeof createApiClient>["createRun"]>[0]
   >["body"],
   "attachedFunctions"
->;
+> & { id?: string };
 
-type TemplateRunInput = Omit<RunInput, "template" | "message"> & {
+type TemplateRunInput = Omit<RunInput, "template" | "message" | "id"> & {
   input: Record<string, unknown>;
 };
 
@@ -226,35 +226,69 @@ export class Inferable {
   }
 
   /**
-   * Returns a template instance. This can be used to trigger runs of a template.
-   * @param input The template definition.
+   * Registers or references a template instance. This can be used to trigger runs of a template.
+   * @param input The template definition or reference.
    * @returns A registered template instance.
    * @example
    * ```ts
    * const d = new Inferable({apiSecret: "API_SECRET"});
    *
-   * const template = await d.template({ id: "template-id" });
+   * const template = await d.template({
+   *   id: "new-template-id",
+   *   name: "my-template",
+   *   attachedFunctions: ["my-service.hello"],
+   *   prompt: "Hello {{name}}",
+   *   structuredOutput: { greeting: z.string() }
+   * });
    *
-   * await template.run({ input: { name: "John Smith" } });
+   * await template.run({ input: { name: "Jane Doe" } });
    * ```
    */
-  public async template({ id }: { id: string }) {
+  public async template({
+    id,
+    attachedFunctions,
+    name,
+    prompt,
+    structuredOutput,
+  }: {
+    id: string;
+    attachedFunctions: string[];
+    name: string;
+    prompt: string;
+    structuredOutput: z.ZodTypeAny;
+  }) {
     if (!this.clusterId) {
       throw new InferableError(
         "Cluster ID must be provided to manage templates",
       );
     }
-    const existingResult = await this.client.getPromptTemplate({
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let jsonSchema: any;
+
+    try {
+      jsonSchema = zodToJsonSchema(structuredOutput);
+    } catch (e) {
+      throw new InferableError("structuredOutput must be a valid JSON schema");
+    }
+
+    const upserted = await this.client.upsertPromptTemplate({
+      body: {
+        id,
+        attachedFunctions,
+        name,
+        prompt,
+        structuredOutput: jsonSchema,
+      },
       params: {
         clusterId: this.clusterId,
-        templateId: id,
       },
     });
 
-    if (existingResult.status != 200) {
-      throw new InferableError(`Failed to get prompt template`, {
-        body: existingResult.body,
-        status: existingResult.status,
+    if (upserted.status != 200) {
+      throw new InferableError(`Failed to register prompt template`, {
+        body: upserted.body,
+        status: upserted.status,
       });
     }
 
@@ -289,34 +323,52 @@ export class Inferable {
     if (!this.clusterId) {
       throw new InferableError("Cluster ID must be provided to manage runs");
     }
-    const runResult = await this.client.createRun({
-      params: {
-        clusterId: this.clusterId,
-      },
-      body: {
-        ...input,
-        attachedFunctions: input.functions?.map((f) => {
-          if (typeof f === "string") {
-            return f;
-          }
-          return `${f.service}_${f.function}`;
-        }),
-      },
-    });
 
-    if (runResult.status != 201) {
-      throw new InferableError("Failed to create run", {
-        body: runResult.body,
-        status: runResult.status,
+    let runResult;
+    if (input.id) {
+      runResult = await this.client.getRun({
+        params: {
+          clusterId: this.clusterId,
+          runId: input.id,
+        },
       });
+
+      if (runResult.status != 200) {
+        throw new InferableError("Failed to get existing run", {
+          body: runResult.body,
+          status: runResult.status,
+        });
+      }
+    } else {
+      runResult = await this.client.createRun({
+        params: {
+          clusterId: this.clusterId,
+        },
+        body: {
+          ...input,
+          attachedFunctions: input.functions?.map((f) => {
+            if (typeof f === "string") {
+              return f;
+            }
+            return `${f.service}_${f.function}`;
+          }),
+        },
+      });
+
+      if (runResult.status != 201) {
+        throw new InferableError("Failed to create run", {
+          body: runResult.body,
+          status: runResult.status,
+        });
+      }
     }
 
     return {
       id: runResult.body.id,
       /**
        * Polls until the run reaches a terminal state (!= "pending" && != "running") or maxWaitTime is reached.
-       * @param maxWaitTime The maximum amount of time to wait for the run to reach a terminal state.
-       * @param delay The amount of time to wait between polling attempts.
+       * @param maxWaitTime The maximum amount of time to wait for the run to reach a terminal state. Defaults to 60 seconds.
+       * @param delay The amount of time to wait between polling attempts. Defaults to 500ms.
        */
       poll: async (maxWaitTime?: number, delay?: number) => {
         const start = Date.now();

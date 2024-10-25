@@ -1,0 +1,189 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      sdk_node: ${{ steps.filter.outputs.sdk_node }}
+      sdk_dotnet: ${{ steps.filter.outputs.sdk_dotnet }}
+      sdk_go: ${{ steps.filter.outputs.sdk_go }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Filter changed files
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            sdk_node:
+              - 'sdk-node/**'
+            sdk_dotnet:
+              - 'sdk-dotnet/**'
+            sdk_go:
+              - 'sdk-go/**'
+
+  build-node:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: sdk-node
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: sdk-node/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build package
+        run: npm run build
+
+  test-node:
+    needs: [check_changes, build-node]
+    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        # node-version: [18.x, 20.x, 21.x] There's a race condition with retry.test.ts
+        node-version: [20.x]
+    defaults:
+      run:
+        working-directory: sdk-node
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: sdk-node/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm run test
+        env:
+          INFERABLE_API_ENDPOINT: "https://api.inferable.ai"
+          INFERABLE_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
+          INFERABLE_MACHINE_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
+          INFERABLE_CONSUME_SECRET: ${{ secrets.INFERABLE_CONSUME_SECRET }}
+
+  build-dotnet:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: sdk-dotnet
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+  test-dotnet:
+    needs: [check_changes, build-dotnet]
+    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: sdk-dotnet
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Test
+        run: dotnet test --no-restore
+        env:
+          INFERABLE_API_ENDPOINT: "https://api.inferable.ai"
+          INFERABLE_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
+          INFERABLE_MACHINE_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
+          INFERABLE_CONSUME_SECRET: ${{ secrets.INFERABLE_CONSUME_SECRET }}
+
+  build-go:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: sdk-go
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22"
+      - name: Get dependencies
+        run: go mod download
+      - name: Build
+        run: go build -v ./...
+
+  test-go:
+    needs: [check_changes, build-go]
+    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: sdk-go
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22"
+      - name: Get dependencies
+        run: go mod download
+      - name: Test
+        run: go test -v ./...
+        env:
+          INFERABLE_API_ENDPOINT: "https://api.inferable.ai"
+          INFERABLE_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
+          INFERABLE_MACHINE_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
+          INFERABLE_CONSUME_SECRET: ${{ secrets.INFERABLE_CONSUME_SECRET }}
