@@ -27,6 +27,7 @@ jobs:
           fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
+        token: ${{ secrets.GITHUB_TOKEN }}
         with:
           filters: |
             sdk_node:
