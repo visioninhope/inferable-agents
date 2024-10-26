@@ -25,6 +25,14 @@ For language-specific quick start guides, please refer to the README in each SDK
 - [Go Quick Start](./sdk-go/README.md#quick-start)
 - [.NET Quick Start](./sdk-dotnet/README.md#quick-start)
 
+## Feature Comparison
+
+| SDK | Register [Functions](https://docs.inferable.ai/pages/functions) | Create [Runs](https://docs.inferable.ai/pages/runs) | Create [Templates](https://docs.inferable.ai/pages/runs#prompt-templates) | Create [Blobs](https://docs.inferable.ai/pages/functions#blob) |
+| --- | --- | --- | --- | --- |
+| Node.js / TypeScript | ✅ | ✅ | ✅ | ✅ |
+| Go | ✅ | ✅ | ❌ | ❌ |
+| .NET | ✅ | ❌ | ❌ | ❌ |
+
 ## Documentation
 
 For comprehensive documentation on using Inferable AI, please visit our [official documentation](https://docs.inferable.ai/).
