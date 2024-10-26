@@ -4,6 +4,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Inferable
 {
+  public class Links
+  {
+    public static string DOCS_AUTH = "https://docs.inferable.ai/pages/auth";
+  }
+
   public class InferableOptions
   {
     public string? BaseUrl { get; set; }
@@ -44,17 +49,12 @@ namespace Inferable
 
       if (apiSecret == null)
       {
-        throw new ArgumentNullException(nameof(options.ApiSecret), "APIKey cannot be null.");
+        throw new ArgumentNullException($"No API Secret provided. Please see ${Links.DOCS_AUTH}");
       }
 
-      if (!apiSecret.StartsWith("sk_cluster_machine"))
+      if (!apiSecret.StartsWith("sk_"))
       {
-        if (apiSecret.StartsWith("sk_"))
-        {
-          throw new ArgumentException($"Provided non-Machine API Secret. Please see");
-        }
-
-        throw new ArgumentException($"Invalid API Secret. Please see");
+        throw new ArgumentException($"Invalid API Secret. Please see: {Links.DOCS_AUTH}");
       }
 
 
@@ -118,7 +118,7 @@ namespace Inferable
       }
 
       if (!this._functionRegistry.ContainsKey(name)) {
-        throw new Exception($"No functions registered with for service '{name}'");
+        throw new Exception($"No functions registered for service '{name}'");
       }
 
       var functions = this._functionRegistry[name];
