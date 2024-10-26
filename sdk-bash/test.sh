@@ -1,4 +1,4 @@
-INFERABLE_API_SECRET="sk_cluster_machine_151qeOFp251eH9v0MxRTYDnxOt2wexZQLmIXU8Vb8"
+INFERABLE_API_SECRET=""
 
 source ./inferable.sh
 

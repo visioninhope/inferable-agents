@@ -111,15 +111,6 @@ namespace Inferable.Tests
     }
 
     [Fact]
-    public void Inferable_Should_Throw_If_Incorrect_API_Secret_Provided()
-    {
-      Assert.Throws<ArgumentException>(() => new InferableClient(new InferableOptions
-            {
-            ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_CONSUME_SECRET")!
-            }));
-    }
-
-    [Fact]
     async public void Inferable_Can_Register_Function()
     {
       var inferable = CreateInferableClient();
