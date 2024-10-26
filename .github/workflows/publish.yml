@@ -33,6 +33,7 @@ jobs:
             sdk_dotnet:
               - 'sdk-dotnet/**'
             sdk_go:
+              - 'sdk-go/**'
 
   publish-node:
     needs: check_changes
