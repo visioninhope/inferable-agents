@@ -14,35 +14,139 @@ jobs:
       contents: read
       pull-requests: read
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    outputs:
+      sdk_node: ${{ steps.filter.outputs.sdk_node }}
+      sdk_dotnet: ${{ steps.filter.outputs.sdk_dotnet }}
+      sdk_go: ${{ steps.filter.outputs.sdk_go }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Filter changed files
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            sdk_node:
+              - 'sdk-node/**'
+            sdk_dotnet:
+              - 'sdk-dotnet/**'
+            sdk_go:
+
+  publish-node:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    defaults:
+      run:
+        working-directory: sdk-node
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check for changes
-        id: check_changes
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: sdk-node/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build package
+        run: npm run build
+      - name: Configure Git User
         run: |
-          if git diff --name-only HEAD^ HEAD | grep -q "^sdk-node/"; then
-            echo "SDK_NODE_CHANGED=true" >> $GITHUB_OUTPUT
-          fi
-          if git diff --name-only HEAD^ HEAD | grep -q "^sdk-dotnet/"; then
-            echo "SDK_DOTNET_CHANGED=true" >> $GITHUB_OUTPUT
-          fi
-          if git diff --name-only HEAD^ HEAD | grep -q "^sdk-go/"; then
-            echo "SDK_GO_CHANGED=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Print changed directories
+          git config --global user.name "Inferable CI"
+          git config --global user.email "ci@inferable.ai"
+      - name: Release It
         run: |
-          echo "Changed directories:"
-          if [[ "${{ steps.check_changes.outputs.SDK_NODE_CHANGED }}" == "true" ]]; then
-            echo "- sdk-node"
-          fi
-          if [[ "${{ steps.check_changes.outputs.SDK_DOTNET_CHANGED }}" == "true" ]]; then
-            echo "- sdk-dotnet"
-          fi
-          if [[ "${{ steps.check_changes.outputs.SDK_GO_CHANGED }}" == "true" ]]; then
-            echo "- sdk-go"
-          fi
+          npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
+          npx release-it --npm.skipChecks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-dotnet:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: sdk-dotnet
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Pack
+        run: dotnet pack --configuration Release --no-restore --output ./output
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v1
+        with:
+          nuget-api-key: ${{ secrets.NUGET_API_KEY }}
+          nuget-version: latest
+      - name: Publish
+        run: dotnet nuget push output\*.nupkg -s https://api.nuget.org/v3/index.json
+
+  publish-go:
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    defaults:
+      run:
+        working-directory: sdk-go
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22"
+      - name: Get current version
+        id: get_version
+        run: |
+          VERSION=$(grep -oP 'const Version = "\K[^"]+' inferable.go)
+          echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Increment patch version
+        id: increment_version
+        run: |
+          IFS='.' read -ra VERSION_PARTS <<< "${{ steps.get_version.outputs.current_version }}"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=$((VERSION_PARTS[2] + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+      - name: Update version in code
+        run: |
+          sed -i 's/const Version = "[^"]*"/const Version = "${{ steps.increment_version.outputs.new_version }}"/' inferable.go
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add inferable.go
+          git commit -m "Bump version to ${{ steps.increment_version.outputs.new_version }}"
+          git push
+      - name: Create Git tag
+        run: |
+          git tag v${{ steps.increment_version.outputs.new_version }}
+          git push origin v${{ steps.increment_version.outputs.new_version }}
