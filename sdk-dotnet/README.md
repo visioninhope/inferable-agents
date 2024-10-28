@@ -56,33 +56,45 @@ client.Default.RegisterFunction(new FunctionRegistration<MyInput>
     Function = new Func<MyInput, MyResult>>((input) => {
         // Your code here
     }),
-    Name = "MyFunction",
+    Name = "SayHello",
     Description = "A simple greeting function",
 });
 
 await client.Default.Start();
 ```
 
-### Starting and Stopping a Service
+### 3. Trigger a run
 
-The example above used the Default service, you can also register separate named services.
+The following code will create an [Inferable run](https://docs.inferable.ai/pages/runs) with the message "Call the testFn" and the `TestFn` function attached.
+
+> You can inspect the progress of the run:
+>
+> - in the [playground UI](https://app.inferable.ai/) via `inf app`
+> - in the [CLI](https://www.npmjs.com/package/@inferable/cli) via `inf runs list`
 
 ```csharp
-var userService = client.RegisterService(new ServiceRegistration
+var run = await inferable.CreateRun(new CreateRunInput
 {
-  Name = "UserService",
+  Message = "Call the testFn",
+  AttachedFunctions = new List<FunctionReference>
+  {
+    new FunctionReference {
+      Function = "TestFn",
+      Service = "default"
+    }
+  },
+  // Optional: Subscribe an Inferable function to receive notifications when the run status changes
+  //OnStatusChange = new CreateOnStatusChangeInput
+  //{
+  //  Function = OnStatusChangeFunction
+  //}
 });
 
-userService.RegisterFunction(....)
-
-await userService.Start();
+// Wait for the run to complete and log.
+var result = await run.Poll(null);
 ```
 
-To stop the service, use:
-
-```csharp
-await userService.StopAsync();
-```
+> Runs can also be triggered via the [API](https://docs.inferable.ai/pages/invoking-a-run-api), [CLI](https://www.npmjs.com/package/@inferable/cli) or [playground UI](https://app.inferable.ai/).
 
 ## Contributing
 

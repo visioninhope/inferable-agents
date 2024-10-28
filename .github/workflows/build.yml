@@ -132,10 +132,9 @@ jobs:
       - name: Test
         run: dotnet test --no-restore
         env:
-          INFERABLE_API_ENDPOINT: "https://api.inferable.ai"
-          INFERABLE_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
-          INFERABLE_MACHINE_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
-          INFERABLE_CONSUME_SECRET: ${{ secrets.INFERABLE_CONSUME_SECRET }}
+          INFERABLE_TEST_API_ENDPOINT: "https://api.inferable.ai"
+          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
+          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
 
   build-go:
     needs: check_changes

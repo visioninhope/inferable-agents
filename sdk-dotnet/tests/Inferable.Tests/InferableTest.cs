@@ -16,12 +16,12 @@ namespace Inferable.Tests
     {
       Env.Load(EnvFilePath);
       ApiClient = new ApiClient(new ApiClientOptions{
-          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_CONSUME_SECRET")!,
-          BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT")!,
+          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_SECRET")!,
+          BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_ENDPOINT")!,
           MachineId = "test"
       });
 
-      TestClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_CLUSTER_ID")!;
+      TestClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_CLUSTER_ID")!;
     }
 
     static InferableClient CreateInferableClient()
@@ -33,7 +33,9 @@ namespace Inferable.Tests
       }).CreateLogger<InferableClient>();
 
       return new InferableClient(new InferableOptions {
-          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_MACHINE_SECRET")!,
+          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_SECRET")!,
+          BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_ENDPOINT")!,
+          ClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_CLUSTER_ID")!,
       }, logger);
     }
 
@@ -208,6 +210,69 @@ namespace Inferable.Tests
         Assert.Equal("rejection", result.Result.ResultType);
         Assert.Contains("This is a test exception", result.Result.Result?.ToString());
 
+      }
+      finally
+      {
+        await inferable.Default.Stop();
+      }
+    }
+
+    /// <summary>
+    /// End to end test of the Inferable SDK
+    /// - Can a Run be triggered
+    /// - Can a Function be called
+    /// - Can a StatusChange function be called
+    /// </summary>
+    [Fact]
+    async public void Inferable_Run_E2E()
+    {
+      var inferable = CreateInferableClient();
+
+      bool didCallSuccessFunction = false;
+      bool didCallOnStatusChange = false;
+
+      var Testfn = inferable.Default.RegisterFunction( new FunctionRegistration<TestInput>
+      {
+        Name = "testFn",
+        Func = new Func<TestInput, string>((input) =>
+        {
+          didCallSuccessFunction = true;
+          return "This is a test response";
+        })
+      });
+
+      var OnStatusChangeFunction = inferable.Default.RegisterFunction(new FunctionRegistration<OnStatusChangeInput<object>>
+      {
+        Name = "onStatusChangeFn",
+        Func = new Func<OnStatusChangeInput<object>, object?>((input) =>
+        {
+          didCallOnStatusChange = true;
+          return null;
+        }),
+      });
+
+      try
+      {
+        await inferable.Default.Start();
+
+        var run = await inferable.CreateRun(new CreateRunInput
+        {
+          Message = "Call the testFn",
+          AttachedFunctions = new List<FunctionReference>
+          {
+            Testfn
+          },
+          OnStatusChange = new CreateOnStatusChangeInput
+          {
+            Function = OnStatusChangeFunction
+          }
+        });
+
+        var result = await run.Poll(null);
+
+        Assert.NotNull(result);
+        Assert.True(didCallSuccessFunction);
+        Assert.True(didCallOnStatusChange);
       }
       finally
       {

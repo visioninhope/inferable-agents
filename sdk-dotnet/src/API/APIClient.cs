@@ -35,6 +35,12 @@ namespace Inferable.API
       _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", options.ApiSecret);
     }
 
+    async private Task RethrowWithContext(HttpRequestException e, HttpResponseMessage response)
+    {
+        throw new Exception($"Failed to get run. Response: {await response.Content.ReadAsStringAsync()}", e);
+    }
+
+
 
     async public Task<CreateMachineResult> CreateMachine(CreateMachineInput input)
     {
@@ -45,7 +51,11 @@ namespace Inferable.API
           new StringContent(jsonData, Encoding.UTF8, "application/json")
           );
 
-      response.EnsureSuccessStatusCode();
+      try {
+        response.EnsureSuccessStatusCode();
+      } catch (HttpRequestException e) {
+        await RethrowWithContext(e, response);
+      }
 
       string responseBody = await response.Content.ReadAsStringAsync();
       return JsonSerializer.Deserialize<CreateMachineResult>(responseBody);
@@ -60,7 +70,55 @@ namespace Inferable.API
           new StringContent(jsonData, Encoding.UTF8, "application/json")
           );
 
-      response.EnsureSuccessStatusCode();
+      try {
+        response.EnsureSuccessStatusCode();
+      } catch (HttpRequestException e) {
+        await RethrowWithContext(e, response);
+      }
+    }
+
+    async public Task<CreateRunResult> CreateRun(string clusterId, CreateRunInput input)
+    {
+      string jsonData = JsonSerializer.Serialize(input);
+
+      HttpResponseMessage response = await _client.PostAsync(
+          $"/clusters/{clusterId}/runs",
+          new StringContent(jsonData, Encoding.UTF8, "application/json")
+          );
+
+      try {
+        response.EnsureSuccessStatusCode();
+      } catch (HttpRequestException e) {
+        await RethrowWithContext(e, response);
+      }
+
+      string responseBody = await response.Content.ReadAsStringAsync();
+      var result = JsonSerializer.Deserialize<CreateRunResult>(responseBody);
+
+      return result;
+    }
+
+    async public Task<GetRunResult> GetRun(string clusterId, string runId)
+    {
+      HttpResponseMessage response = await _client.GetAsync(
+          $"/clusters/{clusterId}/runs/{runId}"
+          );
+
+      try {
+      try {
+        response.EnsureSuccessStatusCode();
+      } catch (HttpRequestException e) {
+        await RethrowWithContext(e, response);
+      }
+
+      } catch (HttpRequestException e) {
+        throw new Exception($"Failed to get run. Status Code: {response.StatusCode}, Response: {await response.Content.ReadAsStringAsync()}", e);
+      }
+
+      string responseBody = await response.Content.ReadAsStringAsync();
+      var result = JsonSerializer.Deserialize<GetRunResult>(responseBody);
+
+      return result;
     }
 
     async public Task<(List<CallMessage>, int?)> ListCalls(string clusterId, string service)
@@ -69,7 +127,11 @@ namespace Inferable.API
           $"/clusters/{clusterId}/calls?service={service}&acknowledge=true"
           );
 
-      response.EnsureSuccessStatusCode();
+      try {
+        response.EnsureSuccessStatusCode();
+      } catch (HttpRequestException e) {
+        await RethrowWithContext(e, response);
+      }
 
       string responseBody = await response.Content.ReadAsStringAsync();
       var result = JsonSerializer.Deserialize<List<CallMessage>>(responseBody) ?? new List<CallMessage>();
@@ -97,7 +159,11 @@ namespace Inferable.API
           new StringContent(jsonData, Encoding.UTF8, "application/json")
           );
 
-      response.EnsureSuccessStatusCode();
+      try {
+        response.EnsureSuccessStatusCode();
+      } catch (HttpRequestException e) {
+        await RethrowWithContext(e, response);
+      }
 
       string responseBody = await response.Content.ReadAsStringAsync();
       return JsonSerializer.Deserialize<CreateCallResult>(responseBody);
