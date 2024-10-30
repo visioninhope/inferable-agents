@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://a.inferable.ai/logo-3.png" width="200" style="border-radius: 10px" />
+  <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
 </p>
 
 [![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/) [![Discord](https://img.shields.io/badge/community-Discord-blue)](https://discord.gg/inferable) [![Website](https://img.shields.io/badge/website-inferable.ai-blue)](https://inferable.ai)
