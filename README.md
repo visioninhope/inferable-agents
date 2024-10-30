@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://a.inferable.ai/logo-3.png" width="200" style="border-radius: 10px" />
+  <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
 </p>
 
 [![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/) [![Discord](https://img.shields.io/badge/community-Discord-blue)](https://discord.gg/inferable) [![Website](https://img.shields.io/badge/website-inferable.ai-blue)](https://inferable.ai)
@@ -11,27 +11,19 @@ Inferable is the developer platform for building agentic automations from your e
 
 ## Key Features
 
-### ✨ Developer Experience
+Here's a concise key features section with 5 points highlighting Inferable's main benefits:
 
-- Create and manage automations programmatically with a delightful developer experience.
-- Get started quickly with native SDKs for TypeScript, Go, and .NET, with more languages coming soon.
-- Integrate seamlessly with your existing codebases and APIs. No rewrites required.
+🚀 **2-Minute Setup**: Get started in minutes with our [managed platform](https://app.inferable.ai) - wrap your existing functions, REST APIs, GraphQL endpoints, and more.
 
-### 🤖 Managed Inference
+🔄 **Rapid Iteration**: Built for developers to quickly prototype, test and refine AI automations with instant feedback. If you can write a function, you can build an agent.
 
-- We handle the complexities of model routing, reasoning, and tool usage for you.
-- Declaratively define complex multi-step workflows. You give us the objective, we handle the rest.
-- Monitor everything in real-time with comprehensive tracing, logging, and analytics.
+⚡️ **Distributed Durable Execution**: Our durable execution engine helps you agents recover from partial failures, load balance across your compute, and caches results for fast re-runs.
 
-### 📈 Distributed Durable Execution
+🛡️ **Zero Network Config**: No inbound connections or networking config required - your compute runs securely behind your firewall, and polls for instructions.
 
-- We handle service discovery and load balancing for your functions.
-- Our durable execution engine helps you recover from partial failures, and caches results for fast re-runs.
+💻 **Your Infrastructure, Your Control**: Keep sensitive data and compute on-premise while leveraging our cloud orchestration. Inferable can't see or access any runtime information or environment variables.
 
-### 🔒 Security
-
-- Keep your data secure and private - all compute runs within your infrastructure with no inbound connections required.
-- Protect sensitive data with end-to-end encryption and masking capabilities built right in.
+🔌 **Multiple Language Support**: Native SDKs for TypeScript, Go, .NET and more coming soon - integrate with your existing codebase in minutes.
 
 ## SDKs
 
