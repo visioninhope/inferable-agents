@@ -1,11 +1,14 @@
 <p align="center">
   <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
+</p>
+
+<div align="center">
 
 [![Website](https://img.shields.io/badge/website-inferable.ai-blue)](https://inferable.ai) [![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/) [![Discord](https://img.shields.io/badge/community-Discord-blue)](https://go.inferable.ai/discord) [![Slack](https://img.shields.io/badge/enterprise-Slack-blue)](https://go.inferable.ai/slack)
 
 ![NPM Version](https://img.shields.io/npm/v/inferable?color=32CD32) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/inferablehq/inferable?filename=sdk-go%2Fgo.mod&color=32CD32) ![NuGet Version](https://img.shields.io/nuget/v/inferable?color=32CD32)
 
-</p>
+</div>
 
 # Introduction
 
