@@ -11,7 +11,8 @@ namespace Inferable
   }
 
   /// <summary>
-  /// Object type that will be returned to a Run's OnStatusChange Function
+  /// Object type that will be returned to a Run's OnStatusChange Function.
+  /// Generic type T is the type of the result the run's (resultSchema)
   /// </summary>
   public struct OnStatusChangeInput<T>
   {

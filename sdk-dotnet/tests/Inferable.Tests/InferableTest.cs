@@ -44,6 +44,12 @@ namespace Inferable.Tests
       public required string testString { get; set; }
     }
 
+    private struct RunOutput
+    {
+      public bool didSayHello { get; set; }
+    }
+
+
     [Fact]
     public void Inferable_Can_Instantiate()
     {
@@ -242,10 +248,10 @@ namespace Inferable.Tests
           }),
       });
 
-      var OnStatusChangeFunction = client.Default.RegisterFunction(new FunctionRegistration<OnStatusChangeInput<object>>
+      var OnStatusChangeFunction = client.Default.RegisterFunction(new FunctionRegistration<OnStatusChangeInput<RunOutput>>
       {
         Name = "onStatusChangeFn",
-        Func = new Func<OnStatusChangeInput<object>, object?>((input) =>
+        Func = new Func<OnStatusChangeInput<RunOutput>, object?>((input) =>
         {
           didCallOnStatusChange = true;
           return null;
@@ -266,7 +272,8 @@ namespace Inferable.Tests
           OnStatusChange = new CreateOnStatusChangeInput
           {
             Function = OnStatusChangeFunction
-          }
+          },
+          ResultSchema = JsonSchema.FromType<RunOutput>(),
         });
 
         var result = await run.Poll(null);
