@@ -61,9 +61,10 @@ For language-specific quick start guides, please refer to the README in each SDK
 | --------------------------------------------------------------------- | :-----: | :-: | :--: |
 | Create [Blob](https://docs.inferable.ai/pages/functions#blob) results      |   ✅    | ❌  |  ❌  |
 | [Mask](https://docs.inferable.ai/pages/functions#masked) results           |   ✅    | ❌  |  ❌  |
-| Visibility timeout configuration `timeoutSeconds`                          |   ✅    | ❌  |  ❌  |
-| Retry configuration `retryCountOnStall`                                    |   ✅    | ❌  |  ❌  |
-| Human in the Loop `requiresApproval`                                       |   ✅    | ❌  |  ❌  |
+| Caching configuration                                     |   ✅    | ❌  |  ❌  |
+| Timeout configuration                                     |   ✅    | ❌  |  ❌  |
+| Retry configuration                                     |   ✅    | ❌  |  ❌  |
+| Approval (Human in the loop) configuration ``              |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
