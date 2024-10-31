@@ -269,7 +269,7 @@ namespace Inferable.Tests
           {
             SayHelloFunction
           },
-          OnStatusChange = new CreateOnStatusChangeInput
+          OnStatusChange = new OnStatusChange
           {
             Function = OnStatusChangeFunction
           },

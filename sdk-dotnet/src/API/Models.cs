@@ -145,20 +145,20 @@ namespace Inferable.API
     public Dictionary<string, string>? Metadata { get; set; }
 
     [
-      JsonPropertyName("onStatusChange"),
-      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
-    ]
-    public CreateOnStatusChangeInput? OnStatusChange { get; set; }
-
-    [
       JsonPropertyName("resultSchema"),
       JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull),
       JsonConverter(typeof(JsonSchemaConverter))
     ]
     public JsonSchema? ResultSchema { get; set; }
+
+    [
+      JsonPropertyName("onStatusChange"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public OnStatusChange? OnStatusChange { get; set; }
   }
 
-  public struct CreateOnStatusChangeInput
+  public struct OnStatusChange
   {
     [
       JsonPropertyName("function"),
