@@ -53,16 +53,17 @@ For language-specific quick start guides, please refer to the README in each SDK
 | Feature                                                         | Node.js | Go  | .NET |
 | --------------------------------------------------------------- | :-----: | :-: | :--: |
 | Register [Functions](https://docs.inferable.ai/pages/functions) |   ✅    | ✅  |  ✅  |
-| Create [Runs](https://docs.inferable.ai/pages/runs)             |   ✅    | ✅  |  ❌  |
+| Create [Runs](https://docs.inferable.ai/pages/runs)             |   ✅    | ✅  |  ✅  |
 
 ### Advanced Features
 
 | Feature                                                               | Node.js | Go  | .NET |
 | --------------------------------------------------------------------- | :-----: | :-: | :--: |
-| Create [Blob](https://docs.inferable.ai/pages/functions#blob) results |   ✅    | ❌  |  ❌  |
-| [Mask](https://docs.inferable.ai/pages/functions#masked) results      |   ✅    | ❌  |  ❌  |
-| Visibility timeout configuration                                      |   ✅    | ❌  |  ❌  |
-| Retry configuration                                                   |   ✅    | ❌  |  ❌  |
+| Create [Blob](https://docs.inferable.ai/pages/functions#blob) results      |   ✅    | ❌  |  ❌  |
+| [Mask](https://docs.inferable.ai/pages/functions#masked) results           |   ✅    | ❌  |  ❌  |
+| Visibility timeout configuration `timeoutSeconds`                          |   ✅    | ❌  |  ❌  |
+| Retry configuration `retryCountOnStall`                                    |   ✅    | ❌  |  ❌  |
+| Human in the Loop `requiresApproval`                                       |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
