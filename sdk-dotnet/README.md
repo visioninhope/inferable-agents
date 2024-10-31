@@ -60,7 +60,7 @@ client.Default.RegisterFunction(new FunctionRegistration<MyInput>
     }),
 });
 
-await client.Default.Start();
+_ = client.Default.Start();
 ```
 
 <details>
@@ -81,7 +81,7 @@ The following code will create an [Inferable run](https://docs.inferable.ai/page
 > - in the [CLI](https://www.npmjs.com/package/@inferable/cli) via `inf runs list`
 
 ```csharp
-var run = await inferable.CreateRun(new CreateRunInput
+var run = await inferable.CreateRunAsync(new CreateRunInput
 {
   Message = "Say hello to John",
   // Optional: Explicitly attach the `sayHello` function (All functions attached by default)
@@ -101,10 +101,10 @@ var run = await inferable.CreateRun(new CreateRunInput
   //}
 });
 
-Console.WriteLine($"Run started: {run.Id}");
+Console.WriteLine($"Run started: {run.ID}");
 
 // Wait for the run to complete and log
-var result = await run.Poll(null);
+var result = await run.PollAsync(null);
 
 Console.WriteLine($"Run result: {result}");
 ```
