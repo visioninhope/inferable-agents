@@ -1,0 +1,45 @@
+name: Create Archives of Bootstrap Projects
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-archives:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Archive bootstrap-node
+        run: |
+          zip -r "archives/bootstrap-node.zip" "bootstrap-node/"
+
+      - name: Archive bootstrap-dotnet
+        run: |
+          zip -r "archives/bootstrap-dotnet.zip" "bootstrap-dotnet/"
+
+      - name: Archive bootstrap-go
+        run: |
+          zip -r "archives/bootstrap-go.zip" "bootstrap-go/"
+
+      - name: Commit archives
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: 'archives/'
+          message: '[skip ci] Update bootstrap project archives'
+          default_author: github_actions
+          push: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+
