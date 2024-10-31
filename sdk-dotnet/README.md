@@ -76,6 +76,7 @@ The following code will create an [Inferable run](https://docs.inferable.ai/page
 var run = await inferable.CreateRun(new CreateRunInput
 {
   Message = "Say hello to John",
+  // Optional: Explicitly attach the `sayHello` function (All functions attached by default)
   AttachedFunctions = new List<FunctionReference>
   {
     new FunctionReference {
@@ -83,8 +84,10 @@ var run = await inferable.CreateRun(new CreateRunInput
       Service = "default"
     }
   },
+  // Optional: Define a schema for the result to conform to
+  ResultSchema = JsonSchema.FromType<RunOutput>();
   // Optional: Subscribe an Inferable function to receive notifications when the run status changes
-  //OnStatusChange = new CreateOnStatusChangeInput
+  //OnStatusChange = new CreateOnStatusChangeInput<RunOutput>
   //{
   //  Function = OnStatusChangeFunction
   //}

@@ -1,7 +1,21 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using NJsonSchema;
 
 namespace Inferable.API
 {
+
+  public class JsonSchemaConverter : JsonConverter<JsonSchema>
+  {
+    public override JsonSchema Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+      throw new NotImplementedException();
+    }
+    public override void Write(Utf8JsonWriter writer, JsonSchema value, JsonSerializerOptions options)
+    {
+      writer.WriteRawValue(value.ToJson());
+    }
+  }
 
   public struct CreateMachineInput
   {
@@ -135,6 +149,13 @@ namespace Inferable.API
       JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
     ]
     public CreateOnStatusChangeInput? OnStatusChange { get; set; }
+
+    [
+      JsonPropertyName("resultSchema"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull),
+      JsonConverter(typeof(JsonSchemaConverter))
+    ]
+    public JsonSchema? ResultSchema { get; set; }
   }
 
   public struct CreateOnStatusChangeInput
