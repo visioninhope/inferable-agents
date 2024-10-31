@@ -222,26 +222,27 @@ namespace Inferable.Tests
     /// - Can a Run be triggered
     /// - Can a Function be called
     /// - Can a StatusChange function be called
+    /// This should match the example in the readme
     /// </summary>
     [Fact]
     async public void Inferable_Run_E2E()
     {
-      var inferable = CreateInferableClient();
+      var client = CreateInferableClient();
 
-      bool didCallSuccessFunction = false;
+      bool didCallSayHello = false;
       bool didCallOnStatusChange = false;
 
-      var Testfn = inferable.Default.RegisterFunction( new FunctionRegistration<TestInput>
+      var SayHelloFunction = client.Default.RegisterFunction(new FunctionRegistration<TestInput>
       {
-        Name = "testFn",
-        Func = new Func<TestInput, string>((input) =>
-        {
-          didCallSuccessFunction = true;
-          return "This is a test response";
-        })
+          Name = "SayHello",
+          Description = "A simple greeting function",
+          Func = new Func<TestInput, object?>((input) => {
+              didCallSayHello = true;
+              return null;
+          }),
       });
 
-      var OnStatusChangeFunction = inferable.Default.RegisterFunction(new FunctionRegistration<OnStatusChangeInput<object>>
+      var OnStatusChangeFunction = client.Default.RegisterFunction(new FunctionRegistration<OnStatusChangeInput<object>>
       {
         Name = "onStatusChangeFn",
         Func = new Func<OnStatusChangeInput<object>, object?>((input) =>
@@ -253,14 +254,14 @@ namespace Inferable.Tests
 
       try
       {
-        await inferable.Default.Start();
+        await client.Default.Start();
 
-        var run = await inferable.CreateRun(new CreateRunInput
+        var run = await client.CreateRun(new CreateRunInput
         {
-          Message = "Call the testFn",
+          Message = "Say hello to John",
           AttachedFunctions = new List<FunctionReference>
           {
-            Testfn
+            SayHelloFunction
           },
           OnStatusChange = new CreateOnStatusChangeInput
           {
@@ -270,13 +271,15 @@ namespace Inferable.Tests
 
         var result = await run.Poll(null);
 
+        await Task.Delay(500);
+
         Assert.NotNull(result);
-        Assert.True(didCallSuccessFunction);
+        Assert.True(didCallSayHello);
         Assert.True(didCallOnStatusChange);
       }
       finally
       {
-        await inferable.Default.Stop();
+        await client.Default.Stop();
       }
     }
   }

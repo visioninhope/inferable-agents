@@ -43,7 +43,7 @@ If you don't provide an API key or base URL, it will attempt to read them from t
 
 ### Registering a Function
 
-To register a function with the Inferable API, you can use the following:
+Register a "sayHello" [function](https://docs.inferable.ai/pages/functions). This file will register the function with the [control-plane](https://docs.inferable.ai/pages/control-plane).
 
 ```csharp
 public class MyInput
@@ -53,11 +53,11 @@ public class MyInput
 
 client.Default.RegisterFunction(new FunctionRegistration<MyInput>
 {
-    Function = new Func<MyInput, MyResult>>((input) => {
-        // Your code here
-    }),
     Name = "SayHello",
     Description = "A simple greeting function",
+    Func = new Func<MyInput, MyResult>>((input) => {
+        // Your code here
+    }),
 });
 
 await client.Default.Start();
@@ -65,7 +65,7 @@ await client.Default.Start();
 
 ### 3. Trigger a run
 
-The following code will create an [Inferable run](https://docs.inferable.ai/pages/runs) with the message "Call the testFn" and the `TestFn` function attached.
+The following code will create an [Inferable run](https://docs.inferable.ai/pages/runs) with the prompt "Say hello to John" and the `sayHello` function attached.
 
 > You can inspect the progress of the run:
 >
@@ -75,11 +75,11 @@ The following code will create an [Inferable run](https://docs.inferable.ai/page
 ```csharp
 var run = await inferable.CreateRun(new CreateRunInput
 {
-  Message = "Call the testFn",
+  Message = "Say hello to John",
   AttachedFunctions = new List<FunctionReference>
   {
     new FunctionReference {
-      Function = "TestFn",
+      Function = "SayHello",
       Service = "default"
     }
   },
@@ -90,16 +90,24 @@ var run = await inferable.CreateRun(new CreateRunInput
   //}
 });
 
-// Wait for the run to complete and log.
+Console.WriteLine($"Run started: {run.Id}");
+
+// Wait for the run to complete and log
 var result = await run.Poll(null);
+
+Console.WriteLine($"Run result: {result}");
 ```
 
 > Runs can also be triggered via the [API](https://docs.inferable.ai/pages/invoking-a-run-api), [CLI](https://www.npmjs.com/package/@inferable/cli) or [playground UI](https://app.inferable.ai/).
 
-## Contributing
+## Documentation
 
-Contributions to the Inferable .NET Client are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.
+- [Inferable documentation](https://docs.inferable.ai/) contains all the information you need to get started with Inferable.
 
 ## Support
 
-For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues).
+For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues) or [join the Discord](https://discord.gg/WHcTNeDP)
+
+## Contributing
+
+Contributions to the Inferable .NET Client are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.
