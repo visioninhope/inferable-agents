@@ -24,43 +24,72 @@ if (app.Environment.IsDevelopment())
   Env.Load();
 }
 
-var inferable = app.Services.GetService<InferableClient>();
+var client = app.Services.GetService<InferableClient>();
 
-if (inferable == null)
+if (client == null)
 {
   throw new Exception("Could not get InferableClient");
 }
 
-inferable.Default.RegisterFunction(new FunctionRegistration<SearchInput> {
+client.Default.RegisterFunction(new FunctionRegistration<SearchInput> {
     Name = "SearchInventory",
     Description = "Searches the inventory",
     Func = new Func<SearchInput, object?>(input => InventorySystem.SearchInventory(input))
     });
 
-inferable.Default.RegisterFunction(new FunctionRegistration<GetInventoryItemInput> {
+client.Default.RegisterFunction(new FunctionRegistration<GetInventoryItemInput> {
     Name = "GetInventoryItem",
     Description = "Gets an inventory item",
     Func = new Func<GetInventoryItemInput, object?>(input => InventorySystem.GetInventoryItem(input))
     });
 
-inferable.Default.RegisterFunction(new FunctionRegistration<EmptyInput> {
+client.Default.RegisterFunction(new FunctionRegistration<EmptyInput> {
     Name = "ListOrders",
     Description = "Lists all orders",
     Func = new Func<EmptyInput, object?>(input => InventorySystem.ListOrders())
     });
 
-inferable.Default.RegisterFunction(new FunctionRegistration<EmptyInput> {
+client.Default.RegisterFunction(new FunctionRegistration<EmptyInput> {
     Name = "TotalOrderValue",
     Description = "Calculates the total value of all orders",
     Func = new Func<EmptyInput, object?>(input => InventorySystem.TotalOrderValue())
 });
 
-inferable.Default.RegisterFunction(new FunctionRegistration<MakeOrderInput> {
+client.Default.RegisterFunction(new FunctionRegistration<MakeOrderInput> {
     Name = "MakeOrder",
     Description = "Makes an order",
     Func = new Func<MakeOrderInput, object?>(input => InventorySystem.MakeOrder(input))
     });
 
-await inferable.Default.Start();
+_ = client.Default.StartAsync();
+
+// Trigger a Run programmatically
+// var run = await client.CreateRunAsync(new Inferable.API.CreateRunInput
+// {
+//   Message = "Can you make an order for 2 lightsabers?",
+//   // Optional: Explicitly attach the `sayHello` function (All functions attached by default)
+//   // AttachedFunctions = new List<FunctionReference>
+//   // {
+//   //   new FunctionReference {
+//   //     Function = "SayHello",
+//   //     Service = "default"
+//   //   }
+//   // },
+//   // Optional: Define a schema for the result to conform to
+//   //ResultSchema = JsonSchema.FromType<RunOutput>();
+//   // Optional: Subscribe an Inferable function to receive notifications when the run status changes
+//   //OnStatusChange = new OnStatusChange<RunOutput>
+//   //{
+//   //  Function = OnStatusChangeFunction
+//   //}
+// });
+//
+// Console.WriteLine($"Run started: {run.ID}");
+//
+// // Wait for the run to complete and log
+// var result = await run.PollAsync(null);
+//
+// Console.WriteLine($"Run result: {result}");
 
 app.Run();
+

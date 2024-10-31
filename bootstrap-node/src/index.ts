@@ -5,14 +5,14 @@ import { z } from 'zod';
 import * as demo from './demo';
 
 // Instantiate the Inferable client.
-const i = new Inferable({
+const client = new Inferable({
   // To get a new key, run:
   // npx @inferable/cli auth keys create 'My New Machine Key' --type='cluster_machine'
   apiSecret: process.env.INFERABLE_API_SECRET
 })
 
 // Register some demo functions
-i.default.register({
+client.default.register({
   name: "searchInventory",
   func: demo.searchInventory,
   description: "Searches the inventory",
@@ -23,7 +23,7 @@ i.default.register({
   },
 });
 
-i.default.register({
+client.default.register({
   name: "getInventoryItem",
   func: demo.getInventoryItem,
   description: "Gets an inventory item",
@@ -34,7 +34,7 @@ i.default.register({
   },
 });
 
-i.default.register({
+client.default.register({
   name: "listOrders",
   func: demo.listOrders,
   description: "Lists all orders",
@@ -43,7 +43,7 @@ i.default.register({
   },
 });
 
-i.default.register({
+client.default.register({
   name: "totalOrderValue",
   func: demo.totalOrderValue,
   description: "Calculates the total value of all orders",
@@ -52,7 +52,7 @@ i.default.register({
   },
 });
 
-i.default.register({
+client.default.register({
   name: "makeOrder",
   func: demo.makeOrder,
   description: "Makes an order",
@@ -71,6 +71,21 @@ i.default.register({
   },
 });
 
-i.default.start().then(() => {
+client.default.start().then(() => {
   console.log("Inferable demo service started");
 })
+
+// Trigger a Run programmatically
+// https://docs.inferable.ai/pages/runs
+// client.run({
+//   message: "Can you make an order for 2 lightsabers?",
+//   // Optional: Explicitly attach the functions (All functions attached by default)
+//   //attachedFunctions: [],
+//   // Optional: Specify the schema of the result
+//   //resultSchema: z.object({}),
+// }).then(async (run) => {
+//     console.log("Run result", {
+//       result: await run.poll(),
+//     });
+//   });
+
