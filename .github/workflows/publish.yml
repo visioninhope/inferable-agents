@@ -95,6 +95,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
       - name: Pack
         run: dotnet pack --configuration Release --no-restore --output ./output
+      # TODO: Auto version bump
       - name: Setup NuGet
         uses: nuget/setup-nuget@v1
         with:
@@ -145,7 +146,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add inferable.go
-          git commit -m "Bump version to ${{ steps.increment_version.outputs.new_version }}"
+          git commit -m "Bump sdk-go version to ${{ steps.increment_version.outputs.new_version }}"
           git push
       - name: Create Git tag
         run: |
