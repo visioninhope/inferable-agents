@@ -54,7 +54,6 @@ namespace Inferable
 
   /// <summary>
   /// The Inferable client. This is the main entry point for using Inferable.
-  /// <example>
   /// Basic usage:
   /// <code>
   /// // create a new Inferable instance
@@ -62,7 +61,6 @@ namespace Inferable
   ///     ApiSecret = "API_SECRET"
   /// });
   /// </code>
-  /// </example>
   /// </summary>
   public class InferableClient
   {
@@ -79,7 +77,6 @@ namespace Inferable
 
     /// <summary>
     /// Convenience reference to a service with the name 'default'.
-    /// <example>
     /// <code>
     /// // Create a new Inferable instance with an API secret
     /// var client = new InferableClient(new InferableOptions {
@@ -102,7 +99,6 @@ namespace Inferable
     /// // Stop the service on shutdown
     /// await client.Default.StopAsync();
     /// </code>
-    /// </example>
     /// </summary>
     public RegisteredService Default
     {
@@ -114,7 +110,6 @@ namespace Inferable
 
     /// <summary>
     /// Initializes a new instance of the InferableClient class.
-    /// <example>
     /// Basic usage:
     /// <code>
     /// // Create a new Inferable instance with an API secret
@@ -127,7 +122,6 @@ namespace Inferable
     /// Environment.SetEnvironmentVariable("INFERABLE_API_SECRET", "API_SECRET");
     /// var client = new InferableClient();
     /// </code>
-    /// </example>
     /// </summary>
     public InferableClient(InferableOptions? options = null, ILogger<InferableClient>? logger = null)
     {
@@ -158,7 +152,6 @@ namespace Inferable
 
     /// <summary>
     /// Registers a service with Inferable.
-    /// <example>
     /// <code>
     /// // Create a new Inferable instance with an API secret
     /// var client = new Inferable(new InferableOptions {
@@ -184,12 +177,29 @@ namespace Inferable
     /// // Stop the service on shutdown
     /// await service.StopAsync();
     /// </code>
-    /// </example>
     /// </summary>
     public RegisteredService RegisterService(string name)
     { return new RegisteredService(name, this);
     }
 
+    /// <summary>
+    /// Creates a run and returns a reference to it.
+    /// <code>
+    /// // Create a new Inferable instance with an API secret
+    /// var client = new InferableClient(new InferableOptions {
+    ///     ApiSecret = "API_SECRET"
+    /// });
+    ///
+    /// var run = client.CreateRun(new CreateRunInput {
+    ///     Message = "Hello world"
+    /// });
+    ///
+    /// Console.WriteLine("Started run with ID: " + run.ID);
+    ///
+    /// var result = await run.PollAsync();
+    /// Console.WriteLine("Run result: " + result);
+    /// </code>
+    /// </summary>
     async public Task<RunReference> CreateRunAsync(CreateRunInput input)
     {
       if (this._clusterId == null) {
@@ -312,7 +322,6 @@ namespace Inferable
 
     /// <summary>
     /// Registers a function against the Service.
-    /// <example>
     /// <code>
     /// service.RegisterFunction(new FunctionRegistration<TestInput>
     /// {
@@ -324,7 +333,6 @@ namespace Inferable
     ///     }),
     /// });
     /// </code>
-    /// </example>
     /// </summary>
     public FunctionReference RegisterFunction<T>(FunctionRegistration<T> function) where T : struct {
       this._inferable.RegisterFunction<T>(this._name, function);
