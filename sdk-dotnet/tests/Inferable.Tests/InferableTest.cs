@@ -238,7 +238,7 @@ namespace Inferable.Tests
           Description = "A simple greeting function",
           Func = new Func<TestInput, object?>((input) => {
               didCallSayHello = true;
-              return null;
+              return $"Hello {input.testString}";
           }),
       });
 
