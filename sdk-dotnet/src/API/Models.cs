@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Inferable.API
 {
+
   public struct CreateMachineInput
   {
     [JsonPropertyName("service")]
@@ -112,4 +113,74 @@ namespace Inferable.API
     public int? TimeoutSeconds { get; set; }
   }
 
+  public struct CreateRunInput
+  {
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [
+      JsonPropertyName("attachedFunctions"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull),
+    ]
+    public List<FunctionReference>? AttachedFunctions { get; set; }
+
+    [
+      JsonPropertyName("metadata"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public Dictionary<string, string>? Metadata { get; set; }
+
+    [
+      JsonPropertyName("onStatusChange"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public CreateOnStatusChangeInput? OnStatusChange { get; set; }
+  }
+
+  public struct CreateOnStatusChangeInput
+  {
+    [
+      JsonPropertyName("function"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull),
+    ]
+    public FunctionReference? Function { get; set; }
+  }
+
+  public struct FunctionReference
+  {
+    [JsonPropertyName("service")]
+    public required string Service { get; set; }
+    [JsonPropertyName("function")]
+    public required string Function { get; set; }
+  }
+
+  public struct CreateRunResult
+  {
+    [JsonPropertyName("id")]
+    public string ID { get; set; }
+  }
+
+  public struct GetRunResult
+  {
+    [JsonPropertyName("id")]
+    public string ID { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; }
+
+    [JsonPropertyName("failureReason")]
+    public string FailureReason { get; set; }
+
+    [JsonPropertyName("summary")]
+    public string Summary { get; set; }
+
+    [JsonPropertyName("result")]
+    public object? Result { get; set; }
+
+    [JsonPropertyName("attachedFunctions")]
+    public List<string> AttachedFunctions { get; set; }
+
+    [JsonPropertyName("metadata")]
+    public Dictionary<string, string> Metadata { get; set; }
+  }
 }

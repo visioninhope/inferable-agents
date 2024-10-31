@@ -16,12 +16,12 @@ namespace Inferable.Tests
     {
       Env.Load(EnvFilePath);
       ApiClient = new ApiClient(new ApiClientOptions{
-          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_CONSUME_SECRET")!,
-          BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT")!,
+          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_SECRET")!,
+          BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_ENDPOINT")!,
           MachineId = "test"
       });
 
-      TestClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_CLUSTER_ID")!;
+      TestClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_CLUSTER_ID")!;
     }
 
     static InferableClient CreateInferableClient()
@@ -33,7 +33,9 @@ namespace Inferable.Tests
       }).CreateLogger<InferableClient>();
 
       return new InferableClient(new InferableOptions {
-          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_MACHINE_SECRET")!,
+          ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_SECRET")!,
+          BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_ENDPOINT")!,
+          ClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_CLUSTER_ID")!,
       }, logger);
     }
 
@@ -212,6 +214,72 @@ namespace Inferable.Tests
       finally
       {
         await inferable.Default.Stop();
+      }
+    }
+
+    /// <summary>
+    /// End to end test of the Inferable SDK
+    /// - Can a Run be triggered
+    /// - Can a Function be called
+    /// - Can a StatusChange function be called
+    /// This should match the example in the readme
+    /// </summary>
+    [Fact]
+    async public void Inferable_Run_E2E()
+    {
+      var client = CreateInferableClient();
+
+      bool didCallSayHello = false;
+      bool didCallOnStatusChange = false;
+
+      var SayHelloFunction = client.Default.RegisterFunction(new FunctionRegistration<TestInput>
+      {
+          Name = "SayHello",
+          Description = "A simple greeting function",
+          Func = new Func<TestInput, object?>((input) => {
+              didCallSayHello = true;
+              return $"Hello {input.testString}";
+          }),
+      });
+
+      var OnStatusChangeFunction = client.Default.RegisterFunction(new FunctionRegistration<OnStatusChangeInput<object>>
+      {
+        Name = "onStatusChangeFn",
+        Func = new Func<OnStatusChangeInput<object>, object?>((input) =>
+        {
+          didCallOnStatusChange = true;
+          return null;
+        }),
+      });
+
+      try
+      {
+        await client.Default.Start();
+
+        var run = await client.CreateRun(new CreateRunInput
+        {
+          Message = "Say hello to John",
+          AttachedFunctions = new List<FunctionReference>
+          {
+            SayHelloFunction
+          },
+          OnStatusChange = new CreateOnStatusChangeInput
+          {
+            Function = OnStatusChangeFunction
+          }
+        });
+
+        var result = await run.Poll(null);
+
+        await Task.Delay(500);
+
+        Assert.NotNull(result);
+        Assert.True(didCallSayHello);
+        Assert.True(didCallOnStatusChange);
+      }
+      finally
+      {
+        await client.Default.Stop();
       }
     }
   }

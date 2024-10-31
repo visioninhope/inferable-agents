@@ -43,7 +43,7 @@ If you don't provide an API key or base URL, it will attempt to read them from t
 
 ### Registering a Function
 
-To register a function with the Inferable API, you can use the following:
+Register a "sayHello" [function](https://docs.inferable.ai/pages/functions). This file will register the function with the [control-plane](https://docs.inferable.ai/pages/control-plane).
 
 ```csharp
 public class MyInput
@@ -53,41 +53,61 @@ public class MyInput
 
 client.Default.RegisterFunction(new FunctionRegistration<MyInput>
 {
-    Function = new Func<MyInput, MyResult>>((input) => {
+    Name = "SayHello",
+    Description = "A simple greeting function",
+    Func = new Func<MyInput, MyResult>>((input) => {
         // Your code here
     }),
-    Name = "MyFunction",
-    Description = "A simple greeting function",
 });
 
 await client.Default.Start();
 ```
 
-### Starting and Stopping a Service
+### 3. Trigger a run
 
-The example above used the Default service, you can also register separate named services.
+The following code will create an [Inferable run](https://docs.inferable.ai/pages/runs) with the prompt "Say hello to John" and the `sayHello` function attached.
+
+> You can inspect the progress of the run:
+>
+> - in the [playground UI](https://app.inferable.ai/) via `inf app`
+> - in the [CLI](https://www.npmjs.com/package/@inferable/cli) via `inf runs list`
 
 ```csharp
-var userService = client.RegisterService(new ServiceRegistration
+var run = await inferable.CreateRun(new CreateRunInput
 {
-  Name = "UserService",
+  Message = "Say hello to John",
+  AttachedFunctions = new List<FunctionReference>
+  {
+    new FunctionReference {
+      Function = "SayHello",
+      Service = "default"
+    }
+  },
+  // Optional: Subscribe an Inferable function to receive notifications when the run status changes
+  //OnStatusChange = new CreateOnStatusChangeInput
+  //{
+  //  Function = OnStatusChangeFunction
+  //}
 });
 
-userService.RegisterFunction(....)
+Console.WriteLine($"Run started: {run.Id}");
 
-await userService.Start();
+// Wait for the run to complete and log
+var result = await run.Poll(null);
+
+Console.WriteLine($"Run result: {result}");
 ```
 
-To stop the service, use:
+> Runs can also be triggered via the [API](https://docs.inferable.ai/pages/invoking-a-run-api), [CLI](https://www.npmjs.com/package/@inferable/cli) or [playground UI](https://app.inferable.ai/).
 
-```csharp
-await userService.StopAsync();
-```
+## Documentation
+
+- [Inferable documentation](https://docs.inferable.ai/) contains all the information you need to get started with Inferable.
+
+## Support
+
+For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues) or [join the Discord](https://discord.gg/WHcTNeDP)
 
 ## Contributing
 
 Contributions to the Inferable .NET Client are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.
-
-## Support
-
-For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues).
