@@ -49,9 +49,21 @@ namespace Inferable
   public class RunReference
   {
     public required string ID { get; set; }
-    public required Func<PollRunOptions?, Task<GetRunResult?>> Poll { get; set; }
+    public required Func<PollRunOptions?, Task<GetRunResult?>> PollAsync { get; set; }
   }
 
+  /// <summary>
+  /// The Inferable client. This is the main entry point for using Inferable.
+  /// <example>
+  /// Basic usage:
+  /// <code>
+  /// // create a new Inferable instance
+  /// var client = new InferableClient(new InferableOptions {
+  ///     ApiSecret = "API_SECRET"
+  /// });
+  /// </code>
+  /// </example>
+  /// </summary>
   public class InferableClient
   {
     public static string DefaultBaseUrl = "https://api.inferable.ai/";
@@ -65,6 +77,33 @@ namespace Inferable
 
     private List<Service> _services = new List<Service>();
 
+    /// <summary>
+    /// Convenience reference to a service with the name 'default'.
+    /// <example>
+    /// <code>
+    /// // Create a new Inferable instance with an API secret
+    /// var client = new InferableClient(new InferableOptions {
+    ///     ApiSecret = "API_SECRET"
+    /// });
+    ///
+    /// client.Default.RegisterFunction(new FunctionRegistration<TestInput>
+    /// {
+    ///     Name = "SayHello",
+    ///     Description = "A simple greeting function",
+    ///     Func = new Func<TestInput, object?>((input) => {
+    ///         didCallSayHello = true;
+    ///         return $"Hello {input.testString}";
+    ///     }),
+    /// });
+    ///
+    /// // Start the service
+    /// await client.Default.StartAsync();
+    ///
+    /// // Stop the service on shutdown
+    /// await client.Default.StopAsync();
+    /// </code>
+    /// </example>
+    /// </summary>
     public RegisteredService Default
     {
       get
@@ -73,6 +112,23 @@ namespace Inferable
       }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the InferableClient class.
+    /// <example>
+    /// Basic usage:
+    /// <code>
+    /// // Create a new Inferable instance with an API secret
+    /// var client = new InferableClient(new InferableOptions {
+    ///     ApiSecret = "API_SECRET"
+    /// });
+    ///
+    /// // OR
+    ///
+    /// Environment.SetEnvironmentVariable("INFERABLE_API_SECRET", "API_SECRET");
+    /// var client = new InferableClient();
+    /// </code>
+    /// </example>
+    /// </summary>
     public InferableClient(InferableOptions? options = null, ILogger<InferableClient>? logger = null)
     {
       string? apiSecret = options?.ApiSecret ?? Environment.GetEnvironmentVariable("INFERABLE_API_SECRET");
@@ -100,22 +156,51 @@ namespace Inferable
       this._logger = logger ?? NullLogger<InferableClient>.Instance;
     }
 
+    /// <summary>
+    /// Registers a service with Inferable.
+    /// <example>
+    /// <code>
+    /// // Create a new Inferable instance with an API secret
+    /// var client = new Inferable(new InferableOptions {
+    ///     ApiSecret = "API_SECRET"
+    /// });
+    ///
+    /// // Define and register the service
+    /// var service = client.RegisterService("MyService");
+    ///
+    /// service.RegisterFunction(new FunctionRegistration<TestInput>
+    /// {
+    ///     Name = "SayHello",
+    ///     Description = "A simple greeting function",
+    ///     Func = new Func<TestInput, object?>((input) => {
+    ///         didCallSayHello = true;
+    ///         return $"Hello {input.testString}";
+    ///     }),
+    /// });
+    ///
+    /// // Start the service
+    /// await service.StartAsync();
+    ///
+    /// // Stop the service on shutdown
+    /// await service.StopAsync();
+    /// </code>
+    /// </example>
+    /// </summary>
     public RegisteredService RegisterService(string name)
-    {
-      return new RegisteredService(name, this);
+    { return new RegisteredService(name, this);
     }
 
-    async public Task<RunReference> CreateRun(CreateRunInput input)
+    async public Task<RunReference> CreateRunAsync(CreateRunInput input)
     {
       if (this._clusterId == null) {
         throw new ArgumentException("Cluster ID must be provided to manage runs");
       }
 
-      var result = await this._client.CreateRun(this._clusterId, input);
+      var result = await this._client.CreateRunAsync(this._clusterId, input);
 
       return new RunReference {
         ID = result.ID,
-        Poll = async (PollRunOptions? options) => {
+        PollAsync = async (PollRunOptions? options) => {
           var MaxWaitTime = options?.MaxWaitTime ?? TimeSpan.FromSeconds(60);
           var Interval = options?.Interval ?? TimeSpan.FromMilliseconds(500);
 
@@ -137,6 +222,9 @@ namespace Inferable
       };
     }
 
+    /// <summary>
+    /// An array containing the names of all services currently polling.
+    /// </summary>
     public IEnumerable<string> ActiveServices
     {
       get
@@ -145,6 +233,12 @@ namespace Inferable
       }
     }
 
+    /// <summary>
+    /// An array containing the names of all services that are not currently polling.
+    /// </summary>
+    /// <remarks>
+    /// Note that this will only include services that have been started (i.e., <c>StartAsync()</c> method called).
+    /// </remarks>
     public IEnumerable<string> InactiveServices
     {
       get
@@ -153,6 +247,9 @@ namespace Inferable
       }
     }
 
+    /// <summary>
+    /// An array containing the names of all functions that have been registered.
+    /// </summary>
     public IEnumerable<string> RegisteredFunctions
     {
       get
@@ -176,7 +273,7 @@ namespace Inferable
 
     }
 
-    internal async Task StartService(string name) {
+    internal async Task StartServiceAsync(string name) {
       var existing = this._services.FirstOrDefault(s => s.Name == name);
       if (existing != null) {
         throw new Exception("Service is already started");
@@ -194,7 +291,7 @@ namespace Inferable
       await service.Start();
     }
 
-    internal async Task StopService(string name) {
+    internal async Task StopServiceAsync(string name) {
       var existing = this._services.FirstOrDefault(s => s.Name == name);
       if (existing == null) {
         throw new Exception("Service is not started");
@@ -213,6 +310,22 @@ namespace Inferable
       this._inferable = inferable;
     }
 
+    /// <summary>
+    /// Registers a function against the Service.
+    /// <example>
+    /// <code>
+    /// service.RegisterFunction(new FunctionRegistration<TestInput>
+    /// {
+    ///     Name = "SayHello",
+    ///     Description = "A simple greeting function",
+    ///     Func = new Func<TestInput, object?>((input) => {
+    ///         didCallSayHello = true;
+    ///         return $"Hello {input.testString}";
+    ///     }),
+    /// });
+    /// </code>
+    /// </example>
+    /// </summary>
     public FunctionReference RegisterFunction<T>(FunctionRegistration<T> function) where T : struct {
       this._inferable.RegisterFunction<T>(this._name, function);
 
@@ -222,12 +335,18 @@ namespace Inferable
       };
     }
 
-    async public Task Start() {
-      await this._inferable.StartService(this._name);
+    /// <summary>
+    /// Starts the service
+    /// </summary>
+    async public Task StartAsync() {
+      await this._inferable.StartServiceAsync(this._name);
     }
 
-    async public Task Stop() {
-      await this._inferable.StopService(this._name);
+    /// <summary>
+    /// Stops the service
+    /// </summary>
+    async public Task StopAsync() {
+      await this._inferable.StopServiceAsync(this._name);
     }
   }
 

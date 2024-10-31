@@ -10,8 +10,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      bootstrap: ${{ steps.filter.outputs.bootstrap }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Filter changed files
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            bootstrap:
+              - 'bootstrap*/**'
+
   create-archives:
     runs-on: ubuntu-latest
+    if: ${{ needs.check_changes.outputs.bootstrap == 'true' }}
     permissions:
       contents: write
     steps:

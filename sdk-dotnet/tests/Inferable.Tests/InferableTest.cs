@@ -135,8 +135,8 @@ namespace Inferable.Tests
 
       inferable.Default.RegisterFunction(registration);
 
-      await inferable.Default.Start();
-      await inferable.Default.Stop();
+      await inferable.Default.StartAsync();
+      await inferable.Default.StopAsync();
     }
 
     [Fact]
@@ -158,7 +158,7 @@ namespace Inferable.Tests
 
       try
       {
-        await inferable.Default.Start();
+        await inferable.Default.StartAsync();
 
         var result = ApiClient.CreateCall(TestClusterId, new CreateCallInput
         {
@@ -177,7 +177,7 @@ namespace Inferable.Tests
       }
       finally
       {
-        await inferable.Default.Stop();
+        await inferable.Default.StopAsync();
       }
     }
 
@@ -200,7 +200,7 @@ namespace Inferable.Tests
 
       try
       {
-        await inferable.Default.Start();
+        await inferable.Default.StartAsync();
 
         var result = ApiClient.CreateCall(TestClusterId, new CreateCallInput
         {
@@ -219,7 +219,7 @@ namespace Inferable.Tests
       }
       finally
       {
-        await inferable.Default.Stop();
+        await inferable.Default.StopAsync();
       }
     }
 
@@ -260,9 +260,9 @@ namespace Inferable.Tests
 
       try
       {
-        await client.Default.Start();
+        await client.Default.StartAsync();
 
-        var run = await client.CreateRun(new CreateRunInput
+        var run = await client.CreateRunAsync(new CreateRunInput
         {
           Message = "Say hello to John",
           AttachedFunctions = new List<FunctionReference>
@@ -276,7 +276,7 @@ namespace Inferable.Tests
           ResultSchema = JsonSchema.FromType<RunOutput>(),
         });
 
-        var result = await run.Poll(null);
+        var result = await run.PollAsync(null);
 
         await Task.Delay(500);
 
@@ -286,7 +286,7 @@ namespace Inferable.Tests
       }
       finally
       {
-        await client.Default.Stop();
+        await client.Default.StopAsync();
       }
     }
   }
