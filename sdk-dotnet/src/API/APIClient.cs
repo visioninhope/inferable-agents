@@ -77,7 +77,7 @@ namespace Inferable.API
       }
     }
 
-    async public Task<CreateRunResult> CreateRun(string clusterId, CreateRunInput input)
+    async public Task<CreateRunResult> CreateRunAsync(string clusterId, CreateRunInput input)
     {
       string jsonData = JsonSerializer.Serialize(input);
 
