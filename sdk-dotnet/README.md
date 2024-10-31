@@ -63,7 +63,15 @@ client.Default.RegisterFunction(new FunctionRegistration<MyInput>
 await client.Default.Start();
 ```
 
-### 3. Trigger a run
+<details>
+
+<summary>👉 The DotNet SDK for Inferable reflects the types from the input class of the function.</summary>
+
+Unlike the [NodeJs SDK](https://github.com/inferablehq/inferable/sdk-node), the Dotnet SDK for Inferable reflects the types from the input struct of the function. It uses the [NJsonSchema](https://github.com/RicoSuter/NJsonSchema) under the hood to generate JSON schemas from C# types through reflection.
+
+</details>
+
+### Triggering a run
 
 The following code will create an [Inferable run](https://docs.inferable.ai/pages/runs) with the prompt "Say hello to John" and the `sayHello` function attached.
 
@@ -87,7 +95,7 @@ var run = await inferable.CreateRun(new CreateRunInput
   // Optional: Define a schema for the result to conform to
   ResultSchema = JsonSchema.FromType<RunOutput>();
   // Optional: Subscribe an Inferable function to receive notifications when the run status changes
-  //OnStatusChange = new CreateOnStatusChangeInput<RunOutput>
+  //OnStatusChange = new OnStatusChange<RunOutput>
   //{
   //  Function = OnStatusChangeFunction
   //}
