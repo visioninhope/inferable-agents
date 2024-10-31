@@ -68,7 +68,7 @@ jobs:
       - name: Release It
         run: |
           npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
-          npx release-it --npm.skipChecks
+          npx release-it --npm.skipChecks --git.tagName=sdk-node/${version} --github.release=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -149,5 +149,5 @@ jobs:
           git push
       - name: Create Git tag
         run: |
-          git tag v${{ steps.increment_version.outputs.new_version }}
+          git tag sdk-go/v${{ steps.increment_version.outputs.new_version }}
           git push origin v${{ steps.increment_version.outputs.new_version }}
