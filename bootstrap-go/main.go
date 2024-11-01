@@ -84,6 +84,8 @@ func main() {
     panic(err)
   }
 
+  fmt.Println("Inferable is running!")
+
   defer client.Default.Stop()
 
   // Trigger a Run programmatically
