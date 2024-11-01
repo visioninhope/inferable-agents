@@ -219,7 +219,7 @@ namespace Inferable
           while (DateTime.Now < end) {
             var pollResult = await this._client.GetRun(this._clusterId, result.ID);
 
-            var transientStates = new List<string> { "pending", "running" };
+            var transientStates = new List<string> { "pending", "running", "paused" };
             if (transientStates.Contains(pollResult.Status)) {
               await Task.Delay(Interval);
               continue;
