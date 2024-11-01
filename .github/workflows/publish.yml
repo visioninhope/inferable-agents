@@ -68,6 +68,7 @@ jobs:
       - name: Release It
         run: |
           npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
+          version=$(npx release-it --release-version)
           npx release-it --npm.skipChecks --git.tagName=sdk-node/${version} --github.release=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
