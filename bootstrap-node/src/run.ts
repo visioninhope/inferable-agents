@@ -96,9 +96,13 @@ exec(
 );
 
 extract()
-  .then((result) => {
+  .then(({ result }) => {
+    if (!result.posts) {
+      throw new Error("No posts found");
+    }
+
     return Promise.all(
-      (result.result.posts ?? []).map((post) => summarizePost({ data: post })),
+      result.posts.map((post) => summarizePost({ data: post })),
     );
   })
   .then((result) => {
