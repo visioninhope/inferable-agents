@@ -84,7 +84,7 @@ func main() {
     panic(err)
   }
 
-  fmt.Println("Inferable is running!")
+  fmt.Println("Inferable Demo is running!")
 
   defer client.Default.Stop()
 
