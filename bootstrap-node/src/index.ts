@@ -2,7 +2,7 @@ import { Inferable } from "inferable";
 import { z } from "zod";
 
 // Some mock functions to register
-import * as demo from "./demo";
+import * as functions from "./functions";
 
 // Instantiate the Inferable client.
 const client = new Inferable({
@@ -14,7 +14,7 @@ const client = new Inferable({
 // Register some demo functions
 client.default.register({
   name: "getUrlContent",
-  func: demo.getUrlContent,
+  func: functions.getUrlContent,
   description: "Gets the content of a URL",
   schema: {
     input: z.object({
@@ -25,7 +25,7 @@ client.default.register({
 
 client.default.register({
   name: "generatePage",
-  func: demo.generatePage,
+  func: functions.generatePage,
   description: "Generates a page from markdown",
   schema: {
     input: z.object({
