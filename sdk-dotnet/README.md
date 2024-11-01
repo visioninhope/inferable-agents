@@ -69,6 +69,38 @@ _ = client.Default.Start();
 
 Unlike the [NodeJs SDK](https://github.com/inferablehq/inferable/sdk-node), the Dotnet SDK for Inferable reflects the types from the input struct of the function. It uses the [NJsonSchema](https://github.com/RicoSuter/NJsonSchema) under the hood to generate JSON schemas from C# types through reflection.
 
+If the input class defines [System.Text.Json.Serialization](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization) attributes, the SDK will use those in the generated schema. This allows for fine-grained control over the schema generation.
+
+Here's an example to illustrate this:
+
+```cs
+public struct UserInput
+{
+  [JsonPropertyName("id")]
+  public string Id { get; set; }
+  [JsonPropertyName("Name")]
+  public string Name { get; set; }
+  [
+    JsonPropertyName("email"),
+    JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+  ]
+  public string Email { get; set; }
+}
+
+client.Default.RegisterFunction(new FunctionRegistration<MyInput>
+{
+    Name = "SayHello",
+    Description = "A simple greeting function",
+    Func = new Func<UserInput, MyResult>>((input) => {
+        // Your code here
+    }),
+});
+```
+
+In this example, the UserInput class uses [System.Text.Json.Serialization](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.serialization) attributes to define additional properties for the schema:
+
+- The email field is ignored when writing null.
+
 </details>
 
 ### Triggering a run
