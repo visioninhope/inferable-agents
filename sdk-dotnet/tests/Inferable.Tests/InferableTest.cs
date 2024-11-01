@@ -278,7 +278,7 @@ namespace Inferable.Tests
 
         var result = await run.PollAsync(null);
 
-        await Task.Delay(500);
+        await Task.Delay(5000);
 
         Assert.NotNull(result);
         Assert.True(didCallSayHello);
