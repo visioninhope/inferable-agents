@@ -1,9 +1,9 @@
-module github.com/inferablehq/bootstrap-go
+module github.com/inferablehq/inferable/bootstrap-go
 
 go 1.23.2
 
 require (
-	github.com/inferablehq/inferable-go v0.1.13
+	github.com/inferablehq/inferable/sdk-go v0.1.20
 	github.com/joho/godotenv v1.5.1
 )
 
