@@ -64,7 +64,7 @@ For language-specific quick start guides, please refer to the README in each SDK
 | Caching configuration                                     |   ✅    | ❌  |  ❌  |
 | Timeout configuration                                     |   ✅    | ❌  |  ❌  |
 | Retry configuration                                     |   ✅    | ❌  |  ❌  |
-| Approval (Human in the loop) configuration ``              |   ✅    | ❌  |  ❌  |
+| Approval (Human in the loop) configuration               |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
