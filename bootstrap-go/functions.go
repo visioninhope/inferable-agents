@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-// GetUrlContent fetches content from a URL and returns the cleaned HTML
 func GetUrlContent(input struct {
 	URL string `json:"url"`
 }) (interface{}, error) {
@@ -36,7 +35,6 @@ func GetUrlContent(input struct {
 		return nil, err
 	}
 
-	// Simple HTML tag removal (excluding <a> tags)
 	cleaned := removeHTMLTags(string(html))
 
 	return map[string]interface{}{
@@ -44,7 +42,6 @@ func GetUrlContent(input struct {
 	}, nil
 }
 
-// ScoreHNPost calculates a score for a Hacker News post
 func ScoreHNPost(input struct {
 	CommentCount int `json:"commentCount"`
 	Upvotes      int `json:"upvotes"`
@@ -53,7 +50,6 @@ func ScoreHNPost(input struct {
 	return score, nil
 }
 
-// GeneratePage creates an HTML page from markdown content
 func GeneratePage(input struct {
 	Markdown string `json:"markdown"`
 }) (interface{}, error) {
@@ -89,15 +85,13 @@ func GeneratePage(input struct {
 
 // Helper function to remove HTML tags except for <a> tags
 func removeHTMLTags(html string) string {
-	// Split by < to find tags
 	parts := strings.Split(html, "<")
-	result := []string{parts[0]} // First part has no opening bracket
+	result := []string{parts[0]}
 
 	for _, part := range parts[1:] {
 		if strings.HasPrefix(part, "a ") || strings.HasPrefix(part, "/a>") || strings.HasPrefix(part, "a>") {
 			result = append(result, "<"+part)
 		} else {
-			// For other tags, remove until closing bracket
 			if idx := strings.Index(part, ">"); idx != -1 {
 				result = append(result, part[idx+1:])
 			}
