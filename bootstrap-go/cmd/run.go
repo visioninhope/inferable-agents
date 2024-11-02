@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	inferable "github.com/inferablehq/inferable/sdk-go"
+	"github.com/joho/godotenv"
 )
 
 type Post struct {
@@ -30,14 +31,19 @@ type GeneratePageResult struct {
 	PagePath string `json:"pagePath"`
 }
 
-func RunHNExtraction() error {
+func main() {
+	// Load the .env file
+	if err := godotenv.Load(); err != nil {
+		fmt.Printf("Warning: Error loading .env file: %v\n", err)
+	}
+
 	client, err := inferable.New(inferable.InferableOptions{
 		APISecret:   os.Getenv("INFERABLE_API_SECRET"),
 		APIEndpoint: os.Getenv("INFERABLE_API_ENDPOINT"),
 		ClusterID:   os.Getenv("INFERABLE_CLUSTER_ID"),
 	})
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	// Extract top posts
@@ -49,21 +55,21 @@ func RunHNExtraction() error {
 		`,
 	})
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	extractResult, err := extractRun.Poll(nil)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	var posts ExtractResult
 	resultBytes, ok := extractResult.Result.([]byte)
 	if !ok {
-		return fmt.Errorf("failed to convert extract result to []byte")
+		panic("failed to convert extract result to []byte")
 	}
 	if err := json.Unmarshal(resultBytes, &posts); err != nil {
-		return err
+		panic(err)
 	}
 
 	// Summarize each post
@@ -81,21 +87,21 @@ func RunHNExtraction() error {
 			`, post),
 		})
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		summarizeResult, err := summarizeRun.Poll(nil)
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		var summary KeyPoint
 		resultBytes, ok := summarizeResult.Result.([]byte)
 		if !ok {
-			return fmt.Errorf("failed to convert summarize result to []byte")
+			panic("failed to convert summarize result to []byte")
 		}
 		if err := json.Unmarshal(resultBytes, &summary); err != nil {
-			return err
+			panic(err)
 		}
 		summaries = append(summaries, summary)
 	}
@@ -116,21 +122,21 @@ func RunHNExtraction() error {
 		`, summaries),
 	})
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	generateResult, err := generateRun.Poll(nil)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	var pageResult GeneratePageResult
 	resultBytes, ok = generateResult.Result.([]byte)
 	if !ok {
-		return fmt.Errorf("failed to convert generate result to []byte")
+		panic("failed to convert generate result to []byte")
 	}
 	if err := json.Unmarshal(resultBytes, &pageResult); err != nil {
-		return err
+		panic(err)
 	}
 
 	fmt.Printf("Generated page: %+v\n", pageResult)
@@ -140,6 +146,4 @@ func RunHNExtraction() error {
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Failed to open browser: %v\n", err)
 	}
-
-	return nil
 }

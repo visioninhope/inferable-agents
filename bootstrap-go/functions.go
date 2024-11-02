@@ -11,7 +11,7 @@ import (
 
 // GetUrlContent fetches content from a URL and returns the cleaned HTML
 func GetUrlContent(input struct {
-	URL string
+	URL string `json:"url"`
 }) (interface{}, error) {
 	resp, err := http.Get(input.URL)
 	if err != nil {
