@@ -17,6 +17,16 @@ export async function getUrlContent({ url }: { url: string }) {
   };
 }
 
+export function scoreHNPost({
+  commentCount,
+  upvotes,
+}: {
+  commentCount: number;
+  upvotes: number;
+}) {
+  return upvotes + commentCount * 2;
+}
+
 export async function generatePage({ markdown }: { markdown: string }) {
   const html = `
   <html>

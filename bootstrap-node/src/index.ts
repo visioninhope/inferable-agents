@@ -34,6 +34,19 @@ client.default.register({
   },
 });
 
+client.default.register({
+  name: "scoreHNPost",
+  func: functions.scoreHNPost,
+  description:
+    "Calculates a score for a Hacker News post given its comment count and upvotes",
+  schema: {
+    input: z.object({
+      commentCount: z.number().describe("The number of comments"),
+      upvotes: z.number().describe("The number of upvotes"),
+    }),
+  },
+});
+
 client.default.start().then(() => {
   console.log("Inferable demo service started");
 });

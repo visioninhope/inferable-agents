@@ -26,7 +26,7 @@ const extract = async () =>
       message: `
   Hacker News has a homepage at https://news.ycombinator.com/
   Each post has a id, title, a link, and a score, and is voted on by users.
-  Produce a list of the top 5 posts, with the title, a link to the post, and the number of points.
+  Score the top 10 posts and pick the top 3 according to the internal scoring function.
   `,
       resultSchema: z.object({
         posts: postsSchema.array(),
