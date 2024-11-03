@@ -156,6 +156,18 @@ namespace Inferable.API
       JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
     ]
     public OnStatusChange? OnStatusChange { get; set; }
+
+    [
+      JsonPropertyName("reasoningTraces"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public bool? ReasoningTraces { get; set; }
+
+    [
+      JsonPropertyName("callSummarization"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public bool? CallSummarization { get; set; }
   }
 
   public struct OnStatusChange
