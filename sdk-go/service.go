@@ -198,10 +198,10 @@ func (s *service) poll() error {
 		"X-Machine-SDK-Language": "go",
 	}
 
-  clusterId, err := s.inferable.GetClusterId()
-  if err != nil {
-    return fmt.Errorf("failed to get cluster id: %v", err)
-  }
+	clusterId, err := s.inferable.GetClusterId()
+	if err != nil {
+		return fmt.Errorf("failed to get cluster id: %v", err)
+	}
 
 	options := client.FetchDataOptions{
 		Path:    fmt.Sprintf("/clusters/%s/calls?acknowledge=true&service=%s&status=pending&limit=10", clusterId, s.Name),
@@ -320,10 +320,10 @@ func (s *service) persistJobResult(jobID string, result callResult) error {
 		"X-Machine-SDK-Language": "go",
 	}
 
-  clusterId, err := s.inferable.GetClusterId()
-  if err != nil {
-    return fmt.Errorf("failed to get cluster id: %v", err)
-  }
+	clusterId, err := s.inferable.GetClusterId()
+	if err != nil {
+		return fmt.Errorf("failed to get cluster id: %v", err)
+	}
 
 	options := client.FetchDataOptions{
 		Path:    fmt.Sprintf("/clusters/%s/calls/%s/result", clusterId, jobID),

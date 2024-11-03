@@ -29,7 +29,7 @@ type Inferable struct {
 	apiSecret        string
 	functionRegistry functionRegistry
 	machineID        string
-	_clusterID        string
+	_clusterID       string
 	// Convenience reference to a service with the name 'default'.
 	//
 	// Returns:
@@ -137,9 +137,9 @@ func New(options InferableOptions) (*Inferable, error) {
 		return nil, fmt.Errorf("error registering default service: %v", err)
 	}
 
-  if err != nil {
-    return nil, fmt.Errorf("error registering machine: %v", err)
-  }
+	if err != nil {
+		return nil, fmt.Errorf("error registering machine: %v", err)
+	}
 
 	return inferable, nil
 }
@@ -199,10 +199,10 @@ func (i *Inferable) getRun(runID string) (*runResult, error) {
 		"X-Machine-SDK-Language": "go",
 	}
 
-  clusterId, err := i.GetClusterId()
-  if err != nil {
-    return nil, fmt.Errorf("failed to get cluster id: %v", err)
-  }
+	clusterId, err := i.GetClusterId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cluster id: %v", err)
+	}
 
 	options := client.FetchDataOptions{
 		Path:    fmt.Sprintf("/clusters/%s/runs/%s", clusterId, runID),
@@ -254,10 +254,10 @@ func (i *Inferable) getRun(runID string) (*runResult, error) {
 //
 //	fmt.Println("Run result:", result)
 func (i *Inferable) CreateRun(input CreateRunInput) (*runReference, error) {
-  clusterId, err := i.GetClusterId()
-  if err != nil {
-    return nil, fmt.Errorf("failed to get cluster id: %v", err)
-  }
+	clusterId, err := i.GetClusterId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cluster id: %v", err)
+	}
 
 	// Marshal the payload to JSON
 	jsonPayload, err := json.Marshal(input)
@@ -426,16 +426,16 @@ func (i *Inferable) serverOk() error {
 }
 
 func (i *Inferable) GetClusterId() (string, error) {
-  if i._clusterID == "" {
-    clusterId, err := i.registerMachine(nil)
-    if err != nil {
-      return "", fmt.Errorf("failed to register machine: %v", err)
-    }
+	if i._clusterID == "" {
+		clusterId, err := i.registerMachine(nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to register machine: %v", err)
+		}
 
-    i._clusterID = clusterId
-  }
+		i._clusterID = clusterId
+	}
 
-  return i._clusterID, nil
+	return i._clusterID, nil
 }
 
 func (i *Inferable) registerMachine(s *service) (string, error) {
@@ -448,35 +448,34 @@ func (i *Inferable) registerMachine(s *service) (string, error) {
 			Description string `json:"description,omitempty"`
 			Schema      string `json:"schema,omitempty"`
 		} `json:"functions,omitempty"`
-	}{
+	}{}
+
+	if s != nil {
+		payload.Service = s.Name
+
+		// Check if there are any registered functions
+		if len(s.Functions) == 0 {
+			return "", fmt.Errorf("cannot register service '%s': no functions registered", s.Name)
+		}
+
+		// Add registered functions to the payload
+		for _, fn := range s.Functions {
+			schemaJSON, err := json.Marshal(fn.schema)
+			if err != nil {
+				return "", fmt.Errorf("failed to marshal schema for function '%s': %v", fn.Name, err)
+			}
+
+			payload.Functions = append(payload.Functions, struct {
+				Name        string `json:"name"`
+				Description string `json:"description,omitempty"`
+				Schema      string `json:"schema,omitempty"`
+			}{
+				Name:        fn.Name,
+				Description: fn.Description,
+				Schema:      string(schemaJSON),
+			})
+		}
 	}
-
-  if (s != nil) {
-    payload.Service = s.Name
-
-    // Check if there are any registered functions
-    if len(s.Functions) == 0 {
-      return "", fmt.Errorf("cannot register service '%s': no functions registered", s.Name)
-    }
-
-    // Add registered functions to the payload
-    for _, fn := range s.Functions {
-      schemaJSON, err := json.Marshal(fn.schema)
-      if err != nil {
-        return "", fmt.Errorf("failed to marshal schema for function '%s': %v", fn.Name, err)
-      }
-
-      payload.Functions = append(payload.Functions, struct {
-        Name        string `json:"name"`
-        Description string `json:"description,omitempty"`
-        Schema      string `json:"schema,omitempty"`
-      }{
-          Name:        fn.Name,
-          Description: fn.Description,
-          Schema:      string(schemaJSON),
-        })
-    }
-  }
 
 	// Marshal the payload to JSON
 	jsonPayload, err := json.Marshal(payload)
