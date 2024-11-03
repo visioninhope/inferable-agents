@@ -7,15 +7,15 @@ public static class HackerNewsService
 {
     private static readonly HttpClient client = new HttpClient();
 
-    public static async Task<object> GetUrlContent(GetUrlContentInput input)
+    public static UrlContentResponse GetUrlContent(GetUrlContentInput input)
     {
         try
         {
-            var response = await client.GetAsync(input.Url);
+            var response = client.GetAsync(input.Url).GetAwaiter().GetResult();
 
             if (!response.IsSuccessStatusCode)
             {
-                return new
+                return new UrlContentResponse
                 {
                     Supervisor = "If the error is retryable, try again. If not, tell the user why this failed.",
                     Message = $"Failed to fetch {input.Url}: {response.StatusCode}",
@@ -23,7 +23,7 @@ public static class HackerNewsService
                 };
             }
 
-            var html = await response.Content.ReadAsStringAsync();
+            var html = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             // Simple HTML tag stripping (except for <a> tags)
             var strippedHtml = System.Text.RegularExpressions.Regex.Replace(
                 html,
@@ -31,11 +31,11 @@ public static class HackerNewsService
                 string.Empty
             );
 
-            return new { Body = strippedHtml };
+            return new UrlContentResponse { Body = strippedHtml };
         }
         catch (Exception ex)
         {
-            return new { Error = ex.Message };
+            return new UrlContentResponse { Error = ex.Message };
         }
     }
 
@@ -44,7 +44,7 @@ public static class HackerNewsService
         return input.Upvotes + (input.CommentCount * 2);
     }
 
-    public static async Task<object> GeneratePage(GeneratePageInput input)
+    public static GeneratePageResponse GeneratePage(GeneratePageInput input)
     {
         var html = $@"
 <html>
@@ -62,9 +62,9 @@ public static class HackerNewsService
 </html>";
 
         var tmpPath = Path.Combine(Path.GetTempPath(), "inferable-hacker-news.html");
-        await File.WriteAllTextAsync(tmpPath, html);
+        File.WriteAllText(tmpPath, html);
 
-        return new
+        return new GeneratePageResponse
         {
             Message = "Tell the user to open the file at tmpPath in their browser.",
             TmpPath = tmpPath

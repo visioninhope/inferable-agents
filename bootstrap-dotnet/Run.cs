@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Inferable;
 using System.Text.Json;
+using Inferable.API;
 
 public class Post
 {
@@ -24,16 +25,17 @@ public class GeneratePageResult
 
 public static class RunHNExtraction
 {
-    public static async Task RunAsync()
+    public static async Task RunAsync(InferableClient? client = null)
     {
-        var client = new InferableClient(new InferableOptions
+        // Use the provided client or create a new one if none is provided
+        client ??= new InferableClient(new InferableOptions
         {
             ApiSecret = Environment.GetEnvironmentVariable("INFERABLE_API_SECRET"),
             BaseUrl = Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT")
         });
 
         // Extract top posts
-        var extractRun = await client.CreateRunAsync(new API.CreateRunInput
+        var extractRun = await client.CreateRunAsync(new Inferable.API.CreateRunInput
         {
             Message = @"
                 Hacker News has a homepage at https://news.ycombinator.com/
@@ -42,7 +44,13 @@ public static class RunHNExtraction
         });
 
         var extractResult = await extractRun.PollAsync(null);
-        var posts = JsonSerializer.Deserialize<ExtractResult>(extractResult.Result.ToString()!);
+
+        if (extractResult.GetValueOrDefault().Result == null)
+        {
+            throw new Exception("No result found in extract run");
+        }
+
+        var posts = JsonSerializer.Deserialize<ExtractResult>(extractResult.GetValueOrDefault().Result?.ToString()!);
 
         if (posts?.Posts == null)
         {
@@ -53,7 +61,7 @@ public static class RunHNExtraction
         var summaries = new List<KeyPoint>();
         foreach (var post in posts.Posts)
         {
-            var summarizeRun = await client.CreateRunAsync(new API.CreateRunInput
+            var summarizeRun = await client.CreateRunAsync(new CreateRunInput
             {
                 Message = $@"
                     <data>
@@ -66,7 +74,7 @@ public static class RunHNExtraction
             });
 
             var summarizeResult = await summarizeRun.PollAsync(null);
-            var summary = JsonSerializer.Deserialize<KeyPoint>(summarizeResult.Result.ToString()!);
+            var summary = JsonSerializer.Deserialize<KeyPoint>(summarizeResult.GetValueOrDefault().Result?.ToString()!);
             if (summary != null)
             {
                 summaries.Add(summary);
@@ -74,7 +82,7 @@ public static class RunHNExtraction
         }
 
         // Generate final page
-        var generateRun = await client.CreateRunAsync(new API.CreateRunInput
+        var generateRun = await client.CreateRunAsync(new CreateRunInput
         {
             Message = $@"
                 <data>
@@ -90,7 +98,7 @@ public static class RunHNExtraction
         });
 
         var generateResult = await generateRun.PollAsync(null);
-        var pageResult = JsonSerializer.Deserialize<GeneratePageResult>(generateResult.Result.ToString()!);
+        var pageResult = JsonSerializer.Deserialize<GeneratePageResult>(generateResult.GetValueOrDefault().Result?.ToString()!);
 
         Console.WriteLine($"Generated page: {JsonSerializer.Serialize(pageResult)}");
 

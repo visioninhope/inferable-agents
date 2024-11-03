@@ -1,51 +1,56 @@
 using DotNetEnv;
 using Inferable;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddSingleton<InferableClient>(sp => {
-    var options = new InferableOptions {
-        ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_API_SECRET"),
-        BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT"),
-    };
-
-    var logger = sp.GetRequiredService<ILogger<InferableClient>>();
-    return new InferableClient(options, logger);
-});
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
+class Program
 {
-    Env.Load();
+    static async Task Main(string[] args)
+    {
+        // Load environment variables in development
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            Env.Load();
+        }
+
+        // Setup dependency injection
+        var services = new ServiceCollection();
+
+        // Add logging
+        services.AddLogging(builder => {
+            builder.AddConsole();
+        });
+
+        // Configure Inferable client
+        services.AddSingleton<InferableClient>(sp => {
+            var options = new InferableOptions {
+                ApiSecret = Environment.GetEnvironmentVariable("INFERABLE_API_SECRET"),
+                BaseUrl = Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT"),
+            };
+
+            var logger = sp.GetRequiredService<ILogger<InferableClient>>();
+            return new InferableClient(options, logger);
+        });
+
+        var serviceProvider = services.BuildServiceProvider();
+        var client = serviceProvider.GetRequiredService<InferableClient>();
+
+        // Check command line arguments
+        if (args.Length > 0 && args[0].ToLower() == "hn")
+        {
+            Console.WriteLine("Running HN extraction...");
+            await RunHNExtraction.RunAsync(client);
+        }
+        else
+        {
+            Console.WriteLine("Starting client...");
+            Register.RegisterFunctions(client);
+            await client.Default.StartAsync();
+
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+        }
+    }
 }
 
-var client = app.Services.GetService<InferableClient>();
-
-if (client == null)
-{
-    throw new Exception("Could not get InferableClient");
-}
-
-client.Default.RegisterFunction(new FunctionRegistration<GetUrlContentInput> {
-    Name = "getUrlContent",
-    Description = "Gets the content of a URL",
-    Func = new Func<GetUrlContentInput, object?>(input => HackerNewsService.GetUrlContent(input))
-});
-
-client.Default.RegisterFunction(new FunctionRegistration<ScorePostInput> {
-    Name = "scoreHNPost",
-    Description = "Calculates a score for a Hacker News post given its comment count and upvotes",
-    Func = new Func<ScorePostInput, object?>(input => HackerNewsService.ScoreHNPost(input))
-});
-
-client.Default.RegisterFunction(new FunctionRegistration<GeneratePageInput> {
-    Name = "generatePage",
-    Description = "Generates a page from markdown",
-    Func = new Func<GeneratePageInput, object?>(input => HackerNewsService.GeneratePage(input))
-});
-
-_ = client.Default.StartAsync();
-
-app.Run();
 
