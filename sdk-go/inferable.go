@@ -63,7 +63,6 @@ type InferableOptions struct {
 	APIEndpoint string
 	APISecret   string
 	MachineID   string
-	ClusterID   string
 }
 
 // Struct type that will be returned to a Run's OnStatusChange Function
@@ -128,7 +127,6 @@ func New(options InferableOptions) (*Inferable, error) {
 		client:           client,
 		apiEndpoint:      options.APIEndpoint,
 		apiSecret:        options.APISecret,
-		clusterID:        options.ClusterID,
 		functionRegistry: functionRegistry{services: make(map[string]*service)},
 		machineID:        machineID,
 	}
@@ -138,6 +136,15 @@ func New(options InferableOptions) (*Inferable, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error registering default service: %v", err)
 	}
+
+  // Call register machine without any services to test API key and get clusterId
+  clusterId, err := inferable.registerMachine(nil);
+
+  if err != nil {
+    return nil, fmt.Errorf("error registering machine: %v", err)
+  }
+
+  inferable.clusterID = clusterId
 
 	return inferable, nil
 }
@@ -181,6 +188,7 @@ func (i *Inferable) RegisterService(serviceName string) (*service, error) {
 	service := &service{
 		Name:      serviceName,
 		Functions: make(map[string]Function),
+    ClusterID: i.clusterID,
 		inferable: i, // Set the reference to the Inferable instance
 	}
 	i.functionRegistry.services[serviceName] = service
@@ -188,10 +196,6 @@ func (i *Inferable) RegisterService(serviceName string) (*service, error) {
 }
 
 func (i *Inferable) getRun(runID string) (*runResult, error) {
-	if i.clusterID == "" {
-		return nil, fmt.Errorf("cluster ID must be provided to manage runs")
-	}
-
 	// Prepare headers
 	headers := map[string]string{
 		"Authorization":          "Bearer " + i.apiSecret,
@@ -268,7 +272,6 @@ func (i *Inferable) CreateRun(input CreateRunInput) (*runReference, error) {
 		"X-Machine-SDK-Language": "go",
 	}
 
-	// Call the registerMachine endpoint
 	options := client.FetchDataOptions{
 		Path:    fmt.Sprintf("/clusters/%s/runs", i.clusterID),
 		Method:  "POST",
@@ -419,4 +422,84 @@ func (i *Inferable) serverOk() error {
 	}
 
 	return nil
+}
+
+func (i *Inferable) registerMachine(s *service) (string, error) {
+
+	// Prepare the payload for registration
+	payload := struct {
+		Service   string `json:"service,omitempty"`
+		Functions []struct {
+			Name        string `json:"name"`
+			Description string `json:"description,omitempty"`
+			Schema      string `json:"schema,omitempty"`
+		} `json:"functions,omitempty"`
+	}{
+	}
+
+  if (s != nil) {
+    payload.Service = s.Name
+
+    // Check if there are any registered functions
+    if len(s.Functions) == 0 {
+      return "", fmt.Errorf("cannot register service '%s': no functions registered", s.Name)
+    }
+
+    // Add registered functions to the payload
+    for _, fn := range s.Functions {
+      schemaJSON, err := json.Marshal(fn.schema)
+      if err != nil {
+        return "", fmt.Errorf("failed to marshal schema for function '%s': %v", fn.Name, err)
+      }
+
+      payload.Functions = append(payload.Functions, struct {
+        Name        string `json:"name"`
+        Description string `json:"description,omitempty"`
+        Schema      string `json:"schema,omitempty"`
+      }{
+          Name:        fn.Name,
+          Description: fn.Description,
+          Schema:      string(schemaJSON),
+        })
+    }
+  }
+
+	// Marshal the payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal payload: %v", err)
+	}
+
+	// Prepare headers
+	headers := map[string]string{
+		"Authorization":          "Bearer " + i.apiSecret,
+		"X-Machine-ID":           i.machineID,
+		"X-Machine-SDK-Version":  Version,
+		"X-Machine-SDK-Language": "go",
+	}
+
+	// Call the registerMachine endpoint
+	options := client.FetchDataOptions{
+		Path:    "/machines",
+		Method:  "POST",
+		Headers: headers,
+		Body:    string(jsonPayload),
+	}
+
+	responseData, _, err, _ := i.fetchData(options)
+	if err != nil {
+		return "", fmt.Errorf("failed to register machine: %v", err)
+	}
+
+	// Parse the response
+	var response struct {
+		ClusterId string `json:"clusterId"`
+	}
+
+	err = json.Unmarshal(responseData, &response)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse registration response: %v", err)
+	}
+
+	return response.ClusterId, nil
 }
