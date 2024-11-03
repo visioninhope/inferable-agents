@@ -13,7 +13,7 @@ namespace Inferable
     static int DEFAULT_RETRY_AFTER_SECONDS = 10;
 
     private string _name;
-    private string? _clusterId;
+    private string _clusterId;
     private bool _polling = false;
 
     private int _retryAfter = DEFAULT_RETRY_AFTER_SECONDS;
@@ -23,10 +23,11 @@ namespace Inferable
 
     private List<IFunctionRegistration> _functions = new List<IFunctionRegistration>();
 
-    internal Service(string name, ApiClient client, ILogger? logger, List<IFunctionRegistration> functions)
+    internal Service(string name, string clusterId, ApiClient client, ILogger? logger, List<IFunctionRegistration> functions)
     {
       this._name = name;
       this._functions = functions;
+      this._clusterId = clusterId;
 
       this._client = client;
       this._logger = logger ?? NullLogger.Instance;
@@ -51,7 +52,7 @@ namespace Inferable
     async internal Task<string> Start()
     {
       this._logger.LogDebug("Starting service '{name}'", this._name);
-      this._clusterId = await RegisterMachine();
+      await RegisterMachine();
 
       // Purposely not awaiting
       _ = this.runLoop();
@@ -131,7 +132,7 @@ namespace Inferable
       _logger.LogDebug($"Polling service {this._name}");
     }
 
-    async private Task<string> RegisterMachine()
+    async private Task RegisterMachine()
     {
       this._logger.LogDebug("Registering machine");
       var functions = new List<Function>();
@@ -152,8 +153,6 @@ namespace Inferable
           Service = this._name,
           Functions = functions
           });
-
-      return registerResult.ClusterId;
     }
   }
 }

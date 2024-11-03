@@ -35,7 +35,6 @@ namespace Inferable.Tests
       return new InferableClient(new InferableOptions {
           ApiSecret = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_SECRET")!,
           BaseUrl = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_API_ENDPOINT")!,
-          ClusterId = System.Environment.GetEnvironmentVariable("INFERABLE_TEST_CLUSTER_ID")!,
       }, logger);
     }
 
