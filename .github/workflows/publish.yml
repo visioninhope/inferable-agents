@@ -69,7 +69,7 @@ jobs:
         run: |
           npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
           version=$(npx release-it --release-version)
-          npx release-it --npm.skipChecks --git.tagName=sdk-node/${version} --no-github.release
+          npx release-it --npm.skipChecks --git.tagName=sdk-node/${version} --no-github.release --git.commitMessage="Bump sdk-node version to ${version}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -92,11 +92,33 @@ jobs:
           dotnet-version: "8.0.x"
       - name: Restore dependencies
         run: dotnet restore
+      - name: Get and Increment Version
+        id: increment_version
+        shell: pwsh
+        run: |
+          $xmlPath = ".\*.csproj"
+          $xml = [xml](Get-Content $xmlPath)
+          $currentVersion = $xml.Project.PropertyGroup.Version
+
+          if (-not $currentVersion) {
+            throw "Version element not found in project file"
+          }
+
+          # Parse version components
+          $major, $minor, $patch = $currentVersion.Split('.')
+          $newPatch = [int]$patch + 1
+          $newVersion = "$major.$minor.$newPatch"
+
+          # Update project file
+          $xml.Project.PropertyGroup.Version = $newVersion
+          $xml.Save($xmlPath)
+
+          # Set output for later steps
+          echo "new_version=$newVersion" >> $GITHUB_OUTPUT
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Pack
         run: dotnet pack --configuration Release --no-restore --output ./output
-      # TODO: Auto version bump
       - name: Setup NuGet
         uses: nuget/setup-nuget@v1
         with:
@@ -104,6 +126,17 @@ jobs:
           nuget-version: latest
       - name: Publish
         run: dotnet nuget push output\*.nupkg -s https://api.nuget.org/v3/index.json
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add inferable.go
+          git commit -m "Bump sdk-dotnet version to ${{ steps.increment_version.outputs.new_version }}"
+          git push
+      - name: Create Git tag
+        run: |
+          git tag sdk-dotnet/v${{ steps.increment_version.outputs.new_version }}
+          git push origin sdk-dotnet/v${{ steps.increment_version.outputs.new_version }}
 
   publish-go:
     needs: check_changes
