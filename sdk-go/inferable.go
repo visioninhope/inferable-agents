@@ -29,7 +29,7 @@ type Inferable struct {
 	apiSecret        string
 	functionRegistry functionRegistry
 	machineID        string
-	clusterID        string
+	_clusterID        string
 	// Convenience reference to a service with the name 'default'.
 	//
 	// Returns:
@@ -137,14 +137,9 @@ func New(options InferableOptions) (*Inferable, error) {
 		return nil, fmt.Errorf("error registering default service: %v", err)
 	}
 
-  // Call register machine without any services to test API key and get clusterId
-  clusterId, err := inferable.registerMachine(nil);
-
   if err != nil {
     return nil, fmt.Errorf("error registering machine: %v", err)
   }
-
-  inferable.clusterID = clusterId
 
 	return inferable, nil
 }
@@ -185,10 +180,10 @@ func (i *Inferable) RegisterService(serviceName string) (*service, error) {
 	if _, exists := i.functionRegistry.services[serviceName]; exists {
 		return nil, fmt.Errorf("service with name '%s' already registered", serviceName)
 	}
+
 	service := &service{
 		Name:      serviceName,
 		Functions: make(map[string]Function),
-    ClusterID: i.clusterID,
 		inferable: i, // Set the reference to the Inferable instance
 	}
 	i.functionRegistry.services[serviceName] = service
@@ -204,8 +199,13 @@ func (i *Inferable) getRun(runID string) (*runResult, error) {
 		"X-Machine-SDK-Language": "go",
 	}
 
+  clusterId, err := i.GetClusterId()
+  if err != nil {
+    return nil, fmt.Errorf("failed to get cluster id: %v", err)
+  }
+
 	options := client.FetchDataOptions{
-		Path:    fmt.Sprintf("/clusters/%s/runs/%s", i.clusterID, runID),
+		Path:    fmt.Sprintf("/clusters/%s/runs/%s", clusterId, runID),
 		Method:  "GET",
 		Headers: headers,
 	}
@@ -254,9 +254,10 @@ func (i *Inferable) getRun(runID string) (*runResult, error) {
 //
 //	fmt.Println("Run result:", result)
 func (i *Inferable) CreateRun(input CreateRunInput) (*runReference, error) {
-	if i.clusterID == "" {
-		return nil, fmt.Errorf("cluster ID must be provided to manage runs")
-	}
+  clusterId, err := i.GetClusterId()
+  if err != nil {
+    return nil, fmt.Errorf("failed to get cluster id: %v", err)
+  }
 
 	// Marshal the payload to JSON
 	jsonPayload, err := json.Marshal(input)
@@ -273,7 +274,7 @@ func (i *Inferable) CreateRun(input CreateRunInput) (*runReference, error) {
 	}
 
 	options := client.FetchDataOptions{
-		Path:    fmt.Sprintf("/clusters/%s/runs", i.clusterID),
+		Path:    fmt.Sprintf("/clusters/%s/runs", clusterId),
 		Method:  "POST",
 		Headers: headers,
 		Body:    string(jsonPayload),
@@ -422,6 +423,19 @@ func (i *Inferable) serverOk() error {
 	}
 
 	return nil
+}
+
+func (i *Inferable) GetClusterId() (string, error) {
+  if i._clusterID == "" {
+    clusterId, err := i.registerMachine(nil)
+    if err != nil {
+      return "", fmt.Errorf("failed to register machine: %v", err)
+    }
+
+    i._clusterID = clusterId
+  }
+
+  return i._clusterID, nil
 }
 
 func (i *Inferable) registerMachine(s *service) (string, error) {

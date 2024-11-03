@@ -32,7 +32,6 @@ type service struct {
 	Name       string
 	Functions  map[string]Function
 	inferable  *Inferable
-	ClusterID  string
 	ctx        context.Context
 	cancel     context.CancelFunc
 	retryAfter int
@@ -199,8 +198,13 @@ func (s *service) poll() error {
 		"X-Machine-SDK-Language": "go",
 	}
 
+  clusterId, err := s.inferable.GetClusterId()
+  if err != nil {
+    return fmt.Errorf("failed to get cluster id: %v", err)
+  }
+
 	options := client.FetchDataOptions{
-		Path:    fmt.Sprintf("/clusters/%s/calls?acknowledge=true&service=%s&status=pending&limit=10", s.ClusterID, s.Name),
+		Path:    fmt.Sprintf("/clusters/%s/calls?acknowledge=true&service=%s&status=pending&limit=10", clusterId, s.Name),
 		Method:  "GET",
 		Headers: headers,
 	}
@@ -316,8 +320,13 @@ func (s *service) persistJobResult(jobID string, result callResult) error {
 		"X-Machine-SDK-Language": "go",
 	}
 
+  clusterId, err := s.inferable.GetClusterId()
+  if err != nil {
+    return fmt.Errorf("failed to get cluster id: %v", err)
+  }
+
 	options := client.FetchDataOptions{
-		Path:    fmt.Sprintf("/clusters/%s/calls/%s/result", s.ClusterID, jobID),
+		Path:    fmt.Sprintf("/clusters/%s/calls/%s/result", clusterId, jobID),
 		Method:  "POST",
 		Headers: headers,
 		Body:    string(payloadJSON),

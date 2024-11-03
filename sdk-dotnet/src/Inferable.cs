@@ -37,7 +37,6 @@ namespace Inferable
     public string? BaseUrl { get; set; }
     public string? ApiSecret { get; set; }
     public string? MachineId { get; set; }
-    public string? ClusterId { get; set; }
   }
 
   public struct PollRunOptions
@@ -68,7 +67,7 @@ namespace Inferable
 
     private readonly ApiClient _client;
     private readonly ILogger<InferableClient> _logger;
-    private readonly string? _clusterId;
+    private string? _clusterId;
 
     // Dictionary of service name to list of functions
     private Dictionary<string, List<IFunctionRegistration>> _functionRegistry = new Dictionary<string, List<IFunctionRegistration>>();
@@ -128,7 +127,6 @@ namespace Inferable
       string? apiSecret = options?.ApiSecret ?? Environment.GetEnvironmentVariable("INFERABLE_API_SECRET");
       string baseUrl = options?.BaseUrl ?? Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT") ?? DefaultBaseUrl;
       string machineId = options?.MachineId ?? Machine.GenerateMachineId();
-      this._clusterId = options?.ClusterId ?? Environment.GetEnvironmentVariable("INFERABLE_CLUSTER_ID");
 
       if (apiSecret == null)
       {
@@ -202,11 +200,8 @@ namespace Inferable
     /// </summary>
     async public Task<RunReference> CreateRunAsync(CreateRunInput input)
     {
-      if (this._clusterId == null) {
-        throw new ArgumentException("Cluster ID must be provided to manage runs");
-      }
-
-      var result = await this._client.CreateRunAsync(this._clusterId, input);
+      var clusterId = await this.GetClusterId();
+      var result = await this._client.CreateRunAsync(clusterId, input);
 
       return new RunReference {
         ID = result.ID,
@@ -217,7 +212,7 @@ namespace Inferable
           var start = DateTime.Now;
           var end = start + MaxWaitTime;
           while (DateTime.Now < end) {
-            var pollResult = await this._client.GetRun(this._clusterId, result.ID);
+            var pollResult = await this._client.GetRun(clusterId, result.ID);
 
             var transientStates = new List<string> { "paused", "pending", "running" };
             if (transientStates.Contains(pollResult.Status)) {
@@ -295,7 +290,7 @@ namespace Inferable
 
       var functions = this._functionRegistry[name];
 
-      var service = new Service(name, this._client, this._logger, functions);
+      var service = new Service(name, await this.GetClusterId(), this._client, this._logger, functions);
 
       this._services.Add(service);
       await service.Start();
@@ -307,6 +302,16 @@ namespace Inferable
         throw new Exception("Service is not started");
       }
       await existing.Stop();
+    }
+
+    internal async Task<string> GetClusterId() {
+      if (this._clusterId == null) {
+        // Call register machine without any services to test API key and get clusterId
+        var registerResult = await _client.CreateMachine(new CreateMachineInput {});
+        this._clusterId = registerResult.ClusterId;
+      }
+
+      return this._clusterId;
     }
   }
 
@@ -357,6 +362,4 @@ namespace Inferable
       await this._inferable.StopServiceAsync(this._name);
     }
   }
-
-
 }
