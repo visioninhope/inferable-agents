@@ -96,7 +96,7 @@ jobs:
         id: increment_version
         shell: pwsh
         run: |
-          $projectFile = Get-ChildItem -Path . -Filter *.csproj | Select-Object -First 1
+          $projectFile = Get-ChildItem -Path ./src -Filter *.csproj | Select-Object -First 1
           if (-not $projectFile) {
               throw "No .csproj file found in current directory"
           }
@@ -115,7 +115,7 @@ jobs:
 
           # Update project file
           $xml.Project.PropertyGroup.Version = $newVersion
-          $xml.Save($xmlPath)
+          $xml.Save($projectFile.FullName)
 
           # Set output for later steps
           echo "new_version=$newVersion" >> $GITHUB_OUTPUT

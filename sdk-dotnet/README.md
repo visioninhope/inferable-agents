@@ -24,7 +24,7 @@ dotnet add package Inferable
 
 To create a new Inferable client, use the `InferableClient` class:
 
-```csharp
+```cs
 using Inferable;
 
 var options = new InferableOptions
@@ -45,7 +45,7 @@ If you don't provide an API key or base URL, it will attempt to read them from t
 
 Register a "sayHello" [function](https://docs.inferable.ai/pages/functions). This file will register the function with the [control-plane](https://docs.inferable.ai/pages/control-plane).
 
-```csharp
+```cs
 public class MyInput
 {
     public string Message { get; set; }
@@ -112,7 +112,7 @@ The following code will create an [Inferable run](https://docs.inferable.ai/page
 > - in the [playground UI](https://app.inferable.ai/) via `inf app`
 > - in the [CLI](https://www.npmjs.com/package/@inferable/cli) via `inf runs list`
 
-```csharp
+```cs
 var run = await inferable.CreateRunAsync(new CreateRunInput
 {
   Message = "Say hello to John",
