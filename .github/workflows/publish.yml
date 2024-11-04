@@ -96,8 +96,12 @@ jobs:
         id: increment_version
         shell: pwsh
         run: |
-          $xmlPath = ".\*.csproj"
-          $xml = [xml](Get-Content $xmlPath)
+          $projectFile = Get-ChildItem -Path . -Filter *.csproj | Select-Object -First 1
+          if (-not $projectFile) {
+              throw "No .csproj file found in current directory"
+          }
+
+          $xml = [xml](Get-Content $projectFile.FullName)
           $currentVersion = $xml.Project.PropertyGroup.Version
 
           if (-not $currentVersion) {
