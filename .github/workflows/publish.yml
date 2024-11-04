@@ -118,7 +118,7 @@ jobs:
           $xml.Save($projectFile.FullName)
 
           # Set output for later steps
-          echo "new_version=$newVersion" >> $GITHUB_OUTPUT
+          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Pack
@@ -134,8 +134,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add inferable.go
-          git commit -m "Bump sdk-dotnet version to ${{ steps.increment_version.outputs.new_version }}"
+          git commit -am "Bump sdk-dotnet version to ${{ steps.increment_version.outputs.new_version }}"
           git push
       - name: Create Git tag
         run: |
@@ -183,8 +182,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add inferable.go
-          git commit -m "Bump sdk-go version to ${{ steps.increment_version.outputs.new_version }}"
+          git commit -am "Bump sdk-go version to ${{ steps.increment_version.outputs.new_version }}"
           git push
       - name: Create Git tag
         run: |
