@@ -69,7 +69,7 @@ jobs:
         run: |
           npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
           version=$(npx release-it --release-version)
-          npx release-it --npm.skipChecks --git.tagName=sdk-node/${version} --no-github.release --git.commitMessage="Bump sdk-node version to ${version}"
+          npx release-it --npm.skipChecks --git.tagName=sdk-node/v${version} --no-github.release --git.commitMessage="Bump sdk-node version to ${version}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
