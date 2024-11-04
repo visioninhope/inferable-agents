@@ -12,21 +12,19 @@
 
 # Introduction
 
-Inferable is the developer platform for building agentic automations from your existing code. You bring the code, we bring the automation engine.
+Inferable is a developer platform that makes it easy to build and deploy reliable, secure LLM-based applications.
 
 ## Key Features
 
-Here's a concise key features section with 5 points highlighting Inferable's main benefits:
+🚀 **[2-Minute Setup](https://docs.inferable.ai/pages/quick-start)**: Get started in minutes with our [managed platform](https://app.inferable.ai) - wrap your existing functions, REST APIs and GraphQL endpoints as tools.
 
-🚀 **2-Minute Setup**: Get started in minutes with our [managed platform](https://app.inferable.ai) - wrap your existing functions, REST APIs, GraphQL endpoints, and more.
+🤖 **[Managed Agent Runtime](https://docs.inferable.ai/pages/runs)**: Managed [ReAct](https://www.promptingguide.ai/techniques/react)-like agent runtime powered by your own functions.
 
-🔄 **Rapid Iteration**: Built for developers to quickly prototype, test and refine AI automations with instant feedback. If you can write a function, you can build an agent.
+⚡️ **[Durable Tool Calling](https://docs.inferable.ai/pages/functions)**: Our durable execution engine helps you agents recover from tool-calling failures, load balance across your compute, and caches results for fast re-runs.
 
-⚡️ **Distributed Durable Execution**: Our durable execution engine helps you agents recover from partial failures, load balance across your compute, and caches results for fast re-runs.
+🛡️ **[Zero Network Config](https://docs.inferable.ai/pages/no-incoming-connections)**: No inbound connections or networking config required - your compute runs securely behind your firewall, and polls Inferable for instructions.
 
-🛡️ **Zero Network Config**: No inbound connections or networking config required - your compute runs securely behind your firewall, and polls for instructions.
-
-💻 **Your Infrastructure, Your Control**: Keep sensitive data and compute on-premise while leveraging our cloud orchestration. Inferable can't see or access any runtime information or environment variables.
+💻 **[Your Infrastructure](https://docs.inferable.ai/pages/on-premise)**: All functions run on your Infrastructure - Keep sensitive data and compute on-premise while leveraging our agent runtime. Inferable can't see or access any runtime information or environment variables.
 
 🔌 **Multiple Language Support**: Native SDKs for TypeScript, Go, .NET and more coming soon - integrate with your existing codebase in minutes.
 
@@ -57,14 +55,14 @@ For language-specific quick start guides, please refer to the README in each SDK
 
 ### Advanced Features
 
-| Feature                                                               | Node.js | Go  | .NET |
-| --------------------------------------------------------------------- | :-----: | :-: | :--: |
-| Create [Blob](https://docs.inferable.ai/pages/functions#blob) results      |   ✅    | ❌  |  ❌  |
-| [Mask](https://docs.inferable.ai/pages/functions#masked) results           |   ✅    | ❌  |  ❌  |
-| Caching configuration                                     |   ✅    | ❌  |  ❌  |
-| Timeout configuration                                     |   ✅    | ❌  |  ❌  |
-| Retry configuration                                     |   ✅    | ❌  |  ❌  |
-| Approval (Human in the loop) configuration               |   ✅    | ❌  |  ❌  |
+| Feature                                                                                                  | Node.js | Go  | .NET |
+| -------------------------------------------------------------------------------------------------------- | :-----: | :-: | :--: |
+| [Blob](https://docs.inferable.ai/pages/functions#blob) results                                           |   ✅    | ❌  |  ❌  |
+| [Mask](https://docs.inferable.ai/pages/functions#masked) results                                         |   ✅    | ❌  |  ❌  |
+| [Cached](https://docs.inferable.ai/pages/functions#config-cache) results                                 |   ✅    | ❌  |  ❌  |
+| Call [Timeouts](https://docs.inferable.ai/pages/functions#config-timeoutseconds)                         |   ✅    | ❌  |  ❌  |
+| Call [Retries](https://docs.inferable.ai/pages/functions#config-retrycountonstall)                       |   ✅    | ❌  |  ❌  |
+| Call [Approval](https://docs.inferable.ai/pages/functions#config-requiresapproval) (Human in the loop)   |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
