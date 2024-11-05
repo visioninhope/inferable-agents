@@ -20,11 +20,11 @@ jobs:
       sdk_go: ${{ steps.filter.outputs.sdk_go }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Filter changed files
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -47,12 +47,12 @@ jobs:
         working-directory: sdk-node
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
@@ -69,7 +69,7 @@ jobs:
         run: |
           npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
           version=$(npx release-it --release-version)
-          npx release-it --npm.skipChecks --git.tagName=sdk-node/${version} --github.release=false
+          npx release-it --npm.skipChecks --git.tagName=sdk-node/v${version} --no-github.release --git.commitMessage="Bump sdk-node version to ${version}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -85,25 +85,61 @@ jobs:
         working-directory: sdk-dotnet
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
       - name: Restore dependencies
         run: dotnet restore
+      - name: Get and Increment Version
+        id: increment_version
+        shell: pwsh
+        run: |
+          $projectFile = Get-ChildItem -Path ./src -Filter *.csproj | Select-Object -First 1
+          if (-not $projectFile) {
+              throw "No .csproj file found in current directory"
+          }
+
+          $xml = [xml](Get-Content $projectFile.FullName)
+          $currentVersion = $xml.Project.PropertyGroup.Version
+
+          if (-not $currentVersion) {
+            throw "Version element not found in project file"
+          }
+
+          # Parse version components
+          $major, $minor, $patch = $currentVersion.Split('.')
+          $newPatch = [int]$patch + 1
+          $newVersion = "$major.$minor.$newPatch"
+
+          # Update project file
+          $xml.Project.PropertyGroup.Version = $newVersion
+          $xml.Save($projectFile.FullName)
+
+          # Set output for later steps
+          echo "new_version=$newVersion" >> $env:GITHUB_OUTPUT
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Pack
         run: dotnet pack --configuration Release --no-restore --output ./output
-      # TODO: Auto version bump
       - name: Setup NuGet
-        uses: nuget/setup-nuget@v1
+        uses: nuget/setup-nuget@v2
         with:
           nuget-api-key: ${{ secrets.NUGET_API_KEY }}
           nuget-version: latest
       - name: Publish
         run: dotnet nuget push output\*.nupkg -s https://api.nuget.org/v3/index.json
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -am "Bump sdk-dotnet version to ${{ steps.increment_version.outputs.new_version }}"
+          git push
+      - name: Create Git tag
+        run: |
+          git tag sdk-dotnet/v${{ steps.increment_version.outputs.new_version }}
+          git push origin sdk-dotnet/v${{ steps.increment_version.outputs.new_version }}
 
   publish-go:
     needs: check_changes
@@ -117,12 +153,12 @@ jobs:
         working-directory: sdk-go
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: "1.22"
       - name: Get current version
@@ -146,8 +182,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add inferable.go
-          git commit -m "Bump sdk-go version to ${{ steps.increment_version.outputs.new_version }}"
+          git commit -am "Bump sdk-go version to ${{ steps.increment_version.outputs.new_version }}"
           git push
       - name: Create Git tag
         run: |

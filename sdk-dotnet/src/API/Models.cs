@@ -19,10 +19,16 @@ namespace Inferable.API
 
   public struct CreateMachineInput
   {
-    [JsonPropertyName("service")]
-    public required string Service { get; set; }
-    [JsonPropertyName("functions")]
-    public required List<Function> Functions { get; set; }
+    [
+      JsonPropertyName("service"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public string Service { get; set; }
+    [
+      JsonPropertyName("functions"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public List<Function> Functions { get; set; }
   }
 
   public struct CreateMachineResult
@@ -156,6 +162,18 @@ namespace Inferable.API
       JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
     ]
     public OnStatusChange? OnStatusChange { get; set; }
+
+    [
+      JsonPropertyName("reasoningTraces"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public bool? ReasoningTraces { get; set; }
+
+    [
+      JsonPropertyName("callSummarization"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public bool? CallSummarization { get; set; }
   }
 
   public struct OnStatusChange
