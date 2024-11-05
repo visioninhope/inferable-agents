@@ -7,7 +7,7 @@ public static class Register
         client.Default.RegisterFunction(new FunctionRegistration<GetUrlContentInput> {
             Name = "getUrlContent",
             Description = "Gets the content of a URL",
-            Func = new Func<GetUrlContentInput, object?>(input => HackerNewsService.GetUrlContent(input))
+            Func = new Func<GetUrlContentInput, object?>(input => HackerNewsService.GetUrlContent(input)),
         });
 
         client.Default.RegisterFunction(new FunctionRegistration<ScorePostInput> {
