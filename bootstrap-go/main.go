@@ -21,7 +21,6 @@ func main() {
 		// npx @inferable/cli auth keys create 'My New Machine Key' --type='cluster_machine'
 		APISecret:   os.Getenv("INFERABLE_API_SECRET"),
 		APIEndpoint: os.Getenv("INFERABLE_API_ENDPOINT"),
-		ClusterID:   os.Getenv("INFERABLE_CLUSTER_ID"),
 	})
 
 	if err != nil {
@@ -61,7 +60,9 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Inferable demo service started")
+	fmt.Println("Inferable service started")
+
+	fmt.Println("Press CTRL+C to stop")
 
 	// Wait for CTRL+C
 	<-make(chan struct{})

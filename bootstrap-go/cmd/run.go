@@ -45,13 +45,20 @@ func main() {
 	client, err := inferable.New(inferable.InferableOptions{
 		APISecret:   os.Getenv("INFERABLE_API_SECRET"),
 		APIEndpoint: os.Getenv("INFERABLE_API_ENDPOINT"),
-		ClusterID:   os.Getenv("INFERABLE_CLUSTER_ID"),
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	cmd := exec.Command("open", fmt.Sprintf("https://app.inferable.ai/clusters/%s/runs", os.Getenv("INFERABLE_CLUSTER_ID")))
+	fmt.Println("Opening browser to view runs")
+
+	url := "https://app.inferable.ai/clusters"
+
+	if os.Getenv("INFERABLE_CLUSTER_ID") != "" {
+		url = fmt.Sprintf("https://app.inferable.ai/clusters/%s/runs", os.Getenv("INFERABLE_CLUSTER_ID"))
+	}
+
+	cmd := exec.Command("open", url)
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("Failed to open browser: %v\n", err)
 	}
@@ -177,7 +184,7 @@ func main() {
 
 		You are given a list of posts from Hacker News, and a summary of the comments for each post.
 
-		Generate a web page with the following structure:
+		Generate markdown with the following structure, and generate an HTML page from it.
 		- A header with the title of the page
 		- A list of posts, with the title, a link to the post, and the key points from the comments in a ul
 		- A footer with a link to the original Hacker News page
