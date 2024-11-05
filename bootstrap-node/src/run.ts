@@ -85,15 +85,16 @@ const generatePage = async ({ data }: { data: object }) =>
     })
     .then((r) => r.poll());
 
+const url = process.env.INFERABLE_CLUSTER_ID
+  ? `https://app.inferable.ai/clusters/${process.env.INFERABLE_CLUSTER_ID}/runs`
+  : "https://app.inferable.ai/clusters";
+
 // open the page in the browser
-exec(
-  `open https://app.inferable.ai/clusters/${process.env.INFERABLE_CLUSTER_ID}/runs`,
-  (error) => {
-    if (error) {
-      console.error("Failed to open browser:", error);
-    }
-  },
-);
+exec(`open ${url}`, (error) => {
+  if (error) {
+    console.error("Failed to open browser:", error);
+  }
+});
 
 extract()
   .then(({ result }) => {

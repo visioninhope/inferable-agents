@@ -36,7 +36,7 @@ class Program
         var client = serviceProvider.GetRequiredService<InferableClient>();
 
         // Check command line arguments
-        if (args.Length > 0 && args[0].ToLower() == "hn")
+        if (args.Length > 0 && args[0].ToLower() == "run")
         {
             Console.WriteLine("Running HN extraction...");
             await RunHNExtraction.RunAsync(client);

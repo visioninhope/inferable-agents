@@ -53,7 +53,12 @@ public static class RunHNExtraction
         try
         {
             var clusterId = Environment.GetEnvironmentVariable("INFERABLE_CLUSTER_ID");
-            var url = $"https://app.inferable.ai/clusters/{clusterId}/runs";
+            var url = $"https://app.inferable.ai/clusters";
+
+            if (!string.IsNullOrEmpty(clusterId))
+            {
+                url += $"/{clusterId}/runs";
+            }
 
             if (OperatingSystem.IsWindows())
             {

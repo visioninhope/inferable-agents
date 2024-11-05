@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
+</p>
+
 # Inferable Node.js Bootstrap
 
 This is a Node.js bootstrap application that demonstrates how to integrate and use our SDK. It serves as a reference implementation and starting point for Node.js developers.
