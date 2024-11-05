@@ -25,20 +25,13 @@ sequenceDiagram
 
 ## How to Run
 
-1. Set up the project
-
-```bash
-npm i @inferable/cli -g # Install the Inferable CLI
-inf bootstrap node # This will guide you through creating a API key and setting up the project
-```
-
-2. Start the local worker machine
+1. Start the local worker machine
 
 ```bash
 npm run dev
 ```
 
-3. Trigger the Run
+2. Trigger the Run
 
 ```bash
 npm run run
