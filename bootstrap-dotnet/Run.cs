@@ -48,6 +48,32 @@ public class ExtractResult
 
 public static class RunHNExtraction
 {
+    private static void OpenInferableInBrowser()
+    {
+        try
+        {
+            var clusterId = Environment.GetEnvironmentVariable("INFERABLE_CLUSTER_ID");
+            var url = $"https://app.inferable.ai/clusters/{clusterId}/runs";
+
+            if (OperatingSystem.IsWindows())
+            {
+                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                Process.Start("open", url);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                Process.Start("xdg-open", url);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to open browser: {ex.Message}");
+        }
+    }
+
     public static async Task RunAsync(InferableClient? client = null)
     {
         // Use the provided client or create a new one if none is provided
@@ -56,6 +82,8 @@ public static class RunHNExtraction
             ApiSecret = Environment.GetEnvironmentVariable("INFERABLE_API_SECRET"),
             BaseUrl = Environment.GetEnvironmentVariable("INFERABLE_API_ENDPOINT")
         });
+
+        OpenInferableInBrowser();
 
         // Extract top posts
         var extractRun = await client.CreateRunAsync(new Inferable.API.CreateRunInput
@@ -139,29 +167,5 @@ public static class RunHNExtraction
         var pageResult = JsonSerializer.Deserialize<GeneratePageResult>(generateResult.GetValueOrDefault().Result?.ToString()!);
 
         Console.WriteLine($"Generated page: {JsonSerializer.Serialize(pageResult)}");
-
-        // Open browser
-        try
-        {
-            var clusterId = Environment.GetEnvironmentVariable("INFERABLE_CLUSTER_ID");
-            var url = $"https://app.inferable.ai/clusters/{clusterId}/runs";
-
-            if (OperatingSystem.IsWindows())
-            {
-                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                Process.Start("open", url);
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                Process.Start("xdg-open", url);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to open browser: {ex.Message}");
-        }
     }
 }
