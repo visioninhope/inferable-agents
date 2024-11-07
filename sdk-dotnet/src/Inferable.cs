@@ -22,11 +22,11 @@ namespace Inferable
     [JsonPropertyName("status")]
     public string Status { get; set; }
 
-    [JsonPropertyName("summary")]
-    public string? Summary { get; set; }
+    [JsonPropertyName("lastAgentSummary")]
+    public string? LastAgentSummary { get; set; }
 
-    [JsonPropertyName("result")]
-    public T? Result { get; set; }
+    [JsonPropertyName("lastAgentResult")]
+    public T? LastAgentResult { get; set; }
 
     [JsonPropertyName("metadata")]
     public Dictionary<string, string> Metadata { get; set; }

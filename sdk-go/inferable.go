@@ -67,11 +67,11 @@ type InferableOptions struct {
 
 // Struct type that will be returned to a Run's OnStatusChange Function
 type OnStatusChangeInput struct {
-	Status   string      `json:"status"`
-	RunId    string      `json:"runId"`
-	Result   interface{} `json:"result"`
-	Summary  string      `json:"summary"`
-	Metadata interface{} `json:"metadata"`
+	Status           string      `json:"status"`
+	RunId            string      `json:"runId"`
+	LastAgentResult  interface{} `json:"lastAgentresult"`
+	LastAgentSummary string      `json:"lastAgentSummary"`
+	Metadata         interface{} `json:"metadata"`
 }
 
 type runResult = OnStatusChangeInput
