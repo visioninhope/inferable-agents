@@ -346,11 +346,9 @@ export class Inferable {
       schema,
       config,
       description,
-      authenticate,
     }) => {
       this.registerFunction({
         name,
-        authenticate,
         serviceName: input.name,
         func,
         inputSchema: schema.input,
@@ -413,17 +411,12 @@ export class Inferable {
 
   private registerFunction<T extends z.ZodTypeAny | JsonSchemaInput>({
     name,
-    authenticate,
     serviceName,
     func,
     inputSchema,
     config,
     description,
   }: {
-    authenticate?: (
-      authContext: string,
-      args: FunctionInput<T>,
-    ) => Promise<void>;
     name: string;
     serviceName: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -464,7 +457,6 @@ export class Inferable {
 
     const registration: FunctionRegistration<T> = {
       name,
-      authenticate,
       serviceName,
       func,
       schema: {

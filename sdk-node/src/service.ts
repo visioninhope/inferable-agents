@@ -16,6 +16,7 @@ type CallMessage = {
   id: string;
   function: string;
   input?: unknown;
+  customerAuthContext?: unknown;
 };
 
 export class Service {
@@ -269,7 +270,6 @@ export class Service {
     const result = await executeFn(
       registration.func,
       [args],
-      registration.authenticate,
     );
 
     await onComplete(result);

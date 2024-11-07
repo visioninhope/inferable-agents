@@ -53,7 +53,6 @@ export type FunctionRegistrationInput<
   T extends z.ZodTypeAny | JsonSchemaInput,
 > = {
   name: string;
-  authenticate?: (authContext: string, args: FunctionInput<T>) => Promise<void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   func: (input: FunctionInput<T>) => any;
   schema: FunctionSchema<T>;
@@ -96,7 +95,6 @@ export interface FunctionRegistration<
   T extends JsonSchemaInput | z.ZodTypeAny = any,
 > {
   name: string;
-  authenticate?: (authContext: string, args: FunctionInput<T>) => Promise<void>;
   serviceName: string;
   description?: string;
   schema: {
