@@ -8,6 +8,7 @@ import * as links from "./links";
 import { machineId } from "./machine-id";
 import { Service, registerMachine } from "./service";
 import {
+  ContextInput,
   FunctionConfig,
   FunctionInput,
   FunctionRegistration,
@@ -420,7 +421,7 @@ export class Inferable {
     name: string;
     serviceName: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    func: (input: FunctionInput<T>) => any;
+    func: (input: FunctionInput<T>, context: ContextInput) => any;
     inputSchema: T;
     config?: FunctionConfig;
     description?: string;

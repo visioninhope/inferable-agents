@@ -269,7 +269,9 @@ export class Service {
 
     const result = await executeFn(
       registration.func,
-      [args],
+      [args, {
+        customerAuthContext: call.customerAuthContext,
+      }],
     );
 
     await onComplete(result);
