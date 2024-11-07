@@ -63,6 +63,7 @@ For language-specific quick start guides, please refer to the README in each SDK
 | Call [Timeouts](https://docs.inferable.ai/pages/functions#config-timeoutseconds)                         |   ✅    | ❌  |  ❌  |
 | Call [Retries](https://docs.inferable.ai/pages/functions#config-retrycountonstall)                       |   ✅    | ❌  |  ❌  |
 | Call [Approval](https://docs.inferable.ai/pages/functions#config-requiresapproval) (Human in the loop)   |   ✅    | ❌  |  ❌  |
+| Auth Context                                                                                             |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
