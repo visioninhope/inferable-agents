@@ -92,6 +92,7 @@ type CreateRunInput struct {
 	Metadata          map[string]string    `json:"metadata,omitempty"`
 	Template          *RunTemplate         `json:"template,omitempty"`
 	ReasoningTraces   bool                 `json:"reasoningTraces"`
+	Interactive       bool                 `json:"interactive"`
 	CallSummarization bool                 `json:"callSummarization"`
 }
 
