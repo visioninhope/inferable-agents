@@ -70,7 +70,6 @@ type OnStatusChangeInput struct {
 	Status   string      `json:"status"`
 	RunId    string      `json:"runId"`
 	Result   interface{} `json:"result"`
-	Summary  string      `json:"summary"`
 	Metadata interface{} `json:"metadata"`
 }
 
