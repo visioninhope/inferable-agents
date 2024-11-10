@@ -6,6 +6,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/inferablehq/inferable/sdk-go v0.1.26 h1:Co+IOUTlWCf5BzdziNvXUgMR4xqhiEBhEMW/C2b1CiQ=
 github.com/inferablehq/inferable/sdk-go v0.1.26/go.mod h1:MNuRqSw8/28SGdk5dHreAcSDkKK4BenNXOp4QDkAbPw=
+github.com/inferablehq/inferable/sdk-go v0.1.27 h1:kYxpYNWXoPW9b7P0vOVl2QX95Rs1Htm9YTyQMZmpgXQ=
+github.com/inferablehq/inferable/sdk-go v0.1.27/go.mod h1:MNuRqSw8/28SGdk5dHreAcSDkKK4BenNXOp4QDkAbPw=
 github.com/invopop/jsonschema v0.12.0 h1:6ovsNSuvn9wEQVOyc72aycBMVQFKz7cPdMJn10CvzRI=
 github.com/invopop/jsonschema v0.12.0/go.mod h1:ffZ5Km5SWWRAIN6wbDXItl95euhFz2uON45H2qjYt+0=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
