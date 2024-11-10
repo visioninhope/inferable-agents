@@ -115,7 +115,7 @@ The following code will create an [Inferable run](https://docs.inferable.ai/page
 ```cs
 var run = await inferable.CreateRunAsync(new CreateRunInput
 {
-  Message = "Say hello to John",
+  InitialPrompt = "Say hello to John",
   // Optional: Explicitly attach the `sayHello` function (All functions attached by default)
   AttachedFunctions = new List<FunctionReference>
   {

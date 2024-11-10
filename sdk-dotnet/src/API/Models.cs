@@ -135,8 +135,8 @@ namespace Inferable.API
 
   public struct CreateRunInput
   {
-    [JsonPropertyName("message")]
-    public string? Message { get; set; }
+    [JsonPropertyName("initialPrompt")]
+    public string? InitialPrompt { get; set; }
 
     [
       JsonPropertyName("attachedFunctions"),

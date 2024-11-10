@@ -263,7 +263,7 @@ namespace Inferable.Tests
 
         var run = await client.CreateRunAsync(new CreateRunInput
         {
-          Message = "Say hello to John",
+          InitialPrompt = "Say hello to John",
           AttachedFunctions = new List<FunctionReference>
           {
             SayHelloFunction
