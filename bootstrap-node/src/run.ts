@@ -23,7 +23,7 @@ const postsSchema = z.object({
 const extract = async () =>
   client
     .run({
-      message: `
+      initialPrompt: `
   Hacker News has a homepage at https://news.ycombinator.com/
   Each post has a id, title, a link, and a score, and is voted on by users.
   Score the top 10 posts and pick the top 3 according to the internal scoring function.
@@ -45,7 +45,7 @@ const extract = async () =>
 const summarizePost = async ({ data }: { data: object }) =>
   client
     .run({
-      message: `
+      initialPrompt: `
       <data>
         ${JSON.stringify(data)}
       </data>
@@ -67,7 +67,7 @@ const summarizePost = async ({ data }: { data: object }) =>
 const generatePage = async ({ data }: { data: object }) =>
   client
     .run({
-      message: `
+      initialPrompt: `
       <data>
         ${JSON.stringify(data)}
       </data>

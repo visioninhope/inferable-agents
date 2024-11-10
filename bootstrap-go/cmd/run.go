@@ -83,7 +83,7 @@ func main() {
 	}
 
 	extractRun, err := client.CreateRun(inferable.CreateRunInput{
-		Message: `Hacker News has a homepage at https://news.ycombinator.com/
+		InitialPrompt: `Hacker News has a homepage at https://news.ycombinator.com/
 		Each post has a id, title, a link, and a score, and is voted on by users.
 		Score the top 10 posts and pick the top 3 according to the internal scoring function.`,
 		CallSummarization: false,
@@ -122,7 +122,7 @@ func main() {
 	for i, post := range posts.Posts {
 		go func(index int, post Post) {
 			summarizeRun, err := client.CreateRun(inferable.CreateRunInput{
-				Message: fmt.Sprintf(`
+				InitialPrompt: fmt.Sprintf(`
 				<data>
 					%s
 				</data>
@@ -177,7 +177,7 @@ func main() {
 	}
 
 	generateRun, err := client.CreateRun(inferable.CreateRunInput{
-		Message: fmt.Sprintf(`
+		InitialPrompt: fmt.Sprintf(`
 		<data>
 			%s
 		</data>

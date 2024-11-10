@@ -93,7 +93,7 @@ public static class RunHNExtraction
         // Extract top posts
         var extractRun = await client.CreateRunAsync(new Inferable.API.CreateRunInput
         {
-            Message = @"
+            InitialPrompt = @"
                 Hacker News has a homepage at https://news.ycombinator.com/
                 Each post has a id, title, a link, and a score, and is voted on by users.
                 Score the top 10 posts and pick the top 3 according to the internal scoring function.",
@@ -121,7 +121,7 @@ public static class RunHNExtraction
         {
             var summarizeRun = await client.CreateRunAsync(new CreateRunInput
             {
-                Message = $@"
+                InitialPrompt = $@"
                     <data>
                         {JsonSerializer.Serialize(post)}
                     </data>
@@ -154,7 +154,7 @@ public static class RunHNExtraction
         // Generate final page
         var generateRun = await client.CreateRunAsync(new CreateRunInput
         {
-            Message = $@"
+            InitialPrompt = $@"
                 <data>
                     {JsonSerializer.Serialize(summaries)}
                 </data>
