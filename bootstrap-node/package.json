@@ -2,7 +2,8 @@
   "name": "@inferable/node-bootstrap",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "tsx -r dotenv/config src/index.ts"
+    "dev": "tsx -r dotenv/config --watch src/index.ts",
+    "run": "tsx -r dotenv/config src/run.ts"
   },
   "engines": {
     "node": ">=20"
