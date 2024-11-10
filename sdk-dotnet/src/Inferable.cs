@@ -22,9 +22,6 @@ namespace Inferable
     [JsonPropertyName("status")]
     public string Status { get; set; }
 
-    [JsonPropertyName("summary")]
-    public string? Summary { get; set; }
-
     [JsonPropertyName("result")]
     public T? Result { get; set; }
 
@@ -189,7 +186,7 @@ namespace Inferable
     /// });
     ///
     /// var run = client.CreateRun(new CreateRunInput {
-    ///     Message = "Hello world"
+    ///     InitialPrompt = "Hello world"
     /// });
     ///
     /// Console.WriteLine("Started run with ID: " + run.ID);
