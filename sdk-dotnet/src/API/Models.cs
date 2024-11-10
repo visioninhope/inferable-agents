@@ -174,6 +174,12 @@ namespace Inferable.API
       JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
     ]
     public bool? CallSummarization { get; set; }
+
+    [
+      JsonPropertyName("interactive"),
+      JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)
+    ]
+    public bool? Interactive { get; set; }
   }
 
   public struct OnStatusChange
