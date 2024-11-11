@@ -59,7 +59,7 @@ await createMessage({
 
 ```
 
-The hook automatically polls for updates to messages and run status at the specified interval.
+The hook automatically polls for updates to messages and run state at the specified interval.
 
 ## Local Development
 
