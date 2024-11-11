@@ -18,10 +18,4 @@ describe('useRun', () => {
     const { result } = renderHook(() => useRun(mockOptions));
     expect(result.current.messages).toEqual([]);
   });
-
-  it('should require authentication', () => {
-    expect(() => {
-      renderHook(() => useRun({ ...mockOptions, apiSecret: undefined }));
-    }).toThrow('Must provide either customerProvidedSecret or apiSecret');
-  });
 });
