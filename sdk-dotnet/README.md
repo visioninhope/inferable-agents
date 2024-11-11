@@ -149,7 +149,7 @@ Console.WriteLine($"Run result: {result}");
 
 ## Support
 
-For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues) or [join the Discord](https://discord.gg/WHcTNeDP)
+For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues) or [join the Discord](https://go.inferable.ai/discord)
 
 ## Contributing
 
