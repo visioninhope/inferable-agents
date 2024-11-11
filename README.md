@@ -33,6 +33,7 @@ Inferable is a developer platform that makes it easy to build and deploy reliabl
 - [Node.js / TypeScript SDK](./sdk-node/README.md)
 - [Go SDK](./sdk-go/README.md)
 - [.NET SDK](./sdk-dotnet/README.md)
+- [React SDK](./sdk-react/README.md)
 
 Each SDK directory contains its own README with specific installation instructions, quick start guide, and usage examples.
 
@@ -43,15 +44,16 @@ For language-specific quick start guides, please refer to the README in each SDK
 - [Node.js / TypeScript Quick Start](./sdk-node/README.md#quick-start)
 - [Go Quick Start](./sdk-go/README.md#quick-start)
 - [.NET Quick Start](./sdk-dotnet/README.md#quick-start)
+- [React Quick Start](./sdk-react/README.md#quick-start)
 
 ## Feature Comparison
 
 ### Core Features
 
-| Feature                                                         | Node.js | Go  | .NET |
-| --------------------------------------------------------------- | :-----: | :-: | :--: |
-| Register [Functions](https://docs.inferable.ai/pages/functions) |   ✅    | ✅  |  ✅  |
-| Create [Runs](https://docs.inferable.ai/pages/runs)             |   ✅    | ✅  |  ✅  |
+| Feature                                                         | Node.js | Go  | .NET | React |
+| --------------------------------------------------------------- | :-----: | :-: | :--: | :---: |
+| Register [Functions](https://docs.inferable.ai/pages/functions) |   ✅    | ✅  |  ✅  |   ❌  |
+| Create [Runs](https://docs.inferable.ai/pages/runs)             |   ✅    | ✅  |  ✅  |   ✅  |
 
 ### Advanced Features
 
