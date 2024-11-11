@@ -9,6 +9,9 @@
 [![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/)
 
 This is the official Inferable AI SDK for React.
+It is used to start and interact with [Inferable runs](https://docs.inferable.ai/pages/runs) from React applications.
+
+It does **not** currently support [registering functions](https://docs.inferable.ai/pages/functions) as the backend SDKs do.
 
 ## Installation
 
@@ -24,33 +27,58 @@ yarn add @inferable/react
 pnpm add @inferable/react
 ```
 
-## Usage
+## Quick Start
 
 ### useRun Hook
 
 The `useRun` hook provides real-time interaction with an Inferable run:
 
+
+#### Existing Runs
+It can be used to interact with an existing run by specifying the `runId`:
 ```typescript
 const { messages, run, createMessage, start } = useRun({
   clusterId: 'your-cluster-id',
   customerProvidedSecret: 'your-customer-provided-secret',
-  // apiSecret: 'your-api-secret', // Not recomended for frontend usage
-  // Existing Run:
-  // runId: 'your-run-id',
-  // New (From Run Config):
-  // initialMessage: 'Hello!',
-  // configId: 'your-run-config-id',
-  // configInput: {} //optional if `initialPrompt` is not provided,
+  runId: 'your-run-id',
   // pollInterval: 1000, // Optional: defaults to 1000ms
 });
+```
 
-// start()
+
+#### New Runs
+
+It can be used to create a new run by specifying a `configId`:
+
+```typescript
+const { messages, run, createMessage, start } = useRun({
+  clusterId: 'your-cluster-id',
+  customerProvidedSecret: 'your-customer-provided-secret',
+  initialMessage: 'Hello!',
+  configId: 'your-run-config-id',
+  // configInput: {} // Optional: if the config has an inputSchema
+  // pollInterval: 1000, // Optional: defaults to 1000ms
+});
+```
+
+#### Start
+
+Once the hook is initialized, you can start the run by calling the `start` function:
+
+```
+start()
 
 // Access messages and run state
 console.log(messages); // Array of messages in the run
 console.log(run); // Current run status and metadata
+```
 
 
+#### Adding Messages
+
+You can add messages to the run by calling the `createMessage` function:
+
+```
 // Optional: Send follow-up messages
 await createMessage({
   message: 'Hello!',
@@ -59,11 +87,9 @@ await createMessage({
 
 ```
 
-The hook automatically polls for updates to messages and run state at the specified interval.
-
 ## Local Development
 
-To test the SDK locally:
+There is development server included in the repository at `./test-page`.
 
 1. Start the development server:
 ```bash
