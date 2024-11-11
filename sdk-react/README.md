@@ -65,7 +65,7 @@ const { messages, run, createMessage, start } = useRun({
 
 Once the hook is initialized, you can start the run by calling the `start` function:
 
-```
+```typescript
 start()
 
 // Access messages and run state
@@ -78,7 +78,7 @@ console.log(run); // Current run status and metadata
 
 You can add messages to the run by calling the `createMessage` function:
 
-```
+```typescript
 // Optional: Send follow-up messages
 await createMessage({
   message: 'Hello!',
