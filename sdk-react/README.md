@@ -31,22 +31,32 @@ pnpm add @inferable/react
 The `useRun` hook provides real-time interaction with an Inferable run:
 
 ```typescript
-const { messages, run, createMessage } = useRun({
-  apiSecret: 'your-api-secret',
+const { messages, run, createMessage, start } = useRun({
   clusterId: 'your-cluster-id',
-  runId: 'your-run-id',
-  pollInterval: 1000, // Optional: defaults to 1000ms
+  customerProvidedSecret: 'your-customer-provided-secret',
+  // apiSecret: 'your-api-secret', // Not recomended for frontend usage
+  // Existing Run:
+  // runId: 'your-run-id',
+  // New (From Run Config):
+  // initialMessage: 'Hello!',
+  // configId: 'your-run-config-id',
+  // configInput: {} //optional if `initialPrompt` is not provided,
+  // pollInterval: 1000, // Optional: defaults to 1000ms
 });
 
-// Send a message
+// start()
+
+// Access messages and run state
+console.log(messages); // Array of messages in the run
+console.log(run); // Current run status and metadata
+
+
+// Optional: Send follow-up messages
 await createMessage({
   message: 'Hello!',
   type: 'human'
 });
 
-// Access messages and run state
-console.log(messages); // Array of messages in the run
-console.log(run); // Current run status and metadata
 ```
 
 The hook automatically polls for updates to messages and run status at the specified interval.

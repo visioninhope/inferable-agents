@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import { useRun } from '../hooks/useRun';
 
-export function TestPage() {
+type TestPageProps = {
+  baseUrl?: string;
+  customerProvidedSecret?: string;
+  apiSecret?: string;
+  clusterId: string;
+  configId: string;
+  initialPrompt?: string;
+}
+
+export function TestPage(props: TestPageProps) {
   const [message, setMessage] = useState('');
-  const { createMessage, messages, run } = useRun({
-    apiSecret: 'sk_yTEPGri7UDLaTLsDoyX4Rpqkq476KS7ZejCpPMpeYM',
-    clusterId: '01JBECY8T5PT20XTTQMP2XVEE4',
-    runId: '01JCC2NCPRXAN8VJP2F73REE1Y',
-    baseUrl: 'http://localhost:4000'
+  const { createMessage, messages, run, start } = useRun({
+    ...props,
+    onError: (error) => console.error(error)
   });
+
+  const [started, setStarted] = useState(false);
 
   const handleSubmit = async () => {
     await createMessage({
@@ -17,6 +26,22 @@ export function TestPage() {
     });
     setMessage('');
   };
+
+  if (!started) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <button
+          onClick={() => {
+            setStarted(true);
+            start();
+          }}
+          style={{ padding: '8px 16px' }}
+        >
+          Start Run
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -39,7 +64,6 @@ export function TestPage() {
           </div>
         ))}
       </div>
-
       <input
         type="text"
         value={message}
