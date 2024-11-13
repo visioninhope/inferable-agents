@@ -85,7 +85,7 @@ export function useRun(options: UseExistingRunOptions | UseNewRunOptions): UseRu
         });
 
         if (response.status !== 201) {
-          options.onError?.(new Error(`Could not create run. Status: ${response.status}`));
+          options.onError?.(new Error(`Could not create run. Status: ${response.status} Body: ${JSON.stringify(response.body)}`));
         } else {
           setRunId(response.body.id);
         }
@@ -116,7 +116,7 @@ export function useRun(options: UseExistingRunOptions | UseNewRunOptions): UseRu
         if (messageResponse.status === 200) {
           setMessages(messageResponse.body);
         } else {
-          options.onError?.(new Error(`Could not list messages. Status: ${messageResponse.status}`));
+          options.onError?.(new Error(`Could not list messages. Status: ${messageResponse.status} Body: ${JSON.stringify(messageResponse.body)}`));
         }
 
         if (runResponse.status === 200) {
@@ -142,7 +142,7 @@ export function useRun(options: UseExistingRunOptions | UseNewRunOptions): UseRu
     });
 
     if (response.status !== 201) {
-      options.onError?.(new Error(`Could not create message. Status: ${response.status}`));
+      options.onError?.(new Error(`Could not create message. Status: ${response.status} Body: ${JSON.stringify(response.body)}`));
     }
   };
 
