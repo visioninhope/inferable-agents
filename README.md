@@ -1,4 +1,4 @@
-<dp align="center">
+<p align="center">
   <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
 </p>
 
