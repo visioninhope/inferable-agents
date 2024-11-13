@@ -1,4 +1,4 @@
-<p align="center">
+<dp align="center">
   <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
 </p>
 
@@ -65,7 +65,7 @@ For language-specific quick start guides, please refer to the README in each SDK
 | Call [Timeouts](https://docs.inferable.ai/pages/functions#config-timeoutseconds)                         |   ✅    | ❌  |  ❌  |
 | Call [Retries](https://docs.inferable.ai/pages/functions#config-retrycountonstall)                       |   ✅    | ❌  |  ❌  |
 | Call [Approval](https://docs.inferable.ai/pages/functions#config-requiresapproval) (Human in the loop)   |   ✅    | ❌  |  ❌  |
-| Auth Context                                                                                             |   ✅    | ❌  |  ❌  |
+| [Auth / Run Context](https://docs.inferable.ai/pages/runs#context)                                       |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
