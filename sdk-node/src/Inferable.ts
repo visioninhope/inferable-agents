@@ -348,7 +348,9 @@ export class Inferable {
         name,
         serviceName: input.name,
         func,
-        inputSchema: schema.input,
+        inputSchema: schema?.input ?? {
+          input: z.object({}),
+        },
         config,
         description,
       });
