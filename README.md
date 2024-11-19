@@ -52,20 +52,20 @@ For language-specific quick start guides, please refer to the README in each SDK
 
 | Feature                                                         | Node.js | Go  | .NET | React |
 | --------------------------------------------------------------- | :-----: | :-: | :--: | :---: |
-| Register [Functions](https://docs.inferable.ai/pages/functions) |   ✅    | ✅  |  ✅  |   ❌  |
-| Create [Runs](https://docs.inferable.ai/pages/runs)             |   ✅    | ✅  |  ✅  |   ✅  |
+| Register [Functions](https://docs.inferable.ai/pages/functions) |   ✅    | ✅  |  ✅  |  ❌   |
+| Create [Runs](https://docs.inferable.ai/pages/runs)             |   ✅    | ✅  |  ✅  |  ✅   |
 
 ### Advanced Features
 
-| Feature                                                                                                  | Node.js | Go  | .NET |
-| -------------------------------------------------------------------------------------------------------- | :-----: | :-: | :--: |
-| [Blob](https://docs.inferable.ai/pages/functions#blob) results                                           |   ✅    | ❌  |  ❌  |
-| [Mask](https://docs.inferable.ai/pages/functions#masked) results                                         |   ✅    | ❌  |  ❌  |
-| [Cached](https://docs.inferable.ai/pages/functions#config-cache) results                                 |   ✅    | ❌  |  ❌  |
-| Call [Timeouts](https://docs.inferable.ai/pages/functions#config-timeoutseconds)                         |   ✅    | ❌  |  ❌  |
-| Call [Retries](https://docs.inferable.ai/pages/functions#config-retrycountonstall)                       |   ✅    | ❌  |  ❌  |
-| Call [Approval](https://docs.inferable.ai/pages/functions#config-requiresapproval) (Human in the loop)   |   ✅    | ❌  |  ❌  |
-| [Auth / Run Context](https://docs.inferable.ai/pages/runs#context)                                       |   ✅    | ❌  |  ❌  |
+| Feature                                                                                                | Node.js | Go  | .NET |
+| ------------------------------------------------------------------------------------------------------ | :-----: | :-: | :--: |
+| [Blob](https://docs.inferable.ai/pages/functions#blob) results                                         |   ✅    | ❌  |  ❌  |
+| [Mask](https://docs.inferable.ai/pages/functions#masked) results                                       |   ✅    | ❌  |  ❌  |
+| [Cached](https://docs.inferable.ai/pages/functions#config-cache) results                               |   ✅    | ❌  |  ❌  |
+| Call [Timeouts](https://docs.inferable.ai/pages/functions#config-timeoutseconds)                       |   ✅    | ❌  |  ❌  |
+| Call [Retries](https://docs.inferable.ai/pages/functions#config-retrycountonstall)                     |   ✅    | ❌  |  ❌  |
+| Call [Approval](https://docs.inferable.ai/pages/functions#config-requiresapproval) (Human in the loop) |   ✅    | ❌  |  ❌  |
+| [Auth / Run Context](https://docs.inferable.ai/pages/runs#context)                                     |   ✅    | ❌  |  ❌  |
 
 ## Documentation
 
@@ -77,4 +77,5 @@ We welcome contributions to all our SDKs. Please read our [contributing guidelin
 
 ## License
 
-All SDKs in this repository are licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+- All SDKs in this repository are licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+- Inferable Cloud is currently a proprietary closed-source product.
