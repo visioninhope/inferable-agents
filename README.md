@@ -59,12 +59,10 @@ For language-specific quick start guides, please refer to the README in each SDK
 
 | Feature                                                                                                | Node.js | Go  | .NET |
 | ------------------------------------------------------------------------------------------------------ | :-----: | :-: | :--: |
-| [Blob](https://docs.inferable.ai/pages/functions#blob) results                                         |   ✅    | ❌  |  ❌  |
-| [Mask](https://docs.inferable.ai/pages/functions#masked) results                                       |   ✅    | ❌  |  ❌  |
 | [Cached](https://docs.inferable.ai/pages/functions#config-cache) results                               |   ✅    | ❌  |  ❌  |
 | Call [Timeouts](https://docs.inferable.ai/pages/functions#config-timeoutseconds)                       |   ✅    | ❌  |  ❌  |
 | Call [Retries](https://docs.inferable.ai/pages/functions#config-retrycountonstall)                     |   ✅    | ❌  |  ❌  |
-| Call [Approval](https://docs.inferable.ai/pages/functions#config-requiresapproval) (Human in the loop) |   ✅    | ❌  |  ❌  |
+| Call [Approval](https://docs.inferable.ai/pages/functions#approvalrequest) (Human in the loop)        |   ✅    | ❌  |  ❌  |
 | [Auth / Run Context](https://docs.inferable.ai/pages/runs#context)                                     |   ✅    | ❌  |  ❌  |
 
 ## Documentation
