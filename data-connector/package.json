@@ -1,0 +1,25 @@
+{
+  "name": "inferable-data-connector",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "nodemon src/index.ts",
+    "docker:build": "docker build -t inferable-data-connector .",
+    "docker:start": "docker run -it -p 4985:4985 --env-file .env inferable-data-connector",
+    "docker": "npm run docker:build && npm run docker:start",
+    "seed": "tsx example_data/seed-postgres.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "inferable": "^0.30.48",
+    "pg": "^8.13.1",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "typescript": "^5.3.3",
+    "@faker-js/faker": "^9.1.0"
+  }
+}

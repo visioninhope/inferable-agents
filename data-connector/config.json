@@ -1,0 +1,12 @@
+{
+  "privacyMode": 0,
+  "paranoidMode": 0,
+  "connectors": [
+    {
+      "type": "postgres",
+      "name": "myPostgres",
+      "connectionString": "process.env.POSTGRES_URL",
+      "schema": "process.env.POSTGRES_SCHEMA"
+    }
+  ]
+}
