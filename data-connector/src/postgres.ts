@@ -3,8 +3,9 @@ import { approvalRequest, blob, ContextInput, Inferable } from "inferable";
 import pg from "pg";
 import { z } from "zod";
 import crypto from "crypto";
+import type { DataConnector } from "./types";
 
-export class PostgresClient {
+export class PostgresClient implements DataConnector {
   private client: pg.Client | null = null;
   private initialized: Promise<void>;
 
@@ -15,7 +16,7 @@ export class PostgresClient {
       connectionString: string;
       privacyMode: boolean;
       paranoidMode: boolean;
-    }
+    },
   ) {
     assert(params.schema, "Schema parameter is required");
     this.initialized = this.initialize();
@@ -28,7 +29,7 @@ export class PostgresClient {
       console.log(`Initial probe successful: ${res.rows[0].now}`);
       if (this.params.privacyMode) {
         console.log(
-          "Privacy mode is enabled, table data will not be sent to the model."
+          "Privacy mode is enabled, table data will not be sent to the model.",
         );
       }
 
@@ -65,12 +66,12 @@ export class PostgresClient {
     const client = await this.getClient();
     const res = await client.query(
       "SELECT * FROM pg_catalog.pg_tables WHERE schemaname = $1",
-      [this.params.schema]
+      [this.params.schema],
     );
     return res.rows;
   };
 
-  getDatabaseContext = async () => {
+  getContext = async () => {
     await this.initialized;
     const client = await this.getClient();
     const tables = await this.getAllTables();
@@ -79,7 +80,7 @@ export class PostgresClient {
 
     for (const table of tables) {
       const sample = await client.query(
-        `SELECT * FROM ${this.params.schema}.${table.tablename} LIMIT 1`
+        `SELECT * FROM ${this.params.schema}.${table.tablename} LIMIT 1`,
       );
 
       if (sample.rows.length > 0) {
@@ -91,8 +92,8 @@ export class PostgresClient {
             ? []
             : sample.rows.map((row) =>
                 Object.values(row).map((value) =>
-                  String(value).substring(0, 50)
-                )
+                  String(value).substring(0, 50),
+                ),
               )[0],
         };
         context.push(tableContext);
@@ -152,16 +153,16 @@ export class PostgresClient {
     });
 
     service.register({
-      name: "getDatabaseContext",
-      func: this.getDatabaseContext,
-      description: "Gets the context of the database",
+      name: "getContext",
+      func: this.getContext,
+      description: "Gets the schema of the database.",
     });
 
     service.register({
       name: "executeQuery",
       func: this.executeQuery,
       description:
-        "Executes a raw SQL query. If this fails, you need to getDatabaseContext to learn the schema first.",
+        "Executes a raw SQL query. If this fails, you need to getContext to learn the schema first.",
       schema: {
         input: z.object({
           query: z.string().describe("The query to execute"),
