@@ -92,8 +92,8 @@ jobs:
         run: npm run test
         env:
           INFERABLE_TEST_API_ENDPOINT: "https://api.inferable.ai"
-          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
-          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
+          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_TEST_CLUSTER_ID }}
+          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_TEST_API_SECRET }}
 
   build-cli:
     needs: check_changes
@@ -185,8 +185,8 @@ jobs:
         run: dotnet test --no-restore
         env:
           INFERABLE_TEST_API_ENDPOINT: "https://api.inferable.ai"
-          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
-          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
+          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_TEST_CLUSTER_ID }}
+          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_TEST_API_SECRET }}
 
   build-go:
     needs: check_changes
