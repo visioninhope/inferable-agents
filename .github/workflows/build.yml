@@ -238,8 +238,8 @@ jobs:
         run: go test -v ./...
         env:
           INFERABLE_TEST_API_ENDPOINT: "https://api.inferable.ai"
-          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_CLUSTER_ID }}
-          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_MACHINE_SECRET }}
+          INFERABLE_TEST_CLUSTER_ID: ${{ secrets.INFERABLE_TEST_CLUSTER_ID }}
+          INFERABLE_TEST_API_SECRET: ${{ secrets.INFERABLE_TEST_API_SECRET }}
 
   build-react:
     needs: check_changes
