@@ -5,9 +5,8 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "nodemon src/index.ts",
-    "docker:build": "docker build -t inferable-data-connector .",
-    "docker:start": "docker run -it -p 4985:4985 --env-file .env inferable-data-connector",
-    "docker": "npm run docker:build && npm run docker:start",
+    "docker": "docker-compose up --build",
+    "docker:push": "docker build . -t inferable/data-connector && docker push inferable/data-connector:latest",
     "seed": "tsx example_data/seed-postgres.ts"
   },
   "dependencies": {
