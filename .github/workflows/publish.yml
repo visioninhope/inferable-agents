@@ -3,7 +3,7 @@ name: Publish Check
 on:
   workflow_run:
     workflows:
-      - Build and Test
+      - Build, Test, Deploy
     types:
       - completed
 
