@@ -26,6 +26,8 @@ jobs:
       cli: ${{ steps.filter.outputs.cli }}
       control_plane: ${{ steps.filter.outputs.control_plane }}
       app: ${{ steps.filter.outputs.app }}
+      # Deploy steps (Docker build / CFN) if either control-plane or app changed
+      deploy: ${{ steps.filter.outputs.deploy }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,6 +51,9 @@ jobs:
             control_plane:
               - 'control-plane/**'
             app:
+              - 'app/**'
+            deploy:
+              - 'control-plane/**'
               - 'app/**'
 
   build-control-plane:
@@ -404,7 +409,8 @@ jobs:
 
   build-app-image:
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
     permissions:
       id-token: write
     steps:
@@ -449,7 +455,8 @@ jobs:
 
   build-control-plane-image:
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: check_changes
+    if: ${{ needs.check_changes.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
     permissions:
       id-token: write
     steps:
@@ -495,3 +502,50 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $DOCKERHUB_USERNAME/control-plane:latest
           docker push $DOCKERHUB_USERNAME/control-plane:$IMAGE_TAG
           docker push $DOCKERHUB_USERNAME/control-plane:latest
+
+  deploy-cloud:
+    runs-on: ubuntu-latest
+    if: ${{ needs.check_changes.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
+    needs:
+      [check_changes, build-app-image, build-control-plane-image]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: us-east-1
+    - name: Notify start deploy to Rollbar
+      uses: rollbar/github-deploy-action@2.1.1
+      id: rollbar_pre_deploy
+      with:
+        environment: 'production'
+        version: ${{ github.sha }}
+        status: 'started'
+      env:
+        ROLLBAR_ACCESS_TOKEN: ${{ secrets.CLOUD_ROLLBAR_ACCESS_TOKEN }}
+        ROLLBAR_USERNAME: ${{ github.actor }}
+    - name: Deploy to AWS CloudFormation
+      uses: aws-actions/aws-cloudformation-github-deploy@v1
+      with:
+        name: "prod-inferable"
+        role-arn: ${{ secrets.CLOUD_AWS_CFN_ROLE_ARN }}
+        template: ${{ secrets.CLOUD_AWS_CFN_TEMPLATE }}
+        tags: "Environment=prod"
+        capabilities: "CAPABILITY_NAMED_IAM,CAPABILITY_IAM"
+        parameter-overrides: >-
+          Environment=prod,
+          ApiImageTag=${{ github.sha }},
+          AppImageTag=${{ github.sha }}
+    - name: Notify finish deploy to Rollbar
+      uses: rollbar/github-deploy-action@2.1.1
+      id: rollbar_post_deploy
+      with:
+        environment: 'production'
+        version: ${{ github.sha }}
+        status: 'succeeded'
+      env:
+        ROLLBAR_ACCESS_TOKEN: ${{ secrets.CLOUD_ROLLBAR_ACCESS_TOKEN }}
+        ROLLBAR_USERNAME: ${{ github.actor }}
+        DEPLOY_ID: ${{ steps.rollbar_pre_deploy.outputs.deploy_id }}
