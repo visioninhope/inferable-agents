@@ -17,9 +17,9 @@ import "@mdxeditor/editor/style.css";
 import { ClientInferResponseBody } from "@ts-rest/core";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import sanitizeHtml from "sanitize-html";
 
 // Import necessary plugins
-
 export default function Page({ params }: { params: { clusterId: string } }) {
   const { getToken } = useAuth();
   const [clusterContext, setClusterContext] = useState<
@@ -43,12 +43,10 @@ export default function Page({ params }: { params: { clusterId: string } }) {
 
     if (response.status === 200) {
       setClusterContext(response.body.additionalContext);
-      const withoutHtmlTags =
-        response.body.additionalContext?.current.content.replace(
-          /<[^>]*>?/g,
-          "",
-        );
-      setActivePrompt(withoutHtmlTags ?? "");
+      const sanitizedContent = sanitizeHtml(
+        response.body.additionalContext?.current.content ?? ""
+      );
+      setActivePrompt(sanitizedContent);
       setFetched(true);
     } else {
       throw new Error(`Failed to fetch cluster context: ${response.status}`);
