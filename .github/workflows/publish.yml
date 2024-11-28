@@ -44,10 +44,44 @@ jobs:
             bootstrap:
               - 'bootstrap*/**'
 
+  generate_changelog:
+    needs: [check_changes, publish-cli, publish-node, publish-react, publish-dotnet, publish-go, create-archives]
+    runs-on: ubuntu-latest
+    if: |
+      always() && (
+        needs.check_changes.outputs.sdk_node == 'true' ||
+        needs.check_changes.outputs.sdk_react == 'true' ||
+        needs.check_changes.outputs.sdk_dotnet == 'true' ||
+        needs.check_changes.outputs.sdk_go == 'true' ||
+        needs.check_changes.outputs.cli == 'true' ||
+        needs.check_changes.outputs.bootstrap == 'true'
+      )
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v3
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_REPO: ${{ github.repository }}
+      - name: Commit changelog
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: 'CHANGELOG.md'
+          message: '[skip ci] chore: Update changelog'
+          default_author: github_actions
+          push: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-cli:
     needs: check_changes
-    if: ${{ needs.check_changes.outputs.cli == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -86,7 +120,6 @@ jobs:
 
   publish-node:
     needs: check_changes
-    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -125,7 +158,6 @@ jobs:
 
   publish-react:
     needs: check_changes
-    if: ${{ needs.check_changes.outputs.sdk_react == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -164,7 +196,6 @@ jobs:
 
   publish-dotnet:
     needs: check_changes
-    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
     runs-on: windows-latest
     permissions:
       contents: write
@@ -231,7 +262,6 @@ jobs:
 
   publish-go:
     needs: check_changes
-    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -278,8 +308,8 @@ jobs:
           git push origin sdk-go/v${{ steps.increment_version.outputs.new_version }}
 
   create-archives:
+    needs: [check_changes, generate_changelog]
     runs-on: ubuntu-latest
-    needs: check_changes
     if: ${{ needs.check_changes.outputs.bootstrap == 'true' }}
     permissions:
       contents: write
