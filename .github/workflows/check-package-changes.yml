@@ -21,12 +21,11 @@ jobs:
 
       - name: Check for multiple package changes
         run: |
-          CHANGED_SDKS=$(git diff --name-only origin/${{ github.base_ref }} | grep -E '^sdk-[^/]+/' | cut -d'/' -f1 | sort -u)
-          CHANGED_CLI=$(git diff --name-only origin/${{ github.base_ref }} | grep -E '^cli/' | cut -d'/' -f1 | sort -u)
+          CHANGED_PACKAGES=$(git diff --name-only origin/"${{ github.base_ref }}" | grep -E '^(sdk-[^/]+/|cli/)' | cut -d'/' -f1 | sort -u)
 
-          COUNT=$(echo "$CHANGED_SDKS $CHANGED_CLI" | grep -v '^$' | wc -l)
+          COUNT=$(echo "$CHANGED_PACKAGES" | grep -v '^$' | wc -l)
 
-          echo "Changed packages: $CHANGED_SDKS $CHANGED_CLI"
+          echo "$CHANGED_PACKAGES (COUNT=$COUNT)"
 
           if [ "$COUNT" -gt 1 ]; then
             echo "Error: Changes detected in multiple packages:"
