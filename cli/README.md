@@ -1,4 +1,4 @@
-## inferable.ai CLI
+## Inferable CLI
 
 ## Installation
 

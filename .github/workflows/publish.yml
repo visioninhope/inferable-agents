@@ -46,6 +46,7 @@ jobs:
 
   publish-cli:
     needs: check_changes
+    if: ${{ needs.check_changes.outputs.cli == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -84,6 +85,7 @@ jobs:
 
   publish-node:
     needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_node == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -122,6 +124,7 @@ jobs:
 
   publish-react:
     needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_react == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -160,6 +163,7 @@ jobs:
 
   publish-dotnet:
     needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_dotnet == 'true' }}
     runs-on: windows-latest
     permissions:
       contents: write
@@ -226,6 +230,7 @@ jobs:
 
   publish-go:
     needs: check_changes
+    if: ${{ needs.check_changes.outputs.sdk_go == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

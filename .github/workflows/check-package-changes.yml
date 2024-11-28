@@ -1,0 +1,35 @@
+name: Check Package Changes
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'sdk-*/**'
+      - 'cli/**'
+
+jobs:
+  check-package-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for multiple package changes
+        run: |
+          CHANGED_SDKS=$(git diff --name-only origin/${{ github.base_ref }} | grep -E '^sdk-[^/]+/' | cut -d'/' -f1 | sort -u)
+          CHANGED_CLI=$(git diff --name-only origin/${{ github.base_ref }} | grep -E '^cli/' | cut -d'/' -f1 | sort -u)
+
+          COUNT=$(echo "$CHANGED_SDKS $CHANGED_CLI" | grep -v '^$' | wc -l)
+
+          echo "Changed packages: $CHANGED_SDKS $CHANGED_CLI"
+
+          if [ "$COUNT" -gt 1 ]; then
+            echo "Error: Changes detected in multiple packages:"
+            echo "Please limit changes to one package at a time."
+            exit 1
+          fi
