@@ -28,6 +28,20 @@ Inferable is a developer platform that makes it easy to build and deploy reliabl
 
 🔌 **Multiple Language Support**: Native SDKs for TypeScript, Go, .NET and more coming soon - integrate with your existing codebase in minutes.
 
+## Get Started
+
+### Inferable Cloud
+
+Managed deployment of Inferable built for high availability and security. Inferable Cloud includes a [generous free teir](https://inferable.ai/pricing) and requires no credit card to get started.
+
+[Inferable Cloud](https://app.inferable.ai).
+
+### Open-source
+
+Inferable is 100% open-source and self-hostable.
+
+[Self hosting guide](https://docs.inferable.ai/pages/self-hosting)
+
 ## SDKs
 
 - [Node.js / TypeScript SDK](./sdk-node/README.md)
@@ -37,7 +51,7 @@ Inferable is a developer platform that makes it easy to build and deploy reliabl
 
 Each SDK directory contains its own README with specific installation instructions, quick start guide, and usage examples.
 
-## Quick Start
+### Quick Start
 
 For language-specific quick start guides, please refer to the README in each SDK's directory:
 
@@ -46,7 +60,7 @@ For language-specific quick start guides, please refer to the README in each SDK
 - [.NET Quick Start](./sdk-dotnet/README.md#quick-start)
 - [React Quick Start](./sdk-react/README.md#quick-start)
 
-## Feature Comparison
+### SDK Feature Comparison
 
 ### Core Features
 
@@ -71,9 +85,8 @@ For comprehensive documentation on using Inferable AI, please visit our [officia
 
 ## Contributing
 
-We welcome contributions to all our SDKs. Please read our [contributing guidelines](./CONTRIBUTING.md) before submitting any pull requests.
+We welcome contributions to all projects in the Inferable repository. Please read our [contributing guidelines](./CONTRIBUTING.md) before submitting any pull requests.
 
 ## License
 
-- All SDKs in this repository are licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-- Inferable Cloud is currently a proprietary closed-source product.
+All code in this repository is licensed under the MIT License.
