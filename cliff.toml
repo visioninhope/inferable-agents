@@ -93,7 +93,7 @@ commit_preprocessors = [
 commit_parsers = [
   { message = "^feat", group = "<!-- 0 -->⛰️  Features" },
   { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
-  { message = "^doc", group = "<!-- 3 -->📚 Documentation" },
+  { message = "^docs", group = "<!-- 3 -->📚 Documentation" },
   { message = "^perf", group = "<!-- 4 -->⚡ Performance" },
   { message = "^refactor\\(clippy\\)", skip = true },
   { message = "^refactor", group = "<!-- 2 -->🚜 Refactor" },
