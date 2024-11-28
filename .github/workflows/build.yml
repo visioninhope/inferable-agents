@@ -118,7 +118,7 @@ jobs:
           set -eo pipefail
           npm run test
           if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then
-            npx run test:ai
+            npm run test:ai
           fi
         env:
           REDIS_URL: "redis://localhost:6379"
