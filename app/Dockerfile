@@ -51,8 +51,8 @@ COPY --from=build /build/ /app
 COPY --from=build /build/package.json /app/package.json
 COPY --from=build /build/node_modules /app/node_modules
 
-COPY --from=build-playground /build/.next/standalone/playground /app
-COPY --from=build-playground /build/.next/static /app/.next/static
+COPY --from=build /build/.next/standalone/playground /app
+COPY --from=build /build/.next/static /app/.next/static
 
 ENV NODE_ENV=production
 
