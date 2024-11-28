@@ -506,6 +506,8 @@ jobs:
   deploy-cloud:
     runs-on: ubuntu-latest
     if: ${{ needs.check_changes.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
+    permissions:
+      id-token: write
     needs:
       [check_changes, build-app-image, build-control-plane-image]
     steps:
