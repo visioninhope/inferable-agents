@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" RENAME COLUMN "customer_auth_context" TO "auth_context";

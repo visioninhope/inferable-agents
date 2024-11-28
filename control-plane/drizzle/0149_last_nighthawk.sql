@@ -1,0 +1,1 @@
+ALTER TABLE "prompt_templates" ALTER COLUMN "structured_output" DROP NOT NULL;

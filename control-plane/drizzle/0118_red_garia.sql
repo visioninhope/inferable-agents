@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "parent_workflow_id" varchar(1024);

@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "customer_auth_token" text;

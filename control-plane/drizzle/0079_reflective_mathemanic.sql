@@ -1,0 +1,1 @@
+ALTER TABLE "clusters" DROP COLUMN IF EXISTS "wake_up_config";

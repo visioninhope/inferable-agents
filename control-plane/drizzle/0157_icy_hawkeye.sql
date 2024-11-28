@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS "events" (
+	"id" varchar(1024) NOT NULL,
+	"cluster_id" varchar NOT NULL,
+	"type" varchar(1024) NOT NULL,
+	"job_id" varchar(1024),
+	"machine_id" varchar(1024),
+	"service" varchar(1024),
+	"target_fn" varchar(1024),
+	"result_type" varchar(1024),
+	"status" varchar(1024),
+	"run_id" varchar(1024),
+	"user_id" varchar(1024),
+	"tool_name" varchar(1024),
+	"model_id" varchar(1024),
+	"token_usage_input" integer,
+	"token_usage_output" integer,
+	"attention_level" integer,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"meta" json DEFAULT '{}'::json NOT NULL
+);

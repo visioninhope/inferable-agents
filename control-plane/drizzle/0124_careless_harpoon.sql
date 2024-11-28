@@ -1,0 +1,1 @@
+ALTER TABLE "clusters" ADD COLUMN "debug" boolean DEFAULT false NOT NULL;

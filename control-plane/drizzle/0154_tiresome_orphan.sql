@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ALTER COLUMN "feedback_score" SET DATA TYPE integer;

@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" RENAME COLUMN "mocks" TO "test_mocks";

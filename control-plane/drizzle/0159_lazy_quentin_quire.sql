@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "bypass_summarization" boolean DEFAULT false NOT NULL;

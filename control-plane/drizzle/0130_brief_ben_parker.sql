@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_messages" ADD COLUMN "metadata" json;

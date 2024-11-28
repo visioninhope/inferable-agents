@@ -1,0 +1,2 @@
+ALTER TABLE "workflow_messages" DROP CONSTRAINT "workflow_messages_cluster_id_id";--> statement-breakpoint
+ALTER TABLE "workflow_messages" ADD CONSTRAINT "workflow_messages_cluster_id_workflow_id_id" PRIMARY KEY("cluster_id","workflow_id","id");

@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_affinity" ADD COLUMN "external_resource_context" text;

@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "embeddingsLookupIndex" ON "embeddings" USING btree ("cluster_id","type","group_id","id","raw_data_hash");
