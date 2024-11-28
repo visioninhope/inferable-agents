@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_templates" ADD COLUMN "available_as_tool" boolean DEFAULT false NOT NULL;

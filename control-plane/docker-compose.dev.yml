@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  elasticmq:
+    image: softwaremill/elasticmq-native
+    container_name: elasticmq
+    ports:
+      - "9324:9324"
+      - "9325:9325"
+    configs:
+      - source: elasticmq_conf
+        target: /opt/elasticmq.conf
+    volumes:
+      - elasticmqdata:/data
+
+volumes:
+  pgdata:
+  elasticmqdata:
+
+configs:
+  elasticmq_conf:
+    content: |
+      include classpath("application.conf")
+
+      queues {
+        run-process {}
+        run-generate-name {}
+      }

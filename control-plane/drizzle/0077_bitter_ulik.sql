@@ -1,0 +1,1 @@
+ALTER TABLE "external_endpoints" ADD COLUMN "enabled_operations" json;

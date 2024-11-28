@@ -1,0 +1,1 @@
+ALTER TABLE "clusters" ADD COLUMN "additional_context" text;

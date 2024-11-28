@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "result_function" varchar(1024);

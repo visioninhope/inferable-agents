@@ -1,0 +1,1 @@
+ALTER TABLE "services" ALTER COLUMN "service" SET DATA TYPE varchar(1024);

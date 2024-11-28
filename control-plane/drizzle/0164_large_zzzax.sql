@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "timeline_index" ON "events" USING btree ("cluster_id","run_id","attention_level");

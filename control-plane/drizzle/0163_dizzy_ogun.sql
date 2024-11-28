@@ -1,0 +1,1 @@
+ALTER TABLE "prompt_templates" ALTER COLUMN "attached_functions" SET DEFAULT '[]'::json;

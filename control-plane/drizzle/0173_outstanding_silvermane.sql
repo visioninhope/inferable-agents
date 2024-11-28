@@ -1,0 +1,1 @@
+ALTER TABLE "prompt_templates" ADD COLUMN "public" boolean DEFAULT false NOT NULL;

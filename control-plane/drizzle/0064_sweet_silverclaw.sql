@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "name" varchar(1024);

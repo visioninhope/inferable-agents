@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "test" boolean DEFAULT false NOT NULL;

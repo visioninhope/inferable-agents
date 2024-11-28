@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_input_requests" ADD COLUMN "call_identifier" varchar(1023) NOT NULL;

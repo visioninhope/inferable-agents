@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "context" json;

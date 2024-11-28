@@ -1,0 +1,1131 @@
+{
+  "id": "482c751d-9a2b-4c30-b6ba-cc4695f6cd47",
+  "prevId": "15d5f6d0-cc01-43f5-9a32-3efbe32eddaa",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.clusters": {
+      "name": "clusters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "debug": {
+          "name": "debug",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "api_secret": {
+          "name": "api_secret",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "additional_context": {
+          "name": "additional_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "clusters_id_org_index": {
+          "name": "clusters_id_org_index",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.embeddings": {
+      "name": "embeddings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "embedding_1024": {
+          "name": "embedding_1024",
+          "type": "vector(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_data": {
+          "name": "raw_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_data_hash": {
+          "name": "raw_data_hash",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "embedding1024Index": {
+          "name": "embedding1024Index",
+          "columns": [
+            {
+              "expression": "embedding_1024",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "vector_cosine_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "hnsw",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "embeddings_cluster_id_id_type_pk": {
+          "name": "embeddings_cluster_id_id_type_pk",
+          "columns": [
+            "cluster_id",
+            "id",
+            "type"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.jobs": {
+      "name": "jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_fn": {
+          "name": "target_fn",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_args": {
+          "name": "target_args",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cache_key": {
+          "name": "cache_key",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_type": {
+          "name": "result_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "executing_machine_id": {
+          "name": "executing_machine_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remaining_attempts": {
+          "name": "remaining_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "resulted_at": {
+          "name": "resulted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_retrieved_at": {
+          "name": "last_retrieved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "function_execution_time_ms": {
+          "name": "function_execution_time_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timeout_interval_seconds": {
+          "name": "timeout_interval_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 300
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "auth_context": {
+          "name": "auth_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "clusterServiceStatusIndex": {
+          "name": "clusterServiceStatusIndex",
+          "columns": [
+            {
+              "expression": "cluster_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "service",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "clusterServiceStatusFnIndex": {
+          "name": "clusterServiceStatusFnIndex",
+          "columns": [
+            {
+              "expression": "cluster_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "service",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_fn",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "jobs_cluster_id_id": {
+          "name": "jobs_cluster_id_id",
+          "columns": [
+            "cluster_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "jobs_id_unique": {
+          "name": "jobs_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      }
+    },
+    "public.machines": {
+      "name": "machines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "class": {
+          "name": "class",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_ping_at": {
+          "name": "last_ping_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sdk_version": {
+          "name": "sdk_version",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sdk_language": {
+          "name": "sdk_language",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'active'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "machines_id_cluster_id": {
+          "name": "machines_id_cluster_id",
+          "columns": [
+            "id",
+            "cluster_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.service_metadata": {
+      "name": "service_metadata",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "service_metadata_cluster_id_clusters_id_fk": {
+          "name": "service_metadata_cluster_id_clusters_id_fk",
+          "tableFrom": "service_metadata",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "service_metadata_cluster_id_service_key": {
+          "name": "service_metadata_cluster_id_service_key",
+          "columns": [
+            "cluster_id",
+            "service",
+            "status"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.services": {
+      "name": "services",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "queue_url": {
+          "name": "queue_url",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "definition": {
+          "name": "definition",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'external'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "services_cluster_id_clusters_id_fk": {
+          "name": "services_cluster_id_clusters_id_fk",
+          "tableFrom": "services",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "services_cluster_id_service": {
+          "name": "services_cluster_id_service",
+          "columns": [
+            "cluster_id",
+            "service"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_affinity": {
+      "name": "workflow_affinity",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_resource_id": {
+          "name": "external_resource_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_resource_context": {
+          "name": "external_resource_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "workflow_affinity_cluster_id_service": {
+          "name": "workflow_affinity_cluster_id_service",
+          "columns": [
+            "cluster_id",
+            "service",
+            "workflow_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_input_requests": {
+      "name": "workflow_input_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "function": {
+          "name": "function",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_args": {
+          "name": "request_args",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_identifier": {
+          "name": "request_identifier",
+          "type": "varchar(1023)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_input_requests_workflow_id_cluster_id_workflows_id_cluster_id_fk": {
+          "name": "workflow_input_requests_workflow_id_cluster_id_workflows_id_cluster_id_fk",
+          "tableFrom": "workflow_input_requests",
+          "tableTo": "workflows",
+          "columnsFrom": [
+            "workflow_id",
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id",
+            "cluster_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflow_input_requests_workflow_id_id": {
+          "name": "workflow_input_requests_workflow_id_id",
+          "columns": [
+            "workflow_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_interaction_affinity": {
+      "name": "workflow_interaction_affinity",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "workflow_interaction_affinity_pk": {
+          "name": "workflow_interaction_affinity_pk",
+          "columns": [
+            "cluster_id",
+            "workflow_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_messages": {
+      "name": "workflow_messages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtype": {
+          "name": "subtype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_messages_workflow_id_cluster_id_workflows_id_cluster_id_fk": {
+          "name": "workflow_messages_workflow_id_cluster_id_workflows_id_cluster_id_fk",
+          "tableFrom": "workflow_messages",
+          "tableTo": "workflows",
+          "columnsFrom": [
+            "workflow_id",
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id",
+            "cluster_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflow_messages_cluster_id_workflow_id_id": {
+          "name": "workflow_messages_cluster_id_workflow_id_id",
+          "columns": [
+            "cluster_id",
+            "workflow_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_templates": {
+      "name": "workflow_templates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "initial_instructions": {
+          "name": "initial_instructions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actions": {
+          "name": "actions",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::json"
+        },
+        "inputs": {
+          "name": "inputs",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::json"
+        },
+        "trigger": {
+          "name": "trigger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_templates_cluster_id_clusters_id_fk": {
+          "name": "workflow_templates_cluster_id_clusters_id_fk",
+          "tableFrom": "workflow_templates",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflow_templates_cluster_id_id": {
+          "name": "workflow_templates_cluster_id_id",
+          "columns": [
+            "cluster_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflows": {
+      "name": "workflows",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_handle": {
+          "name": "job_handle",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'pending'"
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "template_id": {
+          "name": "template_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "debug": {
+          "name": "debug",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "test": {
+          "name": "test",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "test_mocks": {
+          "name": "test_mocks",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::json"
+        },
+        "args": {
+          "name": "args",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::json"
+        },
+        "actions": {
+          "name": "actions",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_workflow_id": {
+          "name": "parent_workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_comment": {
+          "name": "feedback_comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_score": {
+          "name": "feedback_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflows_cluster_id_clusters_id_fk": {
+          "name": "workflows_cluster_id_clusters_id_fk",
+          "tableFrom": "workflows",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "workflows_job_handle_cluster_id_jobs_id_cluster_id_fk": {
+          "name": "workflows_job_handle_cluster_id_jobs_id_cluster_id_fk",
+          "tableFrom": "workflows",
+          "tableTo": "jobs",
+          "columnsFrom": [
+            "job_handle",
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id",
+            "cluster_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflows_cluster_id_id": {
+          "name": "workflows_cluster_id_id",
+          "columns": [
+            "cluster_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

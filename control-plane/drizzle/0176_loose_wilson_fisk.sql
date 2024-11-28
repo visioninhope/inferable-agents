@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "system_message" varchar(1024);

@@ -1,0 +1,1 @@
+ALTER TABLE "external_endpoints" ADD COLUMN "name" varchar(1024);

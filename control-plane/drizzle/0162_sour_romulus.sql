@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "model_identifier" text;

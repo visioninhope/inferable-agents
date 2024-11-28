@@ -1,0 +1,1 @@
+ALTER TABLE "listeners" ADD COLUMN "description" varchar(1024);

@@ -1,0 +1,1 @@
+ALTER TABLE "embeddings" ADD COLUMN "raw_data_hash" varchar(1024) NOT NULL DEFAULT '1';

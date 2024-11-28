@@ -1,0 +1,1188 @@
+{
+  "id": "c0903220-aa27-40b2-932a-ea685f5dfd8f",
+  "prevId": "905d73db-e9ef-49be-b7a5-f58610550ac1",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.cluster_access_points": {
+      "name": "cluster_access_points",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cluster_access_points_cluster_id_clusters_id_fk": {
+          "name": "cluster_access_points_cluster_id_clusters_id_fk",
+          "tableFrom": "cluster_access_points",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cluster_access_points_cluster_id_name": {
+          "name": "cluster_access_points_cluster_id_name",
+          "columns": [
+            "cluster_id",
+            "name"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.clusters": {
+      "name": "clusters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "api_secret": {
+          "name": "api_secret",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cloud_enabled": {
+          "name": "cloud_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "predictive_retries_enabled": {
+          "name": "predictive_retries_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.embeddings": {
+      "name": "embeddings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "embedding_data": {
+          "name": "embedding_data",
+          "type": "vector(1536)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_data": {
+          "name": "raw_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_data_hash": {
+          "name": "raw_data_hash",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "embeddingIndex": {
+          "name": "embeddingIndex",
+          "columns": [
+            {
+              "expression": "embedding_data",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "vector_cosine_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "hnsw",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "embeddings_cluster_id_id_type_pk": {
+          "name": "embeddings_cluster_id_id_type_pk",
+          "columns": [
+            "cluster_id",
+            "id",
+            "type"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.external_endpoints": {
+      "name": "external_endpoints",
+      "schema": "",
+      "columns": {
+        "http_endpoint": {
+          "name": "http_endpoint",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_scraped_at": {
+          "name": "last_scraped_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scraped_raw_data": {
+          "name": "scraped_raw_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "generated_definition": {
+          "name": "generated_definition",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "headers": {
+          "name": "headers",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server": {
+          "name": "server",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enabled_operations": {
+          "name": "enabled_operations",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "external_endpoints_cluster_idx": {
+          "name": "external_endpoints_cluster_idx",
+          "columns": [
+            {
+              "expression": "cluster_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "external_endpoints_pkey": {
+          "name": "external_endpoints_pkey",
+          "columns": [
+            "cluster_id",
+            "name",
+            "type"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.external_integrations": {
+      "name": "external_integrations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "config": {
+          "name": "config",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "external_integrations_id_cluster_id": {
+          "name": "external_integrations_id_cluster_id",
+          "columns": [
+            "id",
+            "cluster_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.jobs": {
+      "name": "jobs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_hash": {
+          "name": "owner_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_fn": {
+          "name": "target_fn",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_args": {
+          "name": "target_args",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cache_key": {
+          "name": "cache_key",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_type": {
+          "name": "result_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "executing_machine_id": {
+          "name": "executing_machine_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remaining_attempts": {
+          "name": "remaining_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "resulted_at": {
+          "name": "resulted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_retrieved_at": {
+          "name": "last_retrieved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "function_execution_time_ms": {
+          "name": "function_execution_time_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timeout_interval_seconds": {
+          "name": "timeout_interval_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 300
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "predictive_retry_enabled": {
+          "name": "predictive_retry_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "predicted_to_be_retryable": {
+          "name": "predicted_to_be_retryable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "predicted_to_be_retryable_reason": {
+          "name": "predicted_to_be_retryable_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "predictive_retry_count": {
+          "name": "predictive_retry_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "auth_context": {
+          "name": "auth_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx1": {
+          "name": "idx1",
+          "columns": [
+            {
+              "expression": "owner_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "service",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx2": {
+          "name": "idx2",
+          "columns": [
+            {
+              "expression": "owner_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "service",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_fn",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "jobs_owner_hash_id": {
+          "name": "jobs_owner_hash_id",
+          "columns": [
+            "owner_hash",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "jobs_id_unique": {
+          "name": "jobs_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      }
+    },
+    "public.listeners": {
+      "name": "listeners",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "listeners_cluster_id": {
+          "name": "listeners_cluster_id",
+          "tableFrom": "listeners",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "listeners_id_cluster_id": {
+          "name": "listeners_id_cluster_id",
+          "columns": [
+            "id",
+            "cluster_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "listeners_id_unique": {
+          "name": "listeners_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      }
+    },
+    "public.machines": {
+      "name": "machines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "class": {
+          "name": "class",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_ping_at": {
+          "name": "last_ping_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sdk_version": {
+          "name": "sdk_version",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sdk_language": {
+          "name": "sdk_language",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'active'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "machines_id_cluster_id": {
+          "name": "machines_id_cluster_id",
+          "columns": [
+            "id",
+            "cluster_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.packaged_integrations": {
+      "name": "packaged_integrations",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "package_name": {
+          "name": "package_name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'latest'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "packaged_integrations_cluster_id_clusters_id_fk": {
+          "name": "packaged_integrations_cluster_id_clusters_id_fk",
+          "tableFrom": "packaged_integrations",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "packaged_integrations_cluster_id_package_name": {
+          "name": "packaged_integrations_cluster_id_package_name",
+          "columns": [
+            "cluster_id",
+            "package_name"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.predictive_retries_cache": {
+      "name": "predictive_retries_cache",
+      "schema": "",
+      "columns": {
+        "error_name": {
+          "name": "error_name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retryable": {
+          "name": "retryable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "predictive_retries_cache_error_name_error_message": {
+          "name": "predictive_retries_cache_error_name_error_message",
+          "columns": [
+            "error_name",
+            "error_message"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.services": {
+      "name": "services",
+      "schema": "",
+      "columns": {
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "queue_url": {
+          "name": "queue_url",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "definition": {
+          "name": "definition",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "json_schema": {
+          "name": "json_schema",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "services_cluster_id_clusters_id_fk": {
+          "name": "services_cluster_id_clusters_id_fk",
+          "tableFrom": "services",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "services_cluster_id_service": {
+          "name": "services_cluster_id_service",
+          "columns": [
+            "cluster_id",
+            "service"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_input_requests": {
+      "name": "workflow_input_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service": {
+          "name": "service",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "function": {
+          "name": "function",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_args": {
+          "name": "request_args",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_identifier": {
+          "name": "request_identifier",
+          "type": "varchar(1023)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_input_requests_workflow_id_cluster_id_workflows_id_cluster_id_fk": {
+          "name": "workflow_input_requests_workflow_id_cluster_id_workflows_id_cluster_id_fk",
+          "tableFrom": "workflow_input_requests",
+          "tableTo": "workflows",
+          "columnsFrom": [
+            "workflow_id",
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id",
+            "cluster_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflow_input_requests_workflow_id_id": {
+          "name": "workflow_input_requests_workflow_id_id",
+          "columns": [
+            "workflow_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflow_listeners": {
+      "name": "workflow_listeners",
+      "schema": "",
+      "columns": {
+        "listener_id": {
+          "name": "listener_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attached_at": {
+          "name": "attached_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflow_listeners_listener_id_cluster_id": {
+          "name": "workflow_listeners_listener_id_cluster_id",
+          "tableFrom": "workflow_listeners",
+          "tableTo": "listeners",
+          "columnsFrom": [
+            "listener_id",
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id",
+            "cluster_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "workflow_listeners_workflow_id_cluster_id": {
+          "name": "workflow_listeners_workflow_id_cluster_id",
+          "tableFrom": "workflow_listeners",
+          "tableTo": "workflows",
+          "columnsFrom": [
+            "workflow_id",
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id",
+            "cluster_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflow_listeners_listener_id_workflow_id_cluster_id": {
+          "name": "workflow_listeners_listener_id_workflow_id_cluster_id",
+          "columns": [
+            "listener_id",
+            "cluster_id",
+            "workflow_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.workflows": {
+      "name": "workflows",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cluster_id": {
+          "name": "cluster_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (6) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "checkpoint_data": {
+          "name": "checkpoint_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'pending'"
+        },
+        "auth_context": {
+          "name": "auth_context",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workflows_cluster_id_clusters_id_fk": {
+          "name": "workflows_cluster_id_clusters_id_fk",
+          "tableFrom": "workflows",
+          "tableTo": "clusters",
+          "columnsFrom": [
+            "cluster_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workflows_cluster_id_id": {
+          "name": "workflows_cluster_id_id",
+          "columns": [
+            "cluster_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

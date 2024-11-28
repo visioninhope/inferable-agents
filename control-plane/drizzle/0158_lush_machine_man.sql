@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "reasoning_traces" boolean DEFAULT true NOT NULL;

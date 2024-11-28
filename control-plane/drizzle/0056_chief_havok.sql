@@ -1,0 +1,1 @@
+ALTER TABLE "workflows" ADD COLUMN "checkpoint_data" text;

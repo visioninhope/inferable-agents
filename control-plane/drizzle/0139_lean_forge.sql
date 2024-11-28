@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_input_requests" ADD COLUMN "presented_options" text[];
