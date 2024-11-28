@@ -3,7 +3,9 @@ name: Update Changelog
 on:
   push:
     tags:
-      - "**/v*"
+      - '**'
+
+skip: []  # Allows `[skip ci]` commits
 
 jobs:
   generate_changelog:
