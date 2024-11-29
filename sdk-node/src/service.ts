@@ -7,7 +7,6 @@ import { executeFn, Result } from "./execute-fn";
 import { FunctionRegistration } from "./types";
 import { extractBlobs, validateFunctionArgs } from "./util";
 
-const MAX_CONSECUTIVE_POLL_FAILURES = 50;
 const DEFAULT_RETRY_AFTER_SECONDS = 10;
 
 export const log = debug("inferable:client:polling-agent");
@@ -72,25 +71,21 @@ export class Service {
   private async runLoop() {
     this.polling = true;
 
-    let failureCount = 0;
-    while (this.polling && failureCount < MAX_CONSECUTIVE_POLL_FAILURES) {
+    while (this.polling) {
       try {
         await this.pollIteration();
-        failureCount = 0;
       } catch (e) {
         log("Failed poll iteration", e);
-        failureCount++;
       }
+
       await new Promise((resolve) =>
         setTimeout(resolve, this.retryAfter * 1000),
       );
     }
 
-    this.polling = false;
     //@eslint-disable-next-line no-console
     console.error("Quitting polling service", {
       service: this.name,
-      failureCount,
     });
   }
 
