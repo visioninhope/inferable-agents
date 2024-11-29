@@ -125,11 +125,17 @@ export class Service {
       });
     }
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       pollResult.body.map(async (job) => {
         await this.processCall(job);
       }),
     );
+
+    if (results.length > 0) {
+      log("Completed poll iteration", {
+        results: results.map((r) => r.status),
+      });
+    }
   }
 
   private async processCall(call: CallMessage): Promise<void> {
