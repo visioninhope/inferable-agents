@@ -6,6 +6,10 @@ import {
 } from "./knowledge-artifacts";
 import { createCache } from "../../../../utilities/cache";
 import { getClusterDetails } from "../../../management";
+import {
+  buildCurrentDateTimeTool,
+  CURRENT_DATE_TIME_TOOL_NAME,
+} from "./date-time";
 
 const clusterSettingsCache = createCache<{
   enableKnowledgebase: boolean;
@@ -40,6 +44,8 @@ export const getClusterInternalTools = async (
   if (settings.enableKnowledgebase) {
     tools[ACCESS_KNOWLEDGE_ARTIFACTS_TOOL_NAME] = buildAccessKnowledgeArtifacts;
   }
+
+  tools[CURRENT_DATE_TIME_TOOL_NAME] = buildCurrentDateTimeTool;
 
   return tools;
 };

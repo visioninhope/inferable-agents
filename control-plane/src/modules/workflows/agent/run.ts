@@ -27,8 +27,9 @@ import {
   buildAccessKnowledgeArtifacts,
 } from "./tools/knowledge-artifacts";
 import { buildMockFunctionTool } from "./tools/mock-function";
-import { events } from "../../observability/events";
 import { getClusterInternalTools } from "./tools/cluster-internal-tools";
+import { buildCurrentDateTimeTool } from "./tools/date-time";
+import { CURRENT_DATE_TIME_TOOL_NAME } from "./tools/date-time";
 
 /**
  * Run a workflow from the most recent saved state
@@ -315,11 +316,16 @@ export const findRelevantTools = async (state: WorkflowAgentState) => {
   // If functions are explicitly attached, skip relevant tools search
   if (attachedFunctions.length > 0) {
     for (const tool of attachedFunctions) {
-      if (tool.toLowerCase().startsWith("inferable")) {
+      if (tool.toLowerCase().startsWith("inferable_")) {
         const internalToolName = tool.split("_")[1];
 
         if (internalToolName === ACCESS_KNOWLEDGE_ARTIFACTS_TOOL_NAME) {
           tools.push(await buildAccessKnowledgeArtifacts(workflow));
+          continue;
+        }
+
+        if (internalToolName === CURRENT_DATE_TIME_TOOL_NAME) {
+          tools.push(buildCurrentDateTimeTool());
           continue;
         }
       }
