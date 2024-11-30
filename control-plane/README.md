@@ -27,7 +27,7 @@ To run the control plane locally for development:
 
 1. Start the local resources required for development:
 ```bash
-docker compose -f docker-compose.dev.yml up
+docker compose up
 ```
 
 This will start:
