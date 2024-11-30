@@ -34,6 +34,7 @@ ENV SHORT_VERSION=$SHORT_VERSION
 COPY --from=build /build/ /app
 
 ENV NODE_ENV=production
+ENV ENVIRONMENT=prod
 
 EXPOSE 4000
 CMD [ "npm", "run", "start" ]

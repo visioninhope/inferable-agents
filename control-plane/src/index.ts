@@ -111,16 +111,16 @@ app.addHook("onRequest", (request, _reply, done) => {
 const startTime = Date.now();
 
 (async function start() {
-  logger.info("Starting server");
+  logger.info("Starting server", {
+    environment: env.ENVIRONMENT,
+    ee: env.EE_DEPLOYMENT,
+    headless: !!env.MANAGEMENT_API_SECRET
+  });
 
   if (env.ENVIRONMENT === "prod") {
-    await runMigrations().then(() => {
-      logger.info("Database migrated", { latency: Date.now() - startTime });
-    });
-  }
+    await runMigrations()
 
-  if (!env.EE_DEPLOYMENT) {
-    logger.info("Running in hobby mode");
+    logger.info("Database migrated", { latency: Date.now() - startTime });
   }
 
   await Promise.all([
@@ -130,14 +130,14 @@ const startTime = Date.now();
     workflows.start(),
     knowledge.start(),
     models.start(),
+    redis.start(),
     ...(env.EE_DEPLOYMENT
       ? [
           flagsmith?.getEnvironmentFlags(),
-          analytics.start(),
           customerTelemetry.start(),
+          analytics.start(),
           toolhouse.start(),
           externalCalls.start(),
-          redis.start(),
         ]
       : []),
   ])

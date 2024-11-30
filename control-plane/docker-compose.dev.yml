@@ -5,9 +5,9 @@ services:
     image: pgvector/pgvector:pg16
     container_name: postgres
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydb
+      POSTGRES_USER: inferable
+      POSTGRES_PASSWORD: inferable
+      POSTGRES_DB: inferable
     ports:
       - "5432:5432"
     volumes:
@@ -43,4 +43,6 @@ configs:
       queues {
         run-process {}
         run-generate-name {}
+        customer-telemetry {}
+        external-tool-call {}
       }

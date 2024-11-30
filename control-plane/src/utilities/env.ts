@@ -27,7 +27,7 @@ const envSchema = z
     LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
     ENABLE_FASTIFY_LOGGER: truthy.default(false),
 
-    MASTER_API_SECRET: z.string().optional(),
+    MANAGEMENT_API_SECRET: z.string().optional(),
 
     DATABASE_URL: z.string().url(),
     DATABASE_SSL_DISABLED: truthy.default(false),
@@ -36,24 +36,23 @@ const envSchema = z
 
     JOB_LONG_POLLING_TIMEOUT: z.number().default(15),
 
+    REDIS_URL: z.string().url(),
+
     ANTHROPIC_API_KEY: z.string().optional(),
     COHERE_API_KEY: z.string().optional(),
 
     SQS_RUN_PROCESS_QUEUE_URL: z.string(),
     SQS_RUN_GENERATE_NAME_QUEUE_URL: z.string(),
+    SQS_LEARNING_INGEST_QUEUE_URL: z.string().optional(),
+    SQS_CUSTOMER_TELEMETRY_QUEUE_URL: z.string(),
+    SQS_EXTERNAL_TOOL_CALL_QUEUE_URL: z.string(),
 
     SQS_BASE_QUEUE_URL: z.string().optional(),
 
     // Required in EE (Disabled by default)
     EE_DEPLOYMENT: truthy.default(false),
 
-    SQS_LEARNING_INGEST_QUEUE_URL: z.string().optional(),
-    SQS_CUSTOMER_TELEMETRY_QUEUE_URL: z.string().optional(),
-    SQS_EXTERNAL_TOOL_CALL_QUEUE_URL: z.string().optional(),
-
     APP_ORIGIN: z.string().url().optional(),
-
-    REDIS_URL: z.string().url().optional(),
 
     JWKS_URL: z.string().url().optional(),
     JWT_IGNORE_EXPIRATION: truthy.default(false),
@@ -71,15 +70,29 @@ const envSchema = z
     ANALYTICS_BUCKET_NAME: z.string().optional(),
   })
   .superRefine((value, ctx) => {
+    if (!value.MANAGEMENT_API_SECRET && !value.JWKS_URL) {
+      return ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "MANAGEMENT_API_SECRET or JWKS_URL is required",
+        path: ["MANAGEMENT_API_SECRET", "JWKS_URL"],
+      });
+    }
+
+    if (value.MANAGEMENT_API_SECRET) {
+      if (value.JWKS_URL) {
+        return ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "MANAGEMENT_API_SECRET can not be set with JWKS_URL (Headless mode only)",
+          path: ["MANAGEMENT_API_SECRET"],
+        });
+      }
+    }
+
     if (!value.EE_DEPLOYMENT) {
       return;
     }
     const EE_REQUIRED = [
-      "SQS_LEARNING_INGEST_QUEUE_URL",
-      "SQS_CUSTOMER_TELEMETRY_QUEUE_URL",
-      "SQS_EXTERNAL_TOOL_CALL_QUEUE_URL",
       "APP_ORIGIN",
-      "REDIS_URL",
       "JWKS_URL",
       "HYPERDX_API_KEY",
       "ROLLBAR_ACCESS_TOKEN",
@@ -88,14 +101,6 @@ const envSchema = z
       "POSTHOG_HOST",
       "ANALYTICS_BUCKET_NAME",
     ];
-
-    if (value.MASTER_API_SECRET) {
-      return ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "MASTER_API_SECRET can not be set for EE Deployment",
-        path: ["MASTER_API_SECRET"],
-      });
-    }
 
     for (const key of EE_REQUIRED) {
       //eslint-disable-next-line @typescript-eslint/no-explicit-any
