@@ -1,0 +1,38 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.base.yml
+      service: postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    extends:
+      file: docker-compose.base.yml
+      service: redis
+    ports:
+      - "6379:6379"
+
+  elasticmq:
+    extends:
+      file: docker-compose.base.yml
+      service: elasticmq
+    ports:
+      - "9324:9324"
+      - "9325:9325"
+
+volumes:
+  pgdata:
+  elasticmqdata:
+
+configs:
+  elasticmq_conf:
+    content: |
+      include classpath("application.conf")
+
+      queues {
+        run-process {}
+        run-generate-name {}
+        customer-telemetry {}
+        external-tool-call {}
+      }
