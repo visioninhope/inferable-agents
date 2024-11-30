@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<p align="center">
+  <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
+</p>
 
-## Getting Started
+# Inferable Next.js UI
 
-First, run the development server:
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The Inferable Web UI is a user interface for Inferable's control plane. It is open-source and self-hostable.
+
+<img src="https://github.com/inferablehq/inferable/blob/main/app/assets/screenshot.png" alt="Inferable UI" width="100%" style="border-radius: 10px" />
+
+
+### Local Development
+
+1. Start the control plane:
+
+To run the UI locally for development, you will need the control plane running. Please see the [Readme](https://github.com/inferablehq/inferable/blob/main/control-plane/README.md) for instructions on how to run the control plane locally.
+
+2. Populate environment variables:
+
+Development environment varaiables are managed in the `.env`.
+
+`.env.base` contains a base set of required environment variables. Copy `.env.base` to `.env`.
+
+```base
+cp .env.base .env
 ```
 
-Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
+You will need to populate the following environment variables in `.env`:
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Inferable relies on [Clerk](https://clerk.com/) for authentication. You can find your publishable key in the Clerk dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Start the Next.js development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Documentation
 
-## Learn More
+- [Inferable documentation](https://docs.inferable.ai/) contains all the information you need to get started with Inferable.
 
-To learn more about Next.js, take a look at the following resources:
+## Support
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## Contributing
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Contributions to the Inferable UI are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.

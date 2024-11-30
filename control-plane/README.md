@@ -89,4 +89,4 @@ For support or questions, please [create an issue in the repository](https://git
 
 ## Contributing
 
-Contributions to the Inferable NodeJs Client are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.
+Contributions to the Inferable Control Plane are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.
