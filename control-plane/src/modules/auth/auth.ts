@@ -113,17 +113,17 @@ export const plugin = fastifyPlugin(async (fastify: FastifyInstance) => {
 export const extractAuthState = async (
   token: string,
 ): Promise<Auth | undefined> => {
-  // Master Secret support (Hobby deployments only)
-  if (token && token === env.MASTER_API_SECRET) {
+  // Management Secret support (Hobby deployments only)
+  if (token && token === env.MANAGEMENT_API_SECRET) {
     // This is also validated on startup
     if (env.EE_DEPLOYMENT) {
-      throw new Error("Can not use master secret in EE deployment");
+      throw new Error("Can not use management secret in EE deployment");
     }
 
     return {
       type: "api",
-      entityId: "MASTER_API_SECRET",
-      organizationId: "MASTER",
+      entityId: "MANAGEMENT_API_SECRET",
+      organizationId: "ROOT",
       canAccess: async function () {
         return this;
       },
@@ -134,14 +134,14 @@ export const extractAuthState = async (
         return this;
       },
       isMachine: function () {
-        throw new AuthenticationError("Master API secret auth is not machine");
+        throw new AuthenticationError("Management API secret auth is not machine");
       },
       isClerk: function () {
-        throw new AuthenticationError("Master API secret auth is not clerk");
+        throw new AuthenticationError("Management API secret auth is not clerk");
       },
       isCustomerProvided: function () {
         throw new AuthenticationError(
-          "Master API secret auth is not customer provided",
+          "Management API secret auth is not customer provided",
         );
       },
       isAdmin: function () {
