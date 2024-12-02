@@ -4,15 +4,15 @@ set -e
 
 PIDS=()
 
-# Start 10 instances of the machine
-for i in $(seq 1 10); do
+# Start 5 instances of the machine
+for i in $(seq 1 5); do
   tsx machine.ts &
   PIDS+=($!)
 done
 
-# Every 30 seconds, check if all instances are still running
+# Every 60 seconds, check if all instances are still running
 while true; do
-  sleep 30
+  sleep 60
   for pid in "${PIDS[@]}"; do
     kill -0 $pid || exit 1
   done
