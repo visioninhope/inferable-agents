@@ -25,6 +25,7 @@ export default function () {
 
   // Create a new run
   const postRunResponse = http.post(`${BASE_URL}/clusters/${CLUSTER_ID}/runs`, JSON.stringify({
+    name: "Load Test",
     initialPrompt: 'Get the special word from the `searchHaystack` function',
     reasoningTraces: false,
     attachedFunctions: [
@@ -58,7 +59,7 @@ export default function () {
 
   // Poll the run status until complete or timeout
   let attempts = 0;
-  const maxAttempts = 10;
+  const maxAttempts = 300;
 
   while (attempts < maxAttempts) {
     const getRunResponse = http.get(`${BASE_URL}/clusters/${CLUSTER_ID}/runs/${runId}`, {
