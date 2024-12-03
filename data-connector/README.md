@@ -13,11 +13,11 @@ Inferable Data Connector is a bridge between your data systems and Inferable. Co
 
 ## Connectors
 
-- [x] [Postgres](./src/postgres.ts)
-- [x] [OpenAPI](./src/open-api.ts)
-- [ ] [GraphQL](./src/graphql.ts)
-- [ ] [MySQL](./src/mysql.ts)
-- [ ] [SQLite](./src/sqlite.ts)
+- [x] [Postgres](./src/postgres/postgres.ts)
+- [x] [OpenAPI](./src/open-api/open-api.ts)
+- [x] [GraphQL](./src/graphql/graphql.ts)
+- [ ] [MySQL](./src/mysql/mysql.ts)
+- [ ] [SQLite](./src/sqlite/sqlite.ts)
 
 ## Quick Start
 
@@ -109,6 +109,15 @@ Each connector is defined in the `config.connectors` array.
 <summary>OpenAPI Connector Configuration</summary>
 
 - `config.connectors[].specUrl`: The URL to your OpenAPI spec. Must be publicly accessible.
+- `config.connectors[].endpoint`: The endpoint to use. (e.g. `https://api.inferable.ai`)
+- `config.connectors[].defaultHeaders`: The default headers to use. (e.g. `{"Authorization": "Bearer <token>"}`)
+
+</details>
+
+<details>
+<summary>GraphQL Connector Configuration</summary>
+
+- `config.connectors[].schemaUrl`: The URL to your GraphQL schema. Must be publicly accessible.
 - `config.connectors[].endpoint`: The endpoint to use. (e.g. `https://api.inferable.ai`)
 - `config.connectors[].defaultHeaders`: The default headers to use. (e.g. `{"Authorization": "Bearer <token>"}`)
 
