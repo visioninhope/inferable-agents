@@ -17,14 +17,10 @@ Inferable Data Connector is a bridge between your data systems and Inferable. Co
 - [x] [OpenAPI](./src/open-api/open-api.ts)
 - [x] [GraphQL](./src/graphql/graphql.ts)
 - [x] [MySQL](./src/mysql/mysql.ts)
-<<<<<<< HEAD
 - [x] [SQLite](./src/sqlite/sqlite.ts)
 - [ ] [MongoDB](./src/mongodb/mongodb.ts)
 - [ ] [Big Query](./src/big-query/big-query.ts)
 - [ ] [Google Sheets](./src/google-sheets/google-sheets.ts)
-=======
-- [ ] [SQLite](./src/sqlite/sqlite.ts)
->>>>>>> origin/main
 
 ## Quick Start
 
@@ -138,7 +134,6 @@ Each connector is defined in the `config.connectors` array.
 
 </details>
 
-<<<<<<< HEAD
 <details>
 <summary>SQLite Connector Configuration</summary>
 
@@ -146,8 +141,30 @@ Each connector is defined in the `config.connectors` array.
 
 </details>
 
-=======
->>>>>>> origin/main
+<details>
+<summary>GraphQL Connector Configuration</summary>
+
+- `config.connectors[].schemaUrl`: The URL to your GraphQL schema. Must be publicly accessible.
+- `config.connectors[].endpoint`: The endpoint to use. (e.g. `https://api.inferable.ai`)
+- `config.connectors[].defaultHeaders`: The default headers to use. (e.g. `{"Authorization": "Bearer <token>"}`)
+
+</details>
+
+<details>
+<summary>MySQL Connector Configuration</summary>
+
+- `config.connectors[].connectionString`: The connection string to your database. (e.g. `mysql://root:mysql@localhost:3306/mysql`)
+- `config.connectors[].schema`: The schema to use. (e.g. `mysql`)
+
+</details>
+
+<details>
+<summary>SQLite Connector Configuration</summary>
+
+- `config.connectors[].filePath`: The path to your SQLite database file. (e.g. `/path/to/your/database.sqlite`)
+
+</details>
+
 ### config.privacyMode
 
 When enabled (`config.privacyMode=1`), raw data is never sent to the model. Instead:
@@ -201,6 +218,12 @@ A: By default, yes, but enabling `config.privacyMode` ensures that only database
 
 **Q: Where do the queries execute?**
 A: All queries execute within your dockerized environment. Neither the model nor the Inferable Control Plane have direct query execution capabilities.
+
+## Failure Modes
+
+**Context Window Limitations**: The connector may face challenges with large database schemas, large OpenAPI specs, or large GraphQL schemas. In such cases, you may need to provide multiple subsets of the schema to the model via multiple `config.connectors` entries.
+
+**Return Data Limitations**: The connector may face latency issues with large data sets. In such cases, turning on `config.privacyMode` will prevent the model from seeing the raw data, and instead return the data directly to the user.
 
 ## Contributing
 
