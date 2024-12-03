@@ -16,7 +16,7 @@ Inferable Data Connector is a bridge between your data systems and Inferable. Co
 - [x] [Postgres](./src/postgres/postgres.ts)
 - [x] [OpenAPI](./src/open-api/open-api.ts)
 - [x] [GraphQL](./src/graphql/graphql.ts)
-- [ ] [MySQL](./src/mysql/mysql.ts)
+- [x] [MySQL](./src/mysql/mysql.ts)
 - [ ] [SQLite](./src/sqlite/sqlite.ts)
 
 ## Quick Start
@@ -120,6 +120,14 @@ Each connector is defined in the `config.connectors` array.
 - `config.connectors[].schemaUrl`: The URL to your GraphQL schema. Must be publicly accessible.
 - `config.connectors[].endpoint`: The endpoint to use. (e.g. `https://api.inferable.ai`)
 - `config.connectors[].defaultHeaders`: The default headers to use. (e.g. `{"Authorization": "Bearer <token>"}`)
+
+</details>
+
+<details>
+<summary>MySQL Connector Configuration</summary>
+
+- `config.connectors[].connectionString`: The connection string to your database. (e.g. `mysql://root:mysql@localhost:3306/mysql`)
+- `config.connectors[].schema`: The schema to use. (e.g. `mysql`)
 
 </details>
 
