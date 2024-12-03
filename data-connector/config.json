@@ -7,6 +7,14 @@
       "name": "myPostgres",
       "connectionString": "process.env.POSTGRES_URL",
       "schema": "process.env.POSTGRES_SCHEMA"
+    },
+    {
+      "type": "open-api",
+      "specUrl": "process.env.OPENAPI_SPEC_URL",
+      "endpoint": "process.env.SERVER_URL",
+      "defaultHeaders": {
+        "Authorization": "process.env.SERVER_AUTH_HEADER"
+      }
     }
   ]
 }
