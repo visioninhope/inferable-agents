@@ -1,31 +1,31 @@
 import assert from "assert";
 import { approvalRequest, blob, ContextInput, Inferable } from "inferable";
-import pg from "pg";
+import sqlite3 from "sqlite3";
+import { Database, open } from "sqlite";
 import { z } from "zod";
 import crypto from "crypto";
 import type { DataConnector } from "../types";
 
-export class PostgresClient implements DataConnector {
-  private client: pg.Client | null = null;
+export class SQLiteClient implements DataConnector {
+  private db: Database | null = null;
   private initialized = false;
 
   constructor(
     private params: {
       name?: string;
-      schema: string;
-      connectionString: string;
+      filePath: string;
       privacyMode: boolean;
       paranoidMode: boolean;
     },
   ) {
-    assert(params.schema, "Schema parameter is required");
+    assert(params.filePath, "File path parameter is required");
   }
 
   public initialize = async () => {
     try {
-      const client = await this.getClient();
-      const res = await client.query(`SELECT NOW() as now`);
-      console.log(`Initial probe successful: ${res.rows[0].now}`);
+      const db = await this.getConnection();
+      const res = await db.get("SELECT datetime('now') as now");
+      console.log(`Initial probe successful: ${res?.now}`);
       if (this.params.privacyMode) {
         console.log(
           "Privacy mode is enabled, table data will not be sent to the model.",
@@ -42,55 +42,49 @@ export class PostgresClient implements DataConnector {
   };
 
   private handleSigterm = async () => {
-    if (this.client) {
-      await this.client.end();
+    if (this.db) {
+      await this.db.close();
     }
   };
 
-  private getClient = async () => {
-    if (!this.client) {
-      this.client = new pg.Client({
-        connectionString: this.params.connectionString,
-        ssl: false,
+  private getConnection = async () => {
+    if (!this.db) {
+      this.db = await open({
+        filename: this.params.filePath,
+        driver: sqlite3.Database,
       });
-
-      await this.client.connect();
-
-      return this.client;
+      return this.db;
     }
 
-    return this.client;
+    return this.db;
   };
 
   private getAllTables = async () => {
-    const client = await this.getClient();
-    const res = await client.query(
-      "SELECT * FROM pg_catalog.pg_tables WHERE schemaname = $1",
-      [this.params.schema],
+    const db = await this.getConnection();
+    const rows = await db.all(
+      "SELECT name as tablename FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
     );
-    return res.rows;
+    return rows;
   };
 
-  getPostgresContext = async () => {
+  getSqliteContext = async () => {
     if (!this.initialized) throw new Error("Database not initialized");
-    const client = await this.getClient();
+    const db = await this.getConnection();
     const tables = await this.getAllTables();
 
     const context: any[] = [];
 
     for (const table of tables) {
-      const sample = await client.query(
-        `SELECT * FROM ${this.params.schema}.${table.tablename} LIMIT 1`,
-      );
+      const rows = await db.all(`SELECT * FROM ${table.tablename} LIMIT 1`);
 
-      if (sample.rows.length > 0) {
-        const columns = Object.keys(sample.rows[0]);
+      if (rows.length > 0) {
+        const columns = Object.keys(rows[0]);
         const tableContext = {
           tableName: table.tablename.substring(0, 100),
           columns: columns.map((col) => col.substring(0, 100)),
           sampleData: this.params.privacyMode
             ? []
-            : sample.rows.map((row) =>
+            : rows.map((row) =>
                 Object.values(row).map((value) =>
                   String(value).substring(0, 50),
                 ),
@@ -109,10 +103,7 @@ export class PostgresClient implements DataConnector {
     return context;
   };
 
-  executePostgresQuery = async (
-    input: { query: string },
-    ctx: ContextInput,
-  ) => {
+  executeSqliteQuery = async (input: { query: string }, ctx: ContextInput) => {
     if (this.params.paranoidMode) {
       if (!ctx.approved) {
         console.log("Query requires approval");
@@ -123,8 +114,8 @@ export class PostgresClient implements DataConnector {
     }
 
     if (!this.initialized) throw new Error("Database not initialized");
-    const client = await this.getClient();
-    const res = await client.query(input.query);
+    const db = await this.getConnection();
+    const rows = await db.all(input.query);
 
     if (this.params.privacyMode) {
       return {
@@ -133,37 +124,36 @@ export class PostgresClient implements DataConnector {
         blob: blob({
           name: "Results",
           type: "application/json",
-          data: res.rows,
+          data: rows,
         }),
       };
     }
 
-    return res.rows;
+    return rows;
   };
 
-  private connectionStringHash = () => {
+  private filePathHash = () => {
     return crypto
       .createHash("sha256")
-      .update(this.params.connectionString)
+      .update(this.params.filePath)
       .digest("hex")
       .substring(0, 8);
   };
 
   createService = (client: Inferable) => {
     const service = client.service({
-      name:
-        this.params.name ?? `postgres_database_${this.connectionStringHash()}`,
+      name: this.params.name ?? `sqlite_database_${this.filePathHash()}`,
     });
 
     service.register({
-      name: "getPostgresContext",
-      func: this.getPostgresContext,
+      name: "getSqliteContext",
+      func: this.getSqliteContext,
       description: "Gets the schema of the database.",
     });
 
     service.register({
-      name: "executePostgresQuery",
-      func: this.executePostgresQuery,
+      name: "executeSqliteQuery",
+      func: this.executeSqliteQuery,
       description:
         "Executes a raw SQL query. If this fails, you need to getContext to learn the schema first.",
       schema: {
