@@ -2,6 +2,8 @@
 
 Inferable Data Connector is a bridge between your data systems and [Inferable](https://inferable.ai). Configure your data sources in a json file and start conversing with your data in natural language. Works locally, and in any dockerized environment allowing connection to private resources (DB connection / API endpoints) without exposing them to the public internet.
 
+[![Data Connector](https://cdn.loom.com/sessions/thumbnails/0252ba9f5d924eb9bd702386b937cd46-542353fc25558528-full-play.gif)](https://www.loom.com/share/0252ba9f5d924eb9bd702386b937cd46)
+
 ## Features
 
 - 🔐 **Secure Credential Handling**: Credentials (DB connection strings, API keys, etc.) never leave your environment.
@@ -123,7 +125,7 @@ docker run -e INFERABLE_API_SECRET="sk_xxxx" \
 ## Mounting with Docker Compose
 
 ```yaml
-version: '3'
+version: "3"
 services:
   data-connector:
     image: inferable/data-connector:latest
