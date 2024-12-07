@@ -1,4 +1,4 @@
-import { Inferable } from "./inferable";
+import { Inferable } from "./Inferable";
 import { z } from "zod";
 import { TEST_ENDPOINT } from "./tests/utils";
 import { TEST_API_SECRET } from "./tests/utils";
