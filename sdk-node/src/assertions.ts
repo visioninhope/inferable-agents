@@ -30,7 +30,7 @@ export async function assertRun<T>({
   assertionsPassed: boolean;
 }> {
   const results = await Promise.allSettled(
-    assertions.map((a) => a(result, functionCalls)),
+    assertions.map(async (a) => await a(result, functionCalls)),
   );
 
   const hasRejections = results.some((r) => r.status === "rejected");
@@ -38,7 +38,14 @@ export async function assertRun<T>({
   if (hasRejections) {
     await client.createMessage({
       body: {
-        message: `You attempted to return a result, but I have determined the result is possibly incorrect due to failing assertions.`,
+        message: [
+          `You attempted to return a result, but I have determined the result is possibly incorrect due to failing assertions.`,
+          `<failures>`,
+          ...results
+            .filter((r) => r.status === "rejected")
+            .map((r) => r.reason),
+          `</failures>`,
+        ].join("\n"),
         type: "human",
       },
       params: {

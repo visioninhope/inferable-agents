@@ -23,7 +23,7 @@ import {
   validateFunctionSchema,
   validateServiceName,
 } from "./util";
-import { assert, Assertions, assertRun } from "./assertions";
+import { Assertions, assertRun } from "./assertions";
 
 // Custom json formatter
 debug.formatters.J = (json) => {
