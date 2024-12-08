@@ -1,15 +1,15 @@
+import { and, desc, eq, gte, SQL, sql } from "drizzle-orm";
 import { ulid } from "ulid";
+import { NotFoundError } from "../../utilities/errors";
 import { db, events as eventsTable } from "../data";
 import { logger } from "./logger";
-import { eq, and, gte, SQL, desc, or, sql } from "drizzle-orm";
-import { NotFoundError } from "../../utilities/errors";
 
 export type EventTypes =
   | "jobCreated"
   | "jobAcknowledged"
   | "jobStatusRequest"
-  | "jobResulted"
-  | "jobResultedButNotPersisted"
+  | "functionResulted"
+  | "functionResultedButNotPersisted"
   | "jobStalled"
   | "jobStalledTooManyTimes"
   | "jobRecovered"
@@ -18,21 +18,15 @@ export type EventTypes =
   | "machineStalled"
   | "machineResourceProbe"
   | "modelInvocation"
-  | "functionInvocation"
-  | "encryptedAgentMessage"
-  | "workflowScheduleCreated"
-  | "workflowScheduleRemoved"
-  | "listenerAttached"
-  | "listenerDetached"
-  | "listenerNotificationReceived"
   | "humanMessage"
   | "systemMessage"
   | "agentMessage"
-  | "agentTool"
-  | "agentToolError"
+  | "callingFunction"
+  | "functionErrored"
   | "workflowFeedbackSubmitted"
   | "resultSummarized"
-  | "knowledgeArtifactsAccessed";
+  | "knowledgeArtifactsAccessed"
+  | "functionRegistrySearchCompleted";
 
 type Event = {
   clusterId: string;
@@ -75,6 +69,8 @@ type Event = {
     originalResultSize?: number;
     summarySize?: number;
     artifacts?: string[];
+    duration?: number;
+    tools?: string[];
   };
 };
 
@@ -88,7 +84,7 @@ export const userAttentionLevels = {
 const typeToUserAttentionLevel = {
   jobCreated: 10,
   jobAcknowledged: 10,
-  jobResulted: 10,
+  functionResulted: 10,
   jobStalled: 30,
   jobStalledTooManyTimes: 40,
   jobRecovered: 30,
@@ -97,8 +93,8 @@ const typeToUserAttentionLevel = {
   machineResourceProbe: 10,
   modelInvocation: 10,
   functionInvocation: 10,
-  agentTool: 10,
-  agentToolError: 10,
+  callingFunction: 10,
+  functionErrored: 10,
   resultSummarized: 20,
   knowledgeArtifactsAccessed: 20,
 } as const;
@@ -243,6 +239,38 @@ export const getActivityByWorkflowIdForUserAttentionLevel = async (params: {
           eventsTable.attention_level,
           userAttentionLevels[params.userAttentionLevel],
         ),
+      ),
+    )
+    .limit(100)
+    .orderBy(desc(eventsTable.created_at));
+
+  return results;
+};
+
+export const getActivityForTimeline = async (params: {
+  clusterId: string;
+  runId: string;
+  after?: string;
+}) => {
+  const results = await db
+    .select({
+      id: eventsTable.id,
+      clusterId: eventsTable.cluster_id,
+      type: eventsTable.type,
+      jobId: eventsTable.job_id,
+      machineId: eventsTable.machine_id,
+      service: eventsTable.service,
+      createdAt: eventsTable.created_at,
+      targetFn: eventsTable.target_fn,
+      resultType: eventsTable.result_type,
+      status: eventsTable.status,
+      workflowId: eventsTable.run_id,
+    })
+    .from(eventsTable)
+    .where(
+      and(
+        eq(eventsTable.cluster_id, params.clusterId),
+        eq(eventsTable.run_id, params.runId),
       ),
     )
     .limit(100)
