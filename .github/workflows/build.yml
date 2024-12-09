@@ -23,6 +23,7 @@ jobs:
       sdk_dotnet: ${{ steps.filter.outputs.sdk_dotnet }}
       sdk_go: ${{ steps.filter.outputs.sdk_go }}
       sdk_react: ${{ steps.filter.outputs.sdk_react }}
+      assistant_ui: ${{ steps.filter.outputs.assistant_ui }}
       cli: ${{ steps.filter.outputs.cli }}
       control_plane: ${{ steps.filter.outputs.control_plane }}
       data_connector: ${{ steps.filter.outputs.data_connector }}
@@ -48,6 +49,8 @@ jobs:
               - 'sdk-go/**'
             sdk_react:
               - 'sdk-react/**'
+            assistant_ui:
+              - 'assistant-ui/**'
             cli:
               - 'cli/**'
             control_plane:
