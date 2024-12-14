@@ -25,23 +25,13 @@ import {
 import { createErrorToast } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { ClientInferResponseBody, ClientInferResponses } from "@ts-rest/core";
-import { formatRelative } from "date-fns";
+import { formatDistance, formatRelative } from "date-fns";
 import { AppWindowIcon, Layers } from "lucide-react";
 import ToolContextButton from "./chat/ToolContextButton";
 import { DeadGrayCircle, DeadRedCircle, LiveGreenCircle } from "./circles";
 import ErrorDisplay from "./error-display";
 import { EventsOverlayButton } from "./events-overlay";
 import { ServerConnectionStatus } from "./server-connection-pane";
-
-export type Service = {
-  name: string;
-  description?: string;
-  functions?: {
-    name: string;
-    description?: string;
-    schema?: string;
-  }[];
-};
 
 function toServiceName(name: string) {
   return <span>{name}</span>;
@@ -59,7 +49,7 @@ function ServiceCard({
   service,
   clusterId,
 }: {
-  service: Service;
+  service: ClientInferResponseBody<typeof contract.listServices, 200>[number];
   clusterId: string;
 }) {
   return (
@@ -81,11 +71,12 @@ function ServiceCard({
           </div>
         </div>
       </div>
-      <Table>
+      <Table className="text-sm">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-1/3">Function</TableHead>
-            <TableHead className="w-2/3">Description</TableHead>
+            <TableHead className="w-1/4">Function</TableHead>
+            <TableHead className="w-2/4">Description</TableHead>
+            <TableHead className="w-1/4">Last Ping</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -93,7 +84,7 @@ function ServiceCard({
             ?.sort((a, b) => a.name.localeCompare(b.name))
             .map((func) => (
               <TableRow key={func.name}>
-                <TableCell className="w-1/3">
+                <TableCell className="w-1/4">
                   <div className="flex items-center space-x-2">
                     <span className="font-semibold text-sm">
                       {toFunctionName(func.name, service.name)}
@@ -105,8 +96,17 @@ function ServiceCard({
                     />
                   </div>
                 </TableCell>
-                <TableCell className="w-2/3">
+                <TableCell className="w-1/4">
                   {func.description || "No description"}
+                </TableCell>
+                <TableCell className="w-2/4 text-muted-foreground">
+                  {new Date(service.timestamp) > new Date() ? (
+                    <p className="text-sm text-muted-foreground">
+                      Permanent Sync
+                    </p>
+                  ) : (
+                    formatDistance(new Date(service.timestamp), new Date())
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -219,8 +219,6 @@ export function ClusterDetails({
     (m) => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
   ).length;
 
-  const isHealthy = liveMachineCount > 0 && services.length > 0;
-
   return (
     <div className="flex flex-col space-y-2 w-[160px]">
       <Sheet>
@@ -230,7 +228,11 @@ export function ClusterDetails({
             className="border bg-white hover:bg-gray-50 w-full h-10 px-3 justify-start relative"
           >
             <div className="absolute -top-1 right-0">
-              {isHealthy ? <SmallLiveGreenCircle /> : <SmallDeadRedCircle />}
+              {liveMachineCount > 0 ? (
+                <SmallLiveGreenCircle />
+              ) : (
+                <SmallDeadRedCircle />
+              )}
             </div>
             <div className="flex items-center gap-2 text-sm w-full">
               <div className="h-6 w-6 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">
@@ -273,7 +275,11 @@ export function ClusterDetails({
             className="border bg-white hover:bg-gray-50 w-full h-10 px-3 justify-start relative"
           >
             <div className="absolute -top-1 right-0">
-              {isHealthy ? <SmallLiveGreenCircle /> : <SmallDeadRedCircle />}
+              {services.length > 0 ? (
+                <SmallLiveGreenCircle />
+              ) : (
+                <SmallDeadRedCircle />
+              )}
             </div>
             <div className="flex items-center gap-2 text-sm w-full">
               <div className="h-6 w-6 shrink-0 rounded-full bg-gray-100 flex items-center justify-center">

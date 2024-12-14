@@ -3,9 +3,7 @@ import { ulid } from "ulid";
 import * as errors from "../utilities/errors";
 import * as data from "./data";
 import { randomName } from "./names";
-import {
-  storedServiceDefinitionSchema,
-} from "./service-definitions";
+import { storedServiceDefinitionSchema } from "./service-definitions";
 import { VersionedTexts } from "./versioned-text";
 
 export const getClusters = async ({
@@ -187,25 +185,6 @@ export const getClusterDetails = async ({
     enableRunConfigs: cluster.enableRunConfigs,
     enableKnowledgebase: cluster.enableKnowledgebase,
   };
-};
-
-export const getClusterServices = async ({
-  clusterId,
-}: {
-  clusterId: string;
-}) => {
-  const services = await data.db
-    .select({
-      definition: data.services.definition,
-    })
-    .from(data.services)
-    .where(eq(data.services.cluster_id, clusterId));
-
-  const serviceDefinitions = storedServiceDefinitionSchema.parse(
-    services.map((s) => s.definition),
-  );
-
-  return serviceDefinitions;
 };
 
 export const getClusterMachines = async ({
