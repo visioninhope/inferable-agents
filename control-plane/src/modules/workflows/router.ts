@@ -70,20 +70,6 @@ export const runsRouter = initServer().router(
       await auth.canAccess({ cluster: { clusterId } });
       auth.canCreate({ run: true });
 
-      // TODO: Remove once use of deprecated fields is removed
-      if (body.config) {
-        logger.info("Depreacted `run.config` provided in call to createRun");
-        body.configId = body.configId ?? body.config.id;
-        body.input = body.input ?? body.config.input;
-      }
-
-      // TODO: Remove once use of deprecated fields is removed
-      if (body.template) {
-        logger.info("Depreacted `run.template` provided in call to createRun");
-        body.configId = body.configId ?? body.template.id;
-        body.input = body.input ?? body.template.input;
-      }
-
       if (!body.initialPrompt && !body.configId) {
         return {
           status: 400,

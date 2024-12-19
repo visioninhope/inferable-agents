@@ -543,23 +543,9 @@ export const definition = {
           "Structured input arguments to merge with the initial prompt. The schema must match the run configuration input schema if defined",
         )
         .optional(),
-      config: z
-        .object({
-          id: z.string().describe("DEPRECATED"),
-          input: z.object({}).passthrough().describe("DEPRECATED").optional(),
-        })
-        .describe("DEPRECATED")
-        .optional(),
       context: anyObject
         .optional()
         .describe("Additional context to propogate to all calls in the run"),
-      template: z
-        .object({
-          id: z.string().describe("DEPRECATED"),
-          input: z.object({}).passthrough().optional().describe("DEPRECATED"),
-        })
-        .optional()
-        .describe("DEPRECATED"),
       reasoningTraces: z
         .boolean()
         .default(true)
