@@ -68,6 +68,12 @@ export const integrationSchema = z.object({
     })
     .optional()
     .nullable(),
+  tavily: z
+    .object({
+      apiKey: z.string(),
+    })
+    .optional()
+    .nullable(),
 });
 
 export const genericMessageDataSchema = z
@@ -340,6 +346,7 @@ export const definition = {
         .describe(
           "Enable additional logging (Including prompts and results) for use by Inferable support",
         ),
+      enableCustomAuth: z.boolean().optional(),
       enableRunConfigs: z.boolean().optional(),
       enableKnowledgebase: z.boolean().optional(),
     }),
@@ -358,6 +365,7 @@ export const definition = {
         additionalContext: VersionedTextsSchema.nullable(),
         createdAt: z.date(),
         debug: z.boolean(),
+        enableCustomAuth: z.boolean(),
         enableRunConfigs: z.boolean(),
         enableKnowledgebase: z.boolean(),
         lastPingAt: z.date().nullable(),
@@ -535,29 +543,9 @@ export const definition = {
           "Structured input arguments to merge with the initial prompt. The schema must match the run configuration input schema if defined",
         )
         .optional(),
-      config: z
-        .object({
-          id: z.string().describe("DEPRECATED"),
-          input: z
-            .object({})
-            .passthrough()
-            .describe(
-              "DEPRECATED",
-            )
-            .optional(),
-        })
-        .describe("DEPRECATED")
-        .optional(),
       context: anyObject
         .optional()
         .describe("Additional context to propogate to all calls in the run"),
-      template: z
-        .object({
-          id: z.string().describe("DEPRECATED"),
-          input: z.object({}).passthrough().optional().describe("DEPRECATED"),
-        })
-        .optional()
-        .describe("DEPRECATED"),
       reasoningTraces: z
         .boolean()
         .default(true)
@@ -565,7 +553,7 @@ export const definition = {
         .describe("Enable reasoning traces"),
       callSummarization: z
         .boolean()
-        .default(true)
+        .default(false)
         .optional()
         .describe("Enable summarization of oversized call results"),
       interactive: z
@@ -895,6 +883,9 @@ export const definition = {
     headers: z.object({
       authorization: z.string(),
     }),
+    query: z.object({
+      limit: z.coerce.number().min(10).max(50).default(50),
+    }),
     responses: {
       200: z.array(
         z.object({
@@ -930,6 +921,7 @@ export const definition = {
               }),
             )
             .optional(),
+          timestamp: z.date(),
         }),
       ),
     },
@@ -1093,7 +1085,6 @@ export const definition = {
         attachedFunctions: z.array(z.string()),
         resultSchema: anyObject.nullable(),
         inputSchema: anyObject.nullable(),
-        public: z.boolean(),
         createdAt: z.date(),
         updatedAt: z.date(),
         versions: z.array(
@@ -1105,7 +1096,6 @@ export const definition = {
             attachedFunctions: z.array(z.string()),
             resultSchema: anyObject.nullable(),
             inputSchema: anyObject.nullable(),
-            public: z.boolean(),
           }),
         ),
       }),
@@ -1134,7 +1124,6 @@ export const definition = {
       attachedFunctions: z.array(z.string()).optional(),
       resultSchema: anyObject.optional(),
       inputSchema: z.object({}).passthrough().optional().nullable(),
-      public: z.boolean(),
     }),
     responses: {
       201: z.object({ id: z.string() }),
@@ -1162,7 +1151,6 @@ export const definition = {
       attachedFunctions: z.array(z.string()).optional(),
       resultSchema: z.object({}).passthrough().optional().nullable(),
       inputSchema: z.object({}).passthrough().optional().nullable(),
-      public: z.boolean(),
     }),
     responses: {
       200: z.object({
@@ -1514,6 +1502,22 @@ export const definition = {
     pathParams: z.object({
       clusterId: z.string(),
     }),
+  },
+  getServerStats: {
+    method: "GET",
+    path: "/stats",
+    responses: {
+      200: z.object({
+        functionCalls: z.object({
+          count: z.number(),
+        }),
+        tokenUsage: z.object({
+          input: z.number(),
+          output: z.number(),
+        }),
+        refreshedAt: z.number(),
+      }),
+    },
   },
 } as const;
 

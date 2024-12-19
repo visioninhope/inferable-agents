@@ -308,10 +308,7 @@ describe("Inferable SDK End to End Test", () => {
       });
 
       expect(result).toMatchObject({
-        success: true,
-        data: {
-          capital: "Paris",
-        },
+        capital: "Paris",
       });
     });
   });
