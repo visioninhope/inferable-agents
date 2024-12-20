@@ -24,6 +24,7 @@ import { DebugEvent } from "./debug-event";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
 import { Blob } from "./chat/blob";
+import { Strait } from "next/font/google";
 
 const messageSkeleton = (
   <div className="flex flex-col items-start space-y-4 p-4" key="skeleton-0">
@@ -93,7 +94,7 @@ export function Run({
     200
   > | null>(null);
 
-  const [runMetadata, setRunMetadata] = useState<ClientInferResponseBody<
+  const [run, setRun] = useState<ClientInferResponseBody<
     typeof contract.getRun,
     200
   > | null>(null);
@@ -111,7 +112,7 @@ export function Run({
       });
 
       if (result.status === 200) {
-        setRunMetadata(result.body);
+        setRun(result.body);
       }
     }
 
@@ -346,87 +347,132 @@ export function Run({
         timestamp: new Date(a.createdAt).getTime(),
       })) || [];
 
-  const metadataHeader = runMetadata
+  const metadataOptionsHeader = run
     ? {
         element: (
           <div className="bg-white border-b px-4 py-2 mb-4">
             <div className="flex flex-col space-y-2">
               <div className="flex items-center space-x-2">
-                {runMetadata.test ? (
-                  <div className="bg-purple-50 p-1.5 rounded">
+                {run.test ? (
+                  <div className="bg-purple-50 p-2 rounded">
                     <TestTube2Icon className="h-4 w-4 text-purple-500" />
                   </div>
                 ) : (
-                  <div className="bg-blue-50 p-1.5 rounded">
+                  <div className="bg-blue-50 p-2 rounded">
                     <WorkflowIcon className="h-4 w-4 text-blue-500" />
                   </div>
                 )}
-                <span className="text-sm font-medium">
-                  {runMetadata.test ? "Test Run" : "Run"}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {run.test ? "Test Run" : "Run"}
+                  </span>
+                  <p className="text-xs text-gray-400">{run.id}</p>
+                </div>
               </div>
 
-              {runMetadata.metadata &&
-                Object.entries(runMetadata.metadata).length > 0 && (
-                  <div className="flex flex-col space-y-1">
-                    {Object.entries(runMetadata.metadata).map(
-                      ([key, value]) => (
-                        <div
-                          key={key}
-                          className="bg-gray-100 px-2 py-0.5 rounded text-xs w-fit"
-                        >
-                          {key}: {value}
-                        </div>
-                      )
-                    )}
+              {run.metadata && Object.keys(run.metadata).length > 0 && (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-xs font-medium text-gray-500">
+                    Metadata
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(run.metadata).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="bg-gray-100 px-2 py-0.5 rounded text-xs"
+                        title={`${key}: ${value}`}
+                      >
+                        {key}: {value}
+                      </div>
+                    ))}
                   </div>
-                )}
-
-              <div className="text-xs text-gray-500">
-                <span className="font-medium">Functions:</span>{" "}
-                {runMetadata.attachedFunctions &&
-                runMetadata.attachedFunctions.length > 0 ? (
-                  <span className="font-mono">
-                    {runMetadata.attachedFunctions.join(", ")}
-                  </span>
-                ) : (
-                  <span>
-                    Full access including{" "}
-                    <a
-                      className="text-blue-500 hover:underline"
-                      href="https://docs.inferable.ai/pages/standard-lib"
-                    >
-                      Standard Library
-                    </a>
-                  </span>
-                )}
-              </div>
-
-              {runMetadata.userId && (
-                <div className="text-xs text-gray-500">
-                  <span className="font-medium">User Context:</span>{" "}
-                  <span
-                    className="font-mono"
-                    title={runMetadata.userId}
-                    style={{
-                      maxWidth: "100px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {runMetadata.userId}
-                  </span>
                 </div>
               )}
 
-              {runMetadata.status === "failed" && (
+              {run.context && Object.keys(run.context).length > 0 && (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-xs font-medium text-gray-500">
+                    Context
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(run.context).map(([key, value]) => {
+                      const displayValue =
+                        typeof value === "string" && value.length > 50
+                          ? value.slice(0, 47) + "..."
+                          : JSON.stringify(value);
+                      return (
+                        <div
+                          key={key}
+                          className="bg-gray-100 px-2 py-0.5 rounded text-xs"
+                          title={`${key}: ${JSON.stringify(value)}`}
+                        >
+                          {key}: {displayValue}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {run.attachedFunctions && run.attachedFunctions.length > 0 ? (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-xs font-medium text-gray-500">
+                    Functions
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {run.attachedFunctions.map((fn) => (
+                      <div
+                        key={fn}
+                        className="bg-gray-100 px-2 py-0.5 rounded text-xs font-mono"
+                        title={fn}
+                      >
+                        {fn}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-xs font-medium text-gray-500">
+                    Functions
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    <div className="py-0.5 rounded text-xs text-gray-500">
+                      Full access including{" "}
+                      <a
+                        className="text-blue-500 hover:underline"
+                        href="https://docs.inferable.ai/pages/standard-lib"
+                      >
+                        Standard Library
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {run.userId && (
+                <div className="flex flex-col space-y-1">
+                  <span className="text-xs font-medium text-gray-500">
+                    User Context
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    <div
+                      className="bg-gray-100 px-2 py-0.5 rounded text-xs"
+                      title={`Id: ${run.userId}`}
+                    >
+                      Id: <span className="font-mono">{run.userId}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {run.status === "failed" && (
                 <div className="flex items-center space-x-2 ml-auto">
                   <div className="bg-red-50 p-1.5 rounded">
                     <MessageCircleWarning className="h-4 w-4 text-red-500" />
                   </div>
                   <span className="text-sm text-red-600">
-                    Failed: {runMetadata.failureReason}
+                    Failed: {run.failureReason}
                   </span>
                   <Button
                     size="sm"
@@ -510,7 +556,7 @@ export function Run({
       })) || [];
 
   const elements = [
-    metadataHeader,
+    metadataOptionsHeader,
     ...jobElements,
     ...eventElements,
     ...activityElements,
