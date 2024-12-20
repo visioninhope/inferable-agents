@@ -1,9 +1,12 @@
 import { z } from "zod";
+import { env } from "../../../utilities/env";
 import { NotFoundError } from "../../../utilities/errors";
 import { getClusterContextText } from "../../cluster";
 import { workflows } from "../../data";
 import { embedSearchQuery } from "../../embeddings/embeddings";
 import { flagsmith } from "../../flagsmith";
+import { getLatestJobsResultedByFunctionName } from "../../jobs/jobs";
+import { events } from "../../observability/events";
 import { logger } from "../../observability/logger";
 import {
   embeddableServiceFunction,
@@ -17,6 +20,12 @@ import { Run, getWaitingJobIds, updateWorkflow } from "../workflows";
 import { createWorkflowAgent } from "./agent";
 import { mostRelevantKMeansCluster } from "./nodes/tool-parser";
 import { WorkflowAgentState } from "./state";
+import { AgentTool } from "./tool";
+import { getClusterInternalTools } from "./tools/cluster-internal-tools";
+import {
+  CURRENT_DATE_TIME_TOOL_NAME,
+  buildCurrentDateTimeTool,
+} from "./tools/date-time";
 import {
   buildAbstractServiceFunctionTool,
   buildServiceFunctionTool,
@@ -26,14 +35,6 @@ import {
   buildAccessKnowledgeArtifacts,
 } from "./tools/knowledge-artifacts";
 import { buildMockFunctionTool } from "./tools/mock-function";
-import { getClusterInternalTools } from "./tools/cluster-internal-tools";
-import { buildCurrentDateTimeTool } from "./tools/date-time";
-import { CURRENT_DATE_TIME_TOOL_NAME } from "./tools/date-time";
-import { env } from "../../../utilities/env";
-import { events } from "../../observability/events";
-import { AgentTool } from "./tool";
-import { getLatestJobsResultedByFunctionName } from "../../jobs/jobs";
-import { truncate } from "lodash";
 
 /**
  * Run a workflow from the most recent saved state
@@ -261,20 +262,40 @@ export const processRun = async (
   }
 };
 
-const formatJobsContext = (
+function anonymize<T>(value: T): T {
+  if (typeof value === "string") {
+    return "<STRING>" as T;
+  } else if (value === null) {
+    return "<NULL>" as T;
+  } else if (typeof value === "number") {
+    return "<NUMBER>" as T;
+  } else if (typeof value === "boolean") {
+    return "<BOOLEAN>" as T;
+  } else if (Array.isArray(value)) {
+    return [anonymize(value[0])] as T;
+  } else if (typeof value === "object") {
+    const result = {} as T;
+    for (const key in value) {
+      result[key] = anonymize(value[key]);
+    }
+    return result;
+  }
+
+  return value;
+}
+
+export const formatJobsContext = (
   jobs: { targetArgs: string; result: string | null }[],
   status: "success" | "failed",
 ) => {
   if (jobs.length === 0) return "";
 
-  const arbitraryLength = 500;
-
   const jobEntries = jobs
-    .map(
-      (job) => `
-    <input>${truncate(job.targetArgs, { length: arbitraryLength })}</input>
-    <output>${truncate(job.result ?? "", { length: arbitraryLength })}</output>
-  `,
+    .map((job) =>
+      `
+    <input>${JSON.stringify(anonymize(job.targetArgs ? JSON.parse(job.targetArgs) : job.targetArgs))}</input>
+    <output>${JSON.stringify(anonymize(job.result ? JSON.parse(job.result) : job.result))}</output>
+  `.trim(),
     )
     .join("\n");
 
@@ -320,6 +341,11 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
           functionName: toolDetails.functionName,
           limit: 3,
           resultType: "resolution",
+        }).then((jobs) => {
+          return jobs?.map((j) => ({
+            targetArgs: anonymize(j.targetArgs),
+            result: anonymize(j.result),
+          }));
         }),
         getLatestJobsResultedByFunctionName({
           clusterId: workflow.clusterId,
@@ -327,6 +353,11 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
           functionName: toolDetails.functionName,
           limit: 3,
           resultType: "rejection",
+        }).then((jobs) => {
+          return jobs?.map((j) => ({
+            targetArgs: anonymize(j.targetArgs),
+            result: anonymize(j.result),
+          }));
         }),
       ]);
 
@@ -344,14 +375,6 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
 
       if (metadata?.additionalContext) {
         contextArr.push(`<context>${metadata.additionalContext}</context>`);
-      }
-
-      if (metadata?.resultKeys) {
-        contextArr.push(
-          `<result_keys>${metadata.resultKeys
-            .slice(0, 10)
-            .map((k) => k.key)}</result_keys>`,
-        );
       }
 
       return {
