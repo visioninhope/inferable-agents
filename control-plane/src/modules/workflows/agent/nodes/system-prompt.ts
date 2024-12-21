@@ -4,7 +4,6 @@ export const getSystemPrompt = (
   state: WorkflowAgentState,
   schemaString: string[],
 ): string => {
-  state.workflow.enableResultGrounding = true;
   const basePrompt = [
     "You are a helpful assistant with access to a set of tools designed to assist in completing tasks.",
     "You do not respond to greetings or small talk, and instead, you return 'done'.",
