@@ -13,6 +13,7 @@ import { ToolUseBlock } from "@anthropic-ai/sdk/resources";
 
 import { Schema, Validator } from "jsonschema";
 import { buildModelSchema, ModelOutput } from "./model-output";
+import { getSystemPrompt } from "./system-prompt";
 
 type WorkflowStateUpdate = Partial<WorkflowAgentState>;
 
@@ -63,25 +64,7 @@ const _handleModelCall = async (
     return `${tool.name} - ${tool.description} ${tool.schema}`;
   });
 
-  const systemPrompt = [
-    "You are a helpful assistant with access to a set of tools designed to assist in completing tasks.",
-    "You do not respond to greetings or small talk, and instead, you return 'done'.",
-    "Use the tools at your disposal to achieve the task requested.",
-    "If you cannot complete a task with the given tools, return 'done' and explain the issue clearly.",
-    "If there is nothing left to do, return 'done' and provide the final result.",
-    "If you encounter invocation errors (e.g., incorrect tool name, missing input), retry based on the error message.",
-    "When possible, return multiple invocations to trigger them in parallel.",
-    "When referring to tool results, reference json object path as {{id}}. DO NOT REFERENCE THE ORIGINAL VALUES.",
-    state.additionalContext,
-    "<TOOLS_SCHEMAS>",
-    schemaString,
-    "</TOOLS_SCHEMAS>",
-    "<OTHER_AVAILABLE_TOOLS>",
-    ...state.allAvailableTools.filter(
-      (t) => !relevantSchemas.find((s) => s.name === t),
-    ),
-    "</OTHER_AVAILABLE_TOOLS>",
-  ].join(" ");
+  const systemPrompt = getSystemPrompt(state, schemaString);
 
   if (state.workflow.debug) {
     addAttributes({
