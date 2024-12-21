@@ -272,7 +272,7 @@ export const getRunMessagesForDisplay = async ({
           /{{[\w\d.\[\]]+?}}/g,
           (match) => {
             const id = match.replace("{{", "").replace("}}", "");
-            return `[${get(allTokenized, id)}](?t=${id})`;
+            return `[${get(allTokenized, id)}](path://${id})`;
           },
         );
       }

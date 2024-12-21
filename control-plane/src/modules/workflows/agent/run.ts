@@ -296,14 +296,6 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
         contextArr.push(`<context>${metadata.additionalContext}</context>`);
       }
 
-      if (metadata?.resultKeys) {
-        contextArr.push(
-          `<result_keys>${metadata.resultKeys
-            .slice(0, 10)
-            .map((k) => k.key)}</result_keys>`,
-        );
-      }
-
       return {
         serviceName: toolDetails.serviceName,
         functionName: toolDetails.functionName,

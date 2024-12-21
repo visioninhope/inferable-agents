@@ -4,6 +4,7 @@ export const getSystemPrompt = (
   state: WorkflowAgentState,
   schemaString: string[],
 ): string => {
+  state.workflow.enableResultGrounding = true;
   const basePrompt = [
     "You are a helpful assistant with access to a set of tools designed to assist in completing tasks.",
     "You do not respond to greetings or small talk, and instead, you return 'done'.",
@@ -14,18 +15,20 @@ export const getSystemPrompt = (
     "When possible, return multiple invocations to trigger them in parallel.",
   ];
 
-  // Add the result line based on conditions
+  if (state.workflow.enableResultGrounding) {
+    basePrompt.push(
+      "When referring to json values in results, reference json object path as a markdown link [value](jsonpath)",
+    );
+    basePrompt.push("For example, [John](ULID.result.users[0].name)");
+  }
+
   if (state.workflow.resultSchema) {
     basePrompt.push(
-      "Once all tasks have been completed, return the final result as a structured object in the requested format",
-    );
-  } else if (state.workflow.enableResultGrounding) {
-    basePrompt.push(
-      "When referring to tool results, reference json object path as {{id}}. DO NOT REFERENCE THE ORIGINAL VALUES.",
+      "Once all tasks have been completed, return the final result as a structured json object in the requested format",
     );
   } else {
     basePrompt.push(
-      "Once all tasks have been completed, return the final result in markdown",
+      "Once all tasks have been completed, return the final result in markdown with your message.",
     );
   }
 
@@ -48,5 +51,5 @@ export const getSystemPrompt = (
   );
   basePrompt.push("</OTHER_AVAILABLE_TOOLS>");
 
-  return basePrompt.join(" ");
+  return basePrompt.map((p) => p.trim()).join("\n");
 };

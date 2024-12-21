@@ -14,7 +14,8 @@ import { ReadOnlyJSON } from "../read-only-json";
 import ReactMarkdown from "react-markdown";
 import "./markdown.css";
 import { get } from "lodash";
-import { ClipboardCopy, Shield, ShieldCheck } from "lucide-react";
+import { ClipboardCopy, ShieldCheck, ShieldAlert } from "lucide-react";
+import remarkGfm from "remark-gfm";
 
 interface MarkdownProps {
   content: string;
@@ -28,11 +29,14 @@ const MarkdownBase = ({ content, className, messages }: MarkdownProps) => {
     <>
       <ReactMarkdown
         className={cn("markdown-content", className)}
+        remarkPlugins={[remarkGfm]}
         components={{
           a: ({ children, href }) => {
-            if (href?.startsWith("?t=")) {
-              const path = decodeURIComponent(href.replace("?t=", ""));
-              const id = path.split(".")[0];
+            console.log(href);
+            if (href && /^[0-9A-Z]{26}\./.test(href)) {
+              const path = decodeURIComponent(href);
+              const [id] = path.split(".");
+              const resultPath = path;
               const message = messages?.find(
                 (m) =>
                   m.type === "invocation-result" && get(m, "data.id") === id
@@ -41,6 +45,35 @@ const MarkdownBase = ({ content, className, messages }: MarkdownProps) => {
               const invocationResult = get(message, "data.result", {
                 error: "No result found",
               });
+
+              const value = resultPath
+                ? get(invocationResult, resultPath, "Error getting value")
+                : invocationResult;
+
+              let isValueModified = true;
+
+              if (typeof value === "string") {
+                isValueModified = children !== value;
+              } else if (typeof value === "object") {
+                isValueModified = children !== JSON.stringify(value);
+              } else if (typeof value === "number") {
+                isValueModified = children !== value.toString();
+              } else if (typeof value === "boolean") {
+                isValueModified = children !== value.toString();
+              } else if (typeof value === "undefined") {
+                isValueModified = children !== "undefined";
+              } else if (value === null) {
+                isValueModified = children !== "null";
+              } else {
+                isValueModified = children !== value;
+              }
+
+              if (isValueModified) {
+                console.log({
+                  children,
+                  actual: get(invocationResult, resultPath),
+                });
+              }
 
               return (
                 <Sheet>
@@ -75,12 +108,66 @@ const MarkdownBase = ({ content, className, messages }: MarkdownProps) => {
                       </SheetTitle>
                     </SheetHeader>
 
-                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-100 rounded-lg mb-6">
-                      <ShieldCheck className="w-4 h-4 text-green-600" />
-                      <p className="text-sm text-green-700">
-                        Inferable has verified that this value was referenced
-                        from a tool result by the model, without any tampering.
-                      </p>
+                    <div
+                      className={cn(
+                        "flex flex-col gap-2 px-4 py-3 border rounded-lg mb-6",
+                        isValueModified
+                          ? "bg-blue-50 border-blue-100"
+                          : "bg-green-50 border-green-100"
+                      )}
+                    >
+                      {isValueModified ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <p className="text-sm text-blue-700">
+                              This value has been modified in translation.
+                            </p>
+                          </div>
+                          <div className="pl-6 space-y-1.5">
+                            <div className="text-xs text-blue-600 flex items-baseline">
+                              <span className="font-medium w-20">
+                                Displayed:
+                              </span>
+                              <span className="font-mono">
+                                {JSON.stringify(children)}
+                              </span>
+                              <span className="text-blue-400 ml-2">
+                                (
+                                {typeof children === "object"
+                                  ? "object"
+                                  : typeof children}
+                                )
+                              </span>
+                            </div>
+                            <div className="text-xs text-blue-600 flex items-baseline">
+                              <span className="font-medium w-20">Actual:</span>
+                              <span className="font-mono">
+                                {JSON.stringify(
+                                  get(invocationResult, resultPath)
+                                )}
+                              </span>
+                              <span className="text-blue-400 ml-2">
+                                (
+                                {typeof get(invocationResult, resultPath) ===
+                                "object"
+                                  ? "object"
+                                  : typeof get(invocationResult, resultPath)}
+                                )
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <p className="text-sm text-green-700">
+                            Inferable has verified that this value was
+                            referenced from a tool result by the model, without
+                            any tampering.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-6">
@@ -97,13 +184,7 @@ const MarkdownBase = ({ content, className, messages }: MarkdownProps) => {
                           <div>
                             <h3 className="text-sm font-medium">Value</h3>
                             <p className="text-sm font-mono mt-2 bg-secondary/40 p-2 rounded-md overflow-auto">
-                              {
-                                get(
-                                  invocationResult,
-                                  path,
-                                  "Error getting value"
-                                ) as string
-                              }
+                              {JSON.stringify(value, null, 2)}
                             </p>
                           </div>
                         </div>
