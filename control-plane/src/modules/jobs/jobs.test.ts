@@ -8,7 +8,6 @@ import {
   getJob,
   requestApproval,
   submitApproval,
-  anonymizeJob,
 } from "./jobs";
 import {
   acknowledgeJob,
@@ -419,7 +418,7 @@ describe("pollJobs", () => {
         .fill(0)
         .map(async () => {
           await new Promise((resolve) =>
-            setTimeout(resolve, Math.random() * 10),
+            setTimeout(resolve, Math.random() * 10)
           );
           return poll();
         }),
