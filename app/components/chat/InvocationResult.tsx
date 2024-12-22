@@ -1,5 +1,3 @@
-// ... existing imports ...
-import { invocationResultDataSchema } from "@/client/contract";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,12 +13,25 @@ import { useRef, useState } from "react";
 import { z } from "zod";
 import { ReadOnlyJSON } from "../read-only-json";
 import type { MessageContainerProps } from "./workflow-event";
+import ErrorDisplay from "../error-display";
+
+const invocationResultDataSchema = z.object({
+  id: z.string(),
+  result: z.unknown(),
+  createdAt: z.date(),
+});
 
 export function InvocationResult(props: MessageContainerProps) {
-  const data = props.data as z.infer<typeof invocationResultDataSchema>;
+  const { success, data, error } = invocationResultDataSchema.safeParse(
+    props.data
+  );
 
   const [isExpanded, setIsExpanded] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
+
+  if (!success) {
+    return <ErrorDisplay error={error} meta={{ data }} />;
+  }
 
   return (
     <>
