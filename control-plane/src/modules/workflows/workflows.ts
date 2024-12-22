@@ -489,6 +489,7 @@ export const createRunWithMessage = async ({
   customAuthToken,
   authContext,
   context,
+  enableResultGrounding,
 }: {
   user?: Auth;
   clusterId: string;
@@ -517,6 +518,7 @@ export const createRunWithMessage = async ({
   customAuthToken?: string;
   authContext?: unknown;
   context?: unknown;
+  enableResultGrounding?: boolean;
 }) => {
   const workflow = await createRun({
     user,
@@ -538,6 +540,7 @@ export const createRunWithMessage = async ({
     customAuthToken,
     authContext,
     context,
+    enableResultGrounding,
   });
 
   await addMessageAndResume({
