@@ -83,13 +83,6 @@ export const genericMessageDataSchema = z
   })
   .strict();
 
-export const invocationResultDataSchema = z
-  .object({
-    id: z.string(),
-    result: z.object({}).passthrough(),
-  })
-  .strict();
-
 export const resultDataSchema = z
   .object({
     id: z.string(),
@@ -144,7 +137,6 @@ export const messageDataSchema = z.union([
   resultDataSchema,
   agentDataSchema,
   genericMessageDataSchema,
-  invocationResultDataSchema,
 ]);
 
 export const FunctionConfigSchema = z.object({
@@ -570,6 +562,10 @@ export const definition = {
         .describe(
           "Allow the run to be continued with follow-up messages / message edits"
         ),
+      enableResultGrounding: z
+        .boolean()
+        .default(false)
+        .describe("Enable result grounding"),
     }),
     responses: {
       201: z.object({
