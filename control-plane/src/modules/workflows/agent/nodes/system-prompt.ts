@@ -16,7 +16,7 @@ export const getSystemPrompt = (
 
   if (state.workflow.enableResultGrounding) {
     basePrompt.push(
-      "When referring to json values in results, reference json object path as a markdown link [value](jsonpath)",
+      "When referring to facts, reference the json path of the fact as a markdown link [value](jsonpath). JSON paths must start with the ULID.",
     );
     basePrompt.push("For example, [John](ULID.result.users[0].name)");
   }
