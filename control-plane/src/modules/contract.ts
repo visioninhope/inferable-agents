@@ -507,61 +507,38 @@ export const definition = {
         .describe(
           "Mechanism for receiving notifications when the run status changes",
         ),
-      metadata: z
-        .record(z.string())
+      reasoningTraces: z
+        .boolean()
         .optional()
-        .describe("Run metadata which can be used to filter runs"),
+        .describe("Enable reasoning traces"),
+      enableResultGrounding: z
+        .boolean()
+        .optional()
+        .describe("Enable result grounding"),
+      interactive: z
+        .boolean()
+        .optional()
+        .describe("Allow the run to be continued with follow-up messages"),
+      callSummarization: z
+        .boolean()
+        .optional()
+        .describe("Enable summarization of oversized call results"),
       test: z
         .object({
-          enabled: z.boolean().default(false),
+          enabled: z.boolean(),
           mocks: z
             .record(
               z.object({
-                output: z
-                  .object({})
-                  .passthrough()
-                  .describe("The mock output of the function"),
+                output: z.record(z.unknown()),
               }),
             )
-            .optional()
-            .describe(
-              "Function mocks to be used in the run. (Keys should be function in the format <SERVICE>_<FUNCTION>)",
-            ),
+            .optional(),
         })
-        .optional()
-        .describe(
-          "When provided, the run will be marked as as a test / evaluation",
-        ),
-      configId: z
-        .string()
-        .optional()
-        .describe("The run configuration ID to use"),
-      input: z
-        .object({})
-        .passthrough()
-        .describe(
-          "Structured input arguments to merge with the initial prompt. The schema must match the run configuration input schema if defined",
-        )
         .optional(),
+      metadata: z.record(z.string()).optional(),
       context: anyObject
         .optional()
         .describe("Additional context to propogate to all calls in the run"),
-      reasoningTraces: z
-        .boolean()
-        .default(true)
-        .optional()
-        .describe("Enable reasoning traces"),
-      callSummarization: z
-        .boolean()
-        .default(false)
-        .optional()
-        .describe("Enable summarization of oversized call results"),
-      interactive: z
-        .boolean()
-        .default(true)
-        .describe(
-          "Allow the run to be continued with follow-up messages / message edits",
-        ),
     }),
     responses: {
       201: z.object({
