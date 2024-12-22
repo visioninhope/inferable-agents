@@ -41,7 +41,7 @@ import { buildMockFunctionTool } from "./tools/mock-function";
  **/
 export const processRun = async (
   run: Run,
-  metadata?: Record<string, string>,
+  metadata?: Record<string, string>
 ) => {
   logger.info("Running workflow");
 
@@ -80,9 +80,9 @@ export const processRun = async (
         serviceFunctionEmbeddingId({
           serviceName: service.definition.name,
           functionName: f.name,
-        }),
+        })
       );
-    }),
+    })
   );
 
   const mockToolsMap: Record<string, AgentTool> = await buildMockTools(run);
@@ -139,7 +139,7 @@ export const processRun = async (
       const serviceFunctionDetails = await embeddableServiceFunction.getEntity(
         run.clusterId,
         "service-function",
-        toolCall.toolName,
+        toolCall.toolName
       );
 
       if (serviceFunctionDetails) {
@@ -164,7 +164,7 @@ export const processRun = async (
         // optimistically embed the next search query
         // this is not critical to the workflow, so we can do it in the background
         embedSearchQuery(
-          state.messages.map((m) => JSON.stringify(m.data)).join(" "),
+          state.messages.map((m) => JSON.stringify(m.data)).join(" ")
         );
       }
 
@@ -202,7 +202,7 @@ export const processRun = async (
       },
       {
         recursionLimit: 100,
-      },
+      }
     );
 
     const parsedOutput = z
@@ -286,22 +286,26 @@ function anonymize<T>(value: T): T {
 
 export const formatJobsContext = (
   jobs: { targetArgs: string; result: string | null }[],
-  status: "success" | "failed",
+  status: "success" | "failed"
 ) => {
   if (jobs.length === 0) return "";
 
   const jobEntries = jobs
     .map((job) =>
       `
-    <input>${JSON.stringify(anonymize(job.targetArgs ? JSON.parse(job.targetArgs) : job.targetArgs))}</input>
-    <output>${JSON.stringify(anonymize(job.result ? JSON.parse(job.result) : job.result))}</output>
-  `.trim(),
+    <input>${JSON.stringify(
+      anonymize(job.targetArgs ? JSON.parse(job.targetArgs) : job.targetArgs)
+    )}</input>
+    <output>${JSON.stringify(
+      anonymize(job.result ? JSON.parse(job.result) : job.result)
+    )}</output>
+  `.trim()
     )
     .join("\n");
 
-  return `<jobs status="${status}">
+  return `<previous_jobs status="${status}">
     ${jobEntries}
-  </jobs>`;
+  </previous_jobs>`;
 };
 
 async function findRelatedFunctionTools(workflow: Run, search: string) {
@@ -316,7 +320,7 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
         workflow.clusterId,
         "service-function",
         search,
-        50, // limit to 50 results
+        50 // limit to 50 results
       )
     : [];
 
@@ -333,7 +337,7 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
         getToolMetadata(
           workflow.clusterId,
           toolDetails.serviceName,
-          toolDetails.functionName,
+          toolDetails.functionName
         ),
         getLatestJobsResultedByFunctionName({
           clusterId: workflow.clusterId,
@@ -361,7 +365,7 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
         }),
       ]);
 
-      const contextArr = [];
+      const contextArr: string[] = [];
 
       const successJobsContext = formatJobsContext(resolvedJobs, "success");
       if (successJobsContext) {
@@ -380,9 +384,9 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
       return {
         serviceName: toolDetails.serviceName,
         functionName: toolDetails.functionName,
-        toolContext: contextArr.join("\n\n"),
+        toolContext: contextArr.map((c) => c.trim()).join("\n\n"),
       };
-    }),
+    })
   );
 
   const selectedTools = relatedTools.map((toolDetails) =>
@@ -393,13 +397,13 @@ async function findRelatedFunctionTools(workflow: Run, search: string) {
         toolContexts.find(
           (c) =>
             c?.serviceName === toolDetails.serviceName &&
-            c?.functionName === toolDetails.functionName,
+            c?.functionName === toolDetails.functionName
         )?.toolContext,
       ]
         .filter(Boolean)
         .join("\n\n"),
       schema: toolDetails.schema,
-    }),
+    })
   );
 
   return selectedTools;
@@ -442,12 +446,12 @@ export const findRelevantTools = async (state: WorkflowAgentState) => {
       const serviceFunctionDetails = await embeddableServiceFunction.getEntity(
         workflow.clusterId,
         "service-function",
-        tool,
+        tool
       );
 
       if (!serviceFunctionDetails) {
         throw new Error(
-          `Tool ${tool} not found in cluster ${workflow.clusterId}`,
+          `Tool ${tool} not found in cluster ${workflow.clusterId}`
         );
       }
 
@@ -455,19 +459,20 @@ export const findRelevantTools = async (state: WorkflowAgentState) => {
         buildAbstractServiceFunctionTool({
           ...serviceFunctionDetails,
           schema: serviceFunctionDetails.schema,
-        }),
+        })
       );
     }
   } else {
     const found = await findRelatedFunctionTools(
       workflow,
-      state.messages.map((m) => JSON.stringify(m.data)).join(" "),
+      state.messages.map((m) => JSON.stringify(m.data)).join(" ")
     );
 
     tools.push(...found);
 
-    const accessKnowledgeArtifactsTool =
-      await buildAccessKnowledgeArtifacts(workflow);
+    const accessKnowledgeArtifactsTool = await buildAccessKnowledgeArtifacts(
+      workflow
+    );
 
     const currentDateTimeTool = buildCurrentDateTimeTool();
 
@@ -497,7 +502,7 @@ export const buildMockTools = async (workflow: Run) => {
 
   if (!workflow.test) {
     logger.warn(
-      "Workflow is not marked as test enabled but contains mocks. Mocks will be ignored.",
+      "Workflow is not marked as test enabled but contains mocks. Mocks will be ignored."
     );
     return mocks;
   }
@@ -525,7 +530,7 @@ export const buildMockTools = async (workflow: Run) => {
     }
 
     const serviceDefinition = serviceDefinitions.find(
-      (sd) => sd.service === serviceName,
+      (sd) => sd.service === serviceName
     );
 
     if (!serviceDefinition) {
@@ -534,13 +539,13 @@ export const buildMockTools = async (workflow: Run) => {
         {
           key,
           serviceName,
-        },
+        }
       );
       continue;
     }
 
     const functionDefinition = serviceDefinition.definition.functions?.find(
-      (f) => f.name === functionName,
+      (f) => f.name === functionName
     );
 
     if (!functionDefinition) {
@@ -550,7 +555,7 @@ export const buildMockTools = async (workflow: Run) => {
           key,
           serviceName,
           functionName,
-        },
+        }
       );
       continue;
     }
