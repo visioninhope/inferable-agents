@@ -1,111 +1,54 @@
-'use client';
+import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import Image from "next/image";
+import logo from "./logo.png";
 
-import { OrganizationSwitcher, UserButton } from '@clerk/nextjs';
-import Image from 'next/image';
-import logo from './logo.png';
-import { Menu } from 'lucide-react';
-import { Button } from './ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from './ui/sheet';
-import { NavigationItems } from './breadcrumbs';
-import { useParams } from 'next/navigation';
+// Common appearance settings for Clerk components
+const clerkAppearance = {
+  variables: {
+    colorText: "black",
+    fontSize: "14px",
+  },
+  elements: {
+    rootBox: "flex items-center",
+    userButtonBox: "flex items-center",
+    organizationSwitcherTrigger: "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+  }
+};
 
 export function Header() {
-  const params = useParams();
-  const clusterId = params?.clusterId as string;
-
-  const navigationItems = NavigationItems({ clusterId });
-
-  const navigationLinks = Array.isArray(navigationItems?.props.children)
-    ? navigationItems?.props.children
-    : [navigationItems?.props.children];
-
   return (
-    <header className="flex items-center justify-between w-full h-16 px-8">
-      {/* Left section with menu */}
-      <div className="flex items-center md:hidden">
-        {/* Mobile menu */}
-        <div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] flex flex-col gap-2 pt-8">
-              {/* User profile section */}
-              <div className="mb-4 pb-4 border-b">
-                <div className="flex justify-center mb-4">
-                  <UserButton
-                    appearance={{
-                      variables: {
-                        colorText: 'black',
-                      },
-                    }}
-                  />
-                </div>
-                <OrganizationSwitcher
-                  hidePersonal={true}
-                  appearance={{
-                    variables: {
-                      colorText: 'black',
-                    },
-                    elements: {
-                      rootBox: 'w-full',
-                      organizationSwitcherTrigger: 'w-full',
-                    },
-                  }}
-                  afterSelectOrganizationUrl="/switch-org"
-                />
-              </div>
-              {/* Navigation section */}
-              <h2 className="font-medium mb-2 text-sm">Navigation</h2>
-              {navigationLinks.map(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (child: any, index: any) =>
-                  child && (
-                    <SheetClose key={index} asChild>
-                      {child}
-                    </SheetClose>
-                  )
-              )}
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-
-      {/* Logo and text section - centered on mobile, left on desktop */}
-      <div className="flex-1 flex justify-center md:justify-start">
-        <a href="/" className="flex items-center">
-          <div className="flex items-center space-x-3">
-            <Image className="w-8 h-8 md:w-10 md:h-10" src={logo} width={40} height={40} alt={'logo'} />
-            <h1 className="text-xl md:text-2xl">Playground</h1>
+    <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 pl-7 bg-white/95 backdrop-blur-sm border-b shadow-sm">
+      <div className="flex items-center gap-8">
+        <a
+          href="/"
+          className="flex items-center space-x-4 transition-transform duration-200 hover:scale-[1.02]"
+        >
+          <div className="flex items-center space-x-2 -ml-2">
+            <Image
+              src={logo}
+              width={40}
+              height={40}
+              alt={"logo"}
+              className="rounded-lg"
+            />
+            <h1 className="text-2xl font-semibold bg-gradient-to-r from-gray-600 via-gray-800 to-gray-600 bg-clip-text text-transparent tracking-tight">
+              Inferable
+            </h1>
           </div>
         </a>
       </div>
-
-      {/* Right section with desktop controls */}
-      <div className="flex items-center space-x-8 md:flex-none">
-        {/* Desktop user controls */}
-        <div className="hidden md:flex items-center space-x-8">
-          <UserButton
-            appearance={{
-              variables: {
-                colorText: 'black',
-              },
-            }}
-          />
-          <div className="pt-2">
-            <OrganizationSwitcher
-              hidePersonal={true}
-              appearance={{
-                variables: {
-                  colorText: 'black',
-                },
-              }}
-              afterSelectOrganizationUrl="/switch-org"
-            />
-          </div>
-        </div>
+      <div className="flex items-center gap-6">
+        <UserButton
+          appearance={clerkAppearance}
+          afterSignOutUrl="/"
+          showName
+        />
+        <div className="h-6 w-[1px] bg-gray-200" />
+        <OrganizationSwitcher
+          hidePersonal={true}
+          appearance={clerkAppearance}
+          afterSelectOrganizationUrl="/switch-org"
+        />
       </div>
     </header>
   );
