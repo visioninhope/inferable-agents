@@ -50,12 +50,8 @@ describe("findRelevantTools", () => {
       allAvailableTools: [],
     });
 
-    expect(tools.map((tool) => tool.name)).toContain(
-      "testService_someFunction"
-    );
-    expect(tools.map((tool) => tool.name)).not.toContain(
-      "testService_someOtherFunction"
-    );
+    expect(tools.map(tool => tool.name)).toContain("testService_someFunction");
+    expect(tools.map(tool => tool.name)).not.toContain("testService_someOtherFunction");
   });
 });
 
@@ -199,5 +195,32 @@ describe("formatJobsContext", () => {
     );
     expect(result).toContain(`<input>[\"<number>\"]</input>`);
     expect(result).toContain(`<output>[\"<number>\"]</output>`);
+  });
+
+  it("should handle unparseable results", () => {
+    const result = formatJobsContext(
+      [
+        {
+          targetArgs: "this is not json",
+          result: "this is not json",
+        },
+        {
+          targetArgs: "<input>",
+          result: "<output>",
+        },
+        {
+          targetArgs: "123",
+          result: "456",
+        },
+      ],
+      "failed"
+    );
+    expect(result).toBe(
+      `<previous_jobs status="failed">
+<input>"<string>"</input><output>"<string>"</output>
+<input>"<string>"</input><output>"<string>"</output>
+<input>"<number>"</input><output>"<number>"</output>
+</previous_jobs>`
+    );
   });
 });
