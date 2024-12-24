@@ -14,5 +14,8 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require("tailwindcss-animate"), // make sure to "npm install tailwindcss-animate"
+    require("@assistant-ui/react/tailwindcss")
+  ],
 } satisfies Config;

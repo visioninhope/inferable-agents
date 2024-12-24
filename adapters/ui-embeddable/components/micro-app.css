@@ -1,0 +1,85 @@
+/* Root variables for consistent theming */
+.micro-app {
+  /* Color palette - Grayscale theme */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --ring: #94a3b8;
+
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+
+  /* Border radius */
+  --radius-sm: 0.3rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Base styles */
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--foreground);
+  background-color: var(--background);
+
+  /* Add new variables for button styling */
+  --primary-gradient: linear-gradient(to bottom, #1a2537, #0f172a);
+  --button-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  position: relative;
+}
+
+.micro-app .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  height: 2.5rem;
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+  background: var(--primary-gradient);
+  color: var(--primary-foreground);
+  box-shadow: var(--button-shadow);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.micro-app .button:hover {
+  opacity: 0.9;
+}
+
+.micro-app .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.micro-app .pane {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  transform: none;
+  width: 600px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px 0px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
