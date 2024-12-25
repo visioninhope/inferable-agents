@@ -1,6 +1,6 @@
 {
   "name": "@inferable/react",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "React SDK for inferable.ai",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,7 +39,6 @@
     "prettier": "^3.2.5"
   },
   "dependencies": {
-    "@ts-rest/core": "^3.28.0",
-    "usehooks-ts": "^3.1.0"
+    "@ts-rest/core": "^3.28.0"
   }
 }

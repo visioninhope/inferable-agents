@@ -3,6 +3,7 @@ import {
   toolhouseIntegration,
   langfuseIntegration,
   tavilyIntegration,
+  valtownIntegration,
 } from "./constants";
 
 export const integrationSchema = z.object({
@@ -24,6 +25,12 @@ export const integrationSchema = z.object({
   [tavilyIntegration]: z
     .object({
       apiKey: z.string(),
+    })
+    .optional()
+    .nullable(),
+  [valtownIntegration]: z
+    .object({
+      endpoint: z.string().url(),
     })
     .optional()
     .nullable(),

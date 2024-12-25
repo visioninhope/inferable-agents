@@ -1,12 +1,11 @@
+import assert from "assert";
 import { z } from "zod";
-import { getIntegrations } from "./integrations";
-import {
-  deleteServiceDefinition,
-  upsertServiceDefinition,
-} from "../service-definitions";
-import { logger } from "../observability/logger";
 import { acknowledgeJob, getJob, persistJobResult } from "../jobs/jobs";
+import { logger } from "../observability/logger";
 import { packer } from "../packer";
+import { deleteServiceDefinition, upsertServiceDefinition } from "../service-definitions";
+import { integrationSchema } from "./schema";
+import { ToolProvider } from "./types";
 
 const TavilySearchParamsSchema = z.object({
   query: z.string(),
@@ -21,11 +20,6 @@ const TavilySearchParamsSchema = z.object({
 });
 
 export type TavilySearchParams = z.infer<typeof TavilySearchParamsSchema>;
-
-const tavilyApiKeyForCluster = async (clusterId: string) => {
-  const integrations = await getIntegrations({ clusterId });
-  return integrations.tavily?.apiKey;
-};
 
 /**
  * Perform a search using the Tavily API
@@ -63,9 +57,7 @@ export async function searchTavily({
   });
 
   if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ message: response.statusText }));
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
     throw new Error(errorData.message || "Failed to perform search");
   }
 
@@ -87,8 +79,7 @@ const definition = {
           searchDepth: {
             type: "string",
             enum: ["basic", "advanced"],
-            description:
-              "The depth of the search. 'basic' is faster, 'advanced' is more thorough",
+            description: "The depth of the search. 'basic' is faster, 'advanced' is more thorough",
           },
           topic: {
             type: "string",
@@ -118,13 +109,7 @@ const definition = {
   ],
 };
 
-const syncTavilyService = async ({
-  clusterId,
-  apiKey,
-}: {
-  clusterId: string;
-  apiKey?: string;
-}) => {
+const syncTavilyService = async ({ clusterId, apiKey }: { clusterId: string; apiKey?: string }) => {
   logger.info("Syncing Tavily", { clusterId });
 
   if (!apiKey) {
@@ -147,49 +132,54 @@ const unsyncTavilyService = async ({ clusterId }: { clusterId: string }) => {
   });
 };
 
-const handleCall = async ({
-  call,
-  clusterId,
-}: {
-  call: NonNullable<Awaited<ReturnType<typeof getJob>>>;
-  clusterId: string;
-}) => {
+const handleCall = async (
+  call: NonNullable<Awaited<ReturnType<typeof getJob>>>,
+  integrations: z.infer<typeof integrationSchema>
+) => {
   await acknowledgeJob({
     jobId: call.id,
-    clusterId,
+    clusterId: call.clusterId,
     machineId: "TAVILY",
   });
 
-  const apiKey = await tavilyApiKeyForCluster(clusterId);
-  if (!apiKey) {
-    logger.warn("No Tavily API key found for integration", { clusterId });
-    return;
+  const apiKey = integrations.tavily?.apiKey;
+
+  assert(apiKey, "Missing Tavily API key");
+
+  try {
+    const result = await searchTavily({
+      params: packer.unpack(call.targetArgs),
+      apiKey,
+    });
+
+    await persistJobResult({
+      result: packer.pack(result),
+      resultType: "resolution",
+      jobId: call.id,
+      owner: {
+        clusterId: call.clusterId,
+      },
+      machineId: "TAVILY",
+    });
+  } catch (error) {
+    await persistJobResult({
+      result: packer.pack(error),
+      resultType: "rejection",
+      jobId: call.id,
+      owner: {
+        clusterId: call.clusterId,
+      },
+      machineId: "TAVILY",
+    });
   }
-
-  const result = await searchTavily({
-    params: packer.unpack(call.targetArgs),
-    apiKey,
-  });
-
-  await persistJobResult({
-    result: packer.pack(result),
-    resultType: "resolution",
-    jobId: call.id,
-    owner: {
-      clusterId,
-    },
-    machineId: "TAVILY",
-  });
-
-  return result;
 };
 
-export const tavily = {
+export const tavily: ToolProvider = {
   name: "Tavily",
-  onActivate: async (clusterId: string) => {
+  onActivate: async (clusterId: string, integrations: z.infer<typeof integrationSchema>) => {
     await syncTavilyService({
       clusterId,
-      apiKey: await tavilyApiKeyForCluster(clusterId),
+      apiKey: integrations.tavily?.apiKey,
     });
   },
   onDeactivate: async (clusterId: string) => {
