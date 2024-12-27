@@ -2,7 +2,6 @@ import { and, eq, gt, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
 import * as data from "../data";
 import * as events from "../observability/events";
 import { logger } from "../observability/logger";
-import { upsertResultKeys } from "../tool-metadata";
 import { resumeRun } from "../workflows/workflows";
 
 type PersistResultParams = {
@@ -119,22 +118,6 @@ export async function persistJobResult({
         clusterId: owner.clusterId,
       });
     }
-
-    await upsertResultKeys({
-      clusterId: owner.clusterId,
-      service: updateResult[0].service,
-      functionName: updateResult[0].targetFn,
-      result,
-    }).catch(error => {
-      logger.warn("Failed to upsert result keys", {
-        error,
-        jobId,
-        clusterId: owner.clusterId,
-        service: updateResult[0].service,
-        targetFn: updateResult[0].targetFn,
-        result,
-      });
-    });
 
     events.write({
       type: "functionResulted",

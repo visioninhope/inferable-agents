@@ -410,6 +410,14 @@ export const resumeRun = async (input: Pick<Run, "id" | "clusterId">) => {
     return;
   }
 
+  if (input.id === getClusterBackgroundRun(input.clusterId)) {
+    logger.debug("Skipping background run resume", {
+      runId: input.id,
+      clusterId: input.clusterId,
+    });
+    return;
+  }
+
   const sqsResult = await sqs.sendMessage({
     QueueUrl: env.SQS_RUN_PROCESS_QUEUE_URL,
     MessageBody: JSON.stringify({
@@ -522,6 +530,15 @@ export const createRunWithMessage = async ({
   });
 
   return workflow;
+};
+
+/**
+ * A background run allows calls that are not associated with a specific run to have a home.
+ * @param clusterId - The cluster ID
+ * @returns A unique ID for the background run
+ */
+export const getClusterBackgroundRun = (clusterId: string) => {
+  return `${clusterId}BACKGROUND`;
 };
 
 export const assertRunReady = async (input: { runId: string; clusterId: string }) => {
