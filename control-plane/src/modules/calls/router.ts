@@ -3,11 +3,12 @@ import { initServer } from "@ts-rest/fastify";
 import * as jobs from "../jobs/jobs";
 import { packer } from "../packer";
 import { upsertMachine } from "../machines";
-import { BadRequestError } from "../../utilities/errors";
+import { BadRequestError, NotFoundError } from "../../utilities/errors";
 import { createBlob } from "../blobs";
 import { logger } from "../observability/logger";
 import { recordServicePoll } from "../service-definitions";
-import { resumeRun } from "../workflows/workflows";
+import { getJob } from "../jobs/jobs";
+import { getClusterBackgroundRun, resumeRun } from "../workflows/workflows";
 
 export const callsRouter = initServer().router(
   {
@@ -19,7 +20,7 @@ export const callsRouter = initServer().router(
     createCallApproval: contract.createCallApproval,
   },
   {
-    createCall: async (request) => {
+    createCall: async request => {
       const { clusterId } = request.params;
 
       const auth = request.request.getAuth();
@@ -35,6 +36,7 @@ export const callsRouter = initServer().router(
         targetFn: fn,
         targetArgs: packer.pack(input),
         owner: { clusterId },
+        runId: getClusterBackgroundRun(clusterId),
       });
 
       if (!waitTime || waitTime <= 0) {
@@ -73,9 +75,10 @@ export const callsRouter = initServer().router(
         },
       };
     },
-    createCallResult: async (request) => {
+    createCallResult: async request => {
       const { clusterId, callId } = request.params;
-      const { result, resultType, meta } = request.body;
+      let { result, resultType } = request.body;
+      const { meta } = request.body;
 
       const machine = request.request.getAuth().isMachine();
       machine.canAccess({ cluster: { clusterId } });
@@ -112,6 +115,39 @@ export const callsRouter = initServer().router(
         }
       }
 
+      if (!!result) {
+        // Max result size 500kb
+        const data = Buffer.from(JSON.stringify(result));
+        if (Buffer.byteLength(data) > 500 * 1024) {
+          logger.info("Call result too large, persisting as blob", {
+            callId,
+          });
+
+          const call = await getJob({ clusterId, jobId: callId });
+
+          if (!call) {
+            throw new NotFoundError("Call not found");
+          }
+
+          await createBlob({
+            data: data.toString("base64"),
+            size: Buffer.byteLength(data),
+            encoding: "base64",
+            type: "application/json",
+            name: "Oversize call result",
+            clusterId,
+            runId: call.runId ?? undefined,
+            jobId: callId ?? undefined,
+          });
+
+          result = {
+            message: "The result was too large and was returned to the user directly",
+          };
+
+          resultType = "rejection";
+        }
+      }
+
       await Promise.all([
         upsertMachine({
           clusterId,
@@ -120,7 +156,7 @@ export const callsRouter = initServer().router(
           sdkLanguage: request.headers["x-machine-sdk-language"],
           xForwardedFor: request.headers["x-forwarded-for"],
           ip: request.request.ip,
-        }).catch((e) => {
+        }).catch(e => {
           // don't fail the request if the machine upsert fails
 
           logger.error("Failed to upsert machine", {
@@ -142,7 +178,7 @@ export const callsRouter = initServer().router(
         body: undefined,
       };
     },
-    listCalls: async (request) => {
+    listCalls: async request => {
       const { clusterId } = request.params;
       const { service, limit, acknowledge, status } = request.query;
 
@@ -200,7 +236,7 @@ export const callsRouter = initServer().router(
 
       return {
         status: 200,
-        body: pollResult.map((job) => ({
+        body: pollResult.map(job => ({
           id: job.id,
           function: job.targetFn,
           input: packer.unpack(job.targetArgs),
@@ -210,7 +246,7 @@ export const callsRouter = initServer().router(
         })),
       };
     },
-    createCallBlob: async (request) => {
+    createCallBlob: async request => {
       const { callId, clusterId } = request.params;
       const body = request.body;
 
@@ -240,7 +276,7 @@ export const callsRouter = initServer().router(
         body: blob,
       };
     },
-    getCall: async (request) => {
+    getCall: async request => {
       const { clusterId, callId } = request.params;
 
       const auth = request.request.getAuth();
@@ -268,7 +304,7 @@ export const callsRouter = initServer().router(
         body: call,
       };
     },
-    createCallApproval: async (request) => {
+    createCallApproval: async request => {
       const { clusterId, callId } = request.params;
 
       const auth = request.request.getAuth();
@@ -296,5 +332,5 @@ export const callsRouter = initServer().router(
         body: undefined,
       };
     },
-  },
+  }
 );
