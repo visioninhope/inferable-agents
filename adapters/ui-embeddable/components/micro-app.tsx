@@ -5,26 +5,22 @@ import { useState, useEffect } from "react";
 import "./micro-app.css";
 import { Message } from "./message";
 
-const clusterId = process.env.NEXT_PUBLIC_TEST_INFERABLE_CLUSTER_ID;
-
-if (!clusterId) {
-  throw new Error("NEXT_PUBLIC_TEST_INFERABLE_CLUSTER_ID is not set");
-}
-
 export type AppProps = {
   buttonText?: string;
   initialMessage: string;
+  clusterId: string;
+  customAuthToken: string;
 }
 
-export default function App({ buttonText, initialMessage }: AppProps) {
+export default function App({ buttonText, initialMessage, clusterId, customAuthToken }: AppProps) {
   const [isPaneOpen, setIsPaneOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
 
   const { createMessage, messages, run } = useRun({
-    clusterId: clusterId!,
-    customAuthToken: "test",
+    clusterId,
+    customAuthToken,
     onError: error => {
       console.error(error);
     },
