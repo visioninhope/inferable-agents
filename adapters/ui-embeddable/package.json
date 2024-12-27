@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@inferable/react": "^0.0.10",
+    "@inferable/react": "^0.0.11",
     "next": "15.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
