@@ -1,0 +1,14 @@
+.message-line {
+  white-space: pre-wrap;
+  font-family: Inter;
+  font-size: 0.75rem;
+  color: #333333;
+  padding-left: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.message-line.human {
+  font-weight: 600;
+  padding-left: 0.25rem;
+  margin-top: 0.5rem;
+}

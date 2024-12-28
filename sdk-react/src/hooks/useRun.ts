@@ -1,5 +1,5 @@
 import { ClientInferRequest, ClientInferResponseBody } from "@ts-rest/core";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { contract } from "../contract";
 import { createApiClient } from "../createClient";
 import { useInterval } from "./useInterval";
@@ -58,6 +58,10 @@ interface UseRunReturn<T extends z.ZodObject<any>> {
   run?: GetRunResponse;
   /** Result of the run if available */
   result?: z.infer<T>;
+  /** Function to initialize the run and start polling */
+  init: () => void;
+  /** Function to destroy the run and stop polling */
+  destroy: () => void;
 }
 
 /**
@@ -74,6 +78,8 @@ interface UseRunReturn<T extends z.ZodObject<any>> {
  * ```
  */
 export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): UseRunReturn<T> {
+  const [initialized, setInitialized] = useState(false);
+
   const client = useMemo(() => {
     return (
       options.apiClient ??
@@ -96,7 +102,7 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
   const [runId, setRunId] = useState<string>();
 
   useEffect(() => {
-    if (!client) {
+    if (!client || !initialized) {
       return;
     }
 
@@ -130,10 +136,10 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
           options.onError?.(error instanceof Error ? error : new Error(String(error)));
         });
     }
-  }, [client]);
+  }, [client, initialized]);
 
   useInterval(async () => {
-    if (!runId) {
+    if (!runId || !initialized) {
       return;
     }
 
@@ -193,12 +199,22 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
     }
   };
 
+  const init = useCallback(() => {
+    setInitialized(true);
+  }, []);
+
+  const destroy = useCallback(() => {
+    setInitialized(false);
+  }, []);
+
   return {
     client,
     createMessage,
     messages,
     run,
     result: run?.result ? options.resultSchema?.safeParse(run.result)?.data : undefined,
+    init,
+    destroy,
   };
 }
 

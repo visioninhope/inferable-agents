@@ -1,12 +1,11 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { TestPage } from './TestPage'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { TestPage } from "./TestPage";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <TestPage
-    baseUrl='http://localhost:4000'
-    initialPrompt='What tools do we have?'
-    clusterId=''
-    configId=''
-    apiSecret=''/>
-)
+    baseUrl="https://api.inferable.ai"
+    clusterId="01J7M4V93BBZP3YJYSKPDEGZ2T"
+    apiSecret="test"
+  />
+);
