@@ -80,6 +80,14 @@ export const integrationSchema = z.object({
     })
     .optional()
     .nullable(),
+  slack: z
+    .object({
+      nangoConnectionId: z.string(),
+      botUserId: z.string(),
+      teamId: z.string(),
+    })
+    .optional()
+    .nullable(),
 });
 
 export const genericMessageDataSchema = z
@@ -470,6 +478,16 @@ export const definition = {
       authorization: z.string(),
     }),
     body: z.object({
+      runId: z
+        .string()
+        .optional()
+        .describe(
+          "The run ID. If not provided, a new run will be created. If provided, the run will be created with the given"
+        )
+        .refine(
+          val => !val || /^[0-9A-Z]{26}$/.test(val),
+          "Run ID must be a valid ULID (26 uppercase alphanumeric characters)"
+        ),
       initialPrompt: z
         .string()
         .optional()
@@ -1470,6 +1488,31 @@ export const definition = {
         }),
         refreshedAt: z.number(),
       }),
+    },
+  },
+  createNangoSession: {
+    method: "POST",
+    path: "/clusters/:clusterId/nango/sessions",
+    pathParams: z.object({
+      clusterId: z.string(),
+    }),
+    headers: z.object({ authorization: z.string() }),
+    body: z.object({
+      integration: z.string(),
+    }),
+    responses: {
+      200: z.object({
+        token: z.string(),
+      }),
+    },
+  },
+  createNangoEvent: {
+    method: "POST",
+    path: "/nango/events",
+    headers: z.object({ "x-nango-signature": z.string() }),
+    body: z.object({}).passthrough(),
+    responses: {
+      200: z.undefined(),
     },
   },
 } as const;
