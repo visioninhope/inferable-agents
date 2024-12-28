@@ -101,7 +101,6 @@ export function Message({ message, cellNumber, isLastMessage = false, className 
   }
 
   const data = parsedMessage.data;
-  const isHuman = data.type === "human";
   const isInvocationResult = data.type === "invocation-result";
   const hasResult =
     isInvocationResult && data.data.result && Object.keys(data.data.result).length > 0;

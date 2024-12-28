@@ -11,12 +11,6 @@ interface Message {
   content: string;
 }
 
-interface FormData {
-  message?: string;
-  isComposing?: boolean;
-  [key: string]: string | boolean | undefined;
-}
-
 type UseAgentProps = {
   initialMessage: string;
   userInputSchema?: string[];
@@ -33,6 +27,7 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
   const [isPaneOpen, setIsPaneOpen] = useState(false);
   const triggerRef = React.useRef<HTMLSpanElement>(null);
   const [panePosition, setPanePosition] = useState({ top: 0, left: 0 });
+  const [isComposing, setIsComposing] = useState(false);
 
   useEffect(() => {
     if (isPaneOpen && triggerRef.current) {
@@ -64,7 +59,6 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
 
   const Pane: React.FC<{ floating?: boolean }> = ({ floating }) => {
     const hasForm = userInputSchema && Object.keys(userInputSchema).length > 0;
-    const [formData, setFormData] = useState<FormData>({});
 
     const initRunWithMessage = useCallback(
       (message: string) => {
@@ -76,9 +70,6 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
               type: "human",
             })
           )
-          .then(() => {
-            setFormData({});
-          })
           .catch(error => {
             console.error(error);
           });
@@ -90,7 +81,6 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
       (formData: Record<string, string>) => {
         const messageWithData = JSON.stringify({ message: initialMessage, data: formData });
         initRunWithMessage(messageWithData);
-        setFormData({});
       },
       [initialMessage, initRunWithMessage]
     );
@@ -123,26 +113,20 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
             <form
               onSubmit={e => {
                 e.preventDefault();
-                const rawFormData = Object.fromEntries(new FormData(e.target as HTMLFormElement));
-                const stringFormData = Object.fromEntries(
-                  Object.entries(rawFormData).map(([key, value]) => [key, value.toString()])
-                );
-                handleFormSubmit(stringFormData);
+                const formData = new FormData(e.target as HTMLFormElement);
+                const formEntries = Object.fromEntries(
+                  Array.from(formData.entries()).map(([key, value]) => [key, value.toString()])
+                ) as Record<string, string>;
+                handleFormSubmit(formEntries);
               }}
               className="agent-form"
             >
               {userInputSchema?.map(key => (
                 <div key={key} className="agent-form-group">
                   <label htmlFor={key} className="agent-label">
-                    {key}
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
                   </label>
-                  <input
-                    id={key}
-                    name={key}
-                    value={formData[key]?.toString() || ""}
-                    onChange={e => setFormData(prev => ({ ...prev, [key]: e.target.value }))}
-                    className="agent-input"
-                  />
+                  <input id={key} name={key} className="agent-input" type="text" />
                 </div>
               ))}
               <button type="submit" className="agent-button">
@@ -161,14 +145,9 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
             ))}
           {run.run?.status === "done" && (
             <div className="agent-message-composer">
-              {!formData.isComposing ? (
+              {!isComposing ? (
                 <div className="agent-button-group">
-                  <button
-                    className="agent-compose-trigger"
-                    onClick={() =>
-                      setFormData((prev: FormData) => ({ ...prev, isComposing: true }))
-                    }
-                  >
+                  <button className="agent-compose-trigger" onClick={() => setIsComposing(true)}>
                     <span className="agent-button-icon">+</span>
                     <span>Continue</span>
                   </button>
@@ -184,57 +163,29 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
                   </button>
                 </div>
               ) : (
-                <div className="agent-compose-container">
-                  <input
-                    className="agent-message-input"
-                    placeholder="Type your message..."
-                    value={formData.message || ""}
-                    onChange={e =>
-                      setFormData((prev: FormData) => ({ ...prev, message: e.target.value }))
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const message = formData.get("message")?.toString();
+                    if (message) {
+                      initRunWithMessage(message);
+                      (e.target as HTMLFormElement).reset();
                     }
-                    onKeyDown={e => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (formData.message?.trim()) {
-                          run.createMessage({
-                            message: formData.message.trim(),
-                            type: "human",
-                          });
-                          setFormData((prev: FormData) => ({
-                            ...prev,
-                            message: "",
-                            isComposing: false,
-                          }));
-                        }
-                      } else if (e.key === "Escape") {
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          message: "",
-                          isComposing: false,
-                        }));
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    className="agent-send-button"
-                    onClick={() => {
-                      if (formData.message?.trim()) {
-                        run.createMessage({
-                          message: formData.message.trim(),
-                          type: "human",
-                        });
-                        setFormData((prev: FormData) => ({
-                          ...prev,
-                          message: "",
-                          isComposing: false,
-                        }));
-                      }
-                    }}
-                  >
-                    Send
-                  </button>
-                </div>
+                  }}
+                >
+                  <div className="agent-compose-container">
+                    <input
+                      className="agent-message-input"
+                      placeholder="Type your message..."
+                      autoFocus
+                      name="message"
+                    />
+                    <button className="agent-send-button" type="submit">
+                      Send
+                    </button>
+                  </div>
+                </form>
               )}
             </div>
           )}
