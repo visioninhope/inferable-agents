@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Message } from "../ui/message";
 import { useRun } from "./useRun";
 import { z } from "zod";
@@ -51,11 +51,9 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
         className="agent-trigger"
         onClick={() => {
           if (isPaneOpen) {
-            run.destroy();
             setIsPaneOpen(false);
           } else {
             setIsPaneOpen(true);
-            run.init();
           }
         }}
       >
@@ -67,20 +65,43 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
   const Pane: React.FC<{ floating?: boolean }> = ({ floating }) => {
     const hasForm = userInputSchema && Object.keys(userInputSchema).length > 0;
     const [formData, setFormData] = useState<FormData>({});
-    const [isFormOpen, setIsFormOpen] = useState(false);
+
+    const initRunWithMessage = useCallback(
+      (message: string) => {
+        run
+          .init()
+          .then(() =>
+            run.createMessage({
+              message,
+              type: "human",
+            })
+          )
+          .then(() => {
+            setFormData({});
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      },
+      [run]
+    );
+
+    const handleFormSubmit = useCallback(
+      (formData: Record<string, string>) => {
+        const messageWithData = JSON.stringify({ message: initialMessage, data: formData });
+        initRunWithMessage(messageWithData);
+        setFormData({});
+      },
+      [initialMessage, initRunWithMessage]
+    );
 
     useEffect(() => {
-      const mustCreateMessage = isPaneOpen && run.run?.id && run.messages.length === 0;
+      if (!isPaneOpen || !run.run?.id || run.messages.length > 0) return;
 
-      if (mustCreateMessage && hasForm) {
-        setIsFormOpen(true);
-      } else if (mustCreateMessage) {
-        run.createMessage({
-          message: initialMessage,
-          type: "human",
-        });
+      if (!hasForm) {
+        initRunWithMessage(initialMessage);
       }
-    }, [isPaneOpen, run.run?.id, run.messages.length]);
+    }, [isPaneOpen, run.run?.id, run.messages.length, hasForm, initialMessage, initRunWithMessage]);
 
     if (!isPaneOpen) return null;
 
@@ -98,18 +119,15 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
     return (
       <div className="agent-pane" style={paneStyle}>
         <div className="agent-content">
-          {isFormOpen && (
+          {hasForm && run.messages.length === 0 && (
             <form
               onSubmit={e => {
                 e.preventDefault();
-                const formData = Object.fromEntries(new FormData(e.target as HTMLFormElement));
-                run.createMessage({
-                  message: JSON.stringify({
-                    message: initialMessage,
-                    data: formData,
-                  }),
-                  type: "human",
-                });
+                const rawFormData = Object.fromEntries(new FormData(e.target as HTMLFormElement));
+                const stringFormData = Object.fromEntries(
+                  Object.entries(rawFormData).map(([key, value]) => [key, value.toString()])
+                );
+                handleFormSubmit(stringFormData);
               }}
               className="agent-form"
             >
@@ -120,6 +138,7 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
                   </label>
                   <input
                     id={key}
+                    name={key}
                     value={formData[key]?.toString() || ""}
                     onChange={e => setFormData(prev => ({ ...prev, [key]: e.target.value }))}
                     className="agent-input"

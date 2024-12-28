@@ -12,3 +12,24 @@
   padding-left: 0.25rem;
   margin-top: 0.5rem;
 }
+
+.message-line-data {
+  padding-left: 0.25rem;
+  margin-top: -0.5rem;
+  font-size: 0.7rem;
+  color: #666666;
+  font-family: Inter;
+}
+
+.message-line-data-item {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.message-line-data-key {
+  color: #999999;
+}
+
+.message-line-data-value {
+  color: #333333;
+}

@@ -1,5 +1,5 @@
 import { ClientInferRequest, ClientInferResponseBody } from "@ts-rest/core";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { contract } from "../contract";
 import { createApiClient } from "../createClient";
 import { useInterval } from "./useInterval";
@@ -59,7 +59,7 @@ interface UseRunReturn<T extends z.ZodObject<any>> {
   /** Result of the run if available */
   result?: z.infer<T>;
   /** Function to initialize the run and start polling */
-  init: () => void;
+  init: () => Promise<void>;
   /** Function to destroy the run and stop polling */
   destroy: () => void;
 }
@@ -99,47 +99,11 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
 
   const [messages, setMessages] = useState<ListMessagesResponse>([]);
   const [run, setRun] = useState<GetRunResponse>();
-  const [runId, setRunId] = useState<string>();
 
-  useEffect(() => {
-    if (!client || !initialized) {
-      return;
-    }
-
-    if (options.runId) {
-      setRunId(options.runId);
-    } else {
-      client
-        .createRun({
-          body: {
-            runId,
-            ...(options.resultSchema
-              ? { resultSchema: zodToJsonSchema(options.resultSchema) }
-              : {}),
-          },
-          params: {
-            clusterId: options.clusterId,
-          },
-        })
-        .then(response => {
-          if (response.status !== 201) {
-            options.onError?.(
-              new Error(
-                `Could not create run. Status: ${response.status} Body: ${JSON.stringify(response.body)}`
-              )
-            );
-          } else {
-            setRunId(response.body.id);
-          }
-        })
-        .catch(error => {
-          options.onError?.(error instanceof Error ? error : new Error(String(error)));
-        });
-    }
-  }, [client, initialized]);
+  const runId = useRef<string>();
 
   useInterval(async () => {
-    if (!runId || !initialized) {
+    if (!runId.current || !initialized) {
       return;
     }
 
@@ -148,13 +112,13 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
         client.listMessages({
           params: {
             clusterId: options.clusterId,
-            runId: runId,
+            runId: runId.current,
           },
         }),
         client.getRun({
           params: {
             clusterId: options.clusterId,
-            runId: runId,
+            runId: runId.current,
           },
         }),
       ]);
@@ -179,29 +143,70 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
     }
   }, options.pollInterval || 1000);
 
-  const createMessage = async (input: CreateMessageInput) => {
-    if (!runId) return;
+  const createMessage = useCallback(
+    async (input: CreateMessageInput) => {
+      if (!runId.current) {
+        throw new Error("Run ID is required");
+      }
 
-    const response = await client.createMessage({
-      params: {
-        clusterId: options.clusterId,
-        runId,
-      },
-      body: input,
-    });
+      const response = await client.createMessage({
+        params: {
+          clusterId: options.clusterId,
+          runId: runId.current,
+        },
+        body: input,
+      });
 
-    if (response.status !== 201) {
-      options.onError?.(
-        new Error(
-          `Could not create message. Status: ${response.status} Body: ${JSON.stringify(response.body)}`
-        )
-      );
+      if (response.status !== 201) {
+        options.onError?.(
+          new Error(
+            `Could not create message. Status: ${response.status} Body: ${JSON.stringify(response.body)}`
+          )
+        );
+      }
+    },
+    [client]
+  );
+
+  const init = useCallback(async () => {
+    if (!client) {
+      console.warn(`Cannot initialize run. client=${!!client}, runId=${runId}`);
+      return;
     }
-  };
 
-  const init = useCallback(() => {
+    if (options.runId) {
+      runId.current = options.runId;
+    } else {
+      await client
+        .createRun({
+          body: {
+            runId: runId.current,
+            ...(options.resultSchema
+              ? { resultSchema: zodToJsonSchema(options.resultSchema) }
+              : {}),
+          },
+          params: {
+            clusterId: options.clusterId,
+          },
+        })
+        .then(response => {
+          if (response.status !== 201) {
+            options.onError?.(
+              new Error(
+                `Could not create run. Status: ${response.status} Body: ${JSON.stringify(response.body)}`
+              )
+            );
+          } else {
+            runId.current = response.body.id;
+          }
+        })
+        .catch(error => {
+          options.onError?.(error instanceof Error ? error : new Error(String(error)));
+        });
+    }
+
     setInitialized(true);
-  }, []);
+  }, [client]);
 
   const destroy = useCallback(() => {
     setInitialized(false);

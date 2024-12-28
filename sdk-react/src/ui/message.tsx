@@ -48,6 +48,13 @@ const msgs = (m: z.infer<typeof messageSchema>) => {
   }
 };
 
+const jsonToMarkdown = (json: string) => {
+  const parsed = JSON.parse(json);
+  return Object.entries(parsed)
+    .map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
+    .join("\n");
+};
+
 export const MessageLine = ({
   id,
   content,
@@ -57,6 +64,28 @@ export const MessageLine = ({
   content: string;
   type: string;
 }) => {
+  const isJson = content.startsWith("{") && content.endsWith("}");
+
+  if (isJson) {
+    return (
+      <>
+        <pre className={cn("message-line", type)} id={id}>
+          {JSON.parse(content).message}
+        </pre>
+        <pre className="message-line-data">
+          {Object.entries(JSON.parse(content).data).map(([key, value]) => (
+            <span className="message-line-data-item">
+              <span className="message-line-data-key">{key}</span>
+              <span className="message-line-data-value">
+                {typeof value === "string" ? value : JSON.stringify(value)}
+              </span>
+            </span>
+          ))}
+        </pre>
+      </>
+    );
+  }
+
   return (
     <pre className={cn("message-line", type)} id={id}>
       {content}
@@ -65,7 +94,6 @@ export const MessageLine = ({
 };
 
 export function Message({ message, cellNumber, isLastMessage = false, className }: MessageProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const parsedMessage = messageSchema.safeParse(message);
 
   if (!parsedMessage.success) {
