@@ -58,6 +58,7 @@
   font-family: var(--font-sans);
   width: 90%;
   padding: 0.5rem;
+  flex-shrink: 0;
 }
 
 .agent-form-group {
@@ -164,14 +165,23 @@
 
 .agent-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   background: transparent;
   backdrop-filter: blur(10px);
   border-radius: 0.5rem;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  position: relative;
+}
+
+.agent-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .agent-message-composer {
@@ -181,7 +191,7 @@
   position: sticky;
   bottom: 0;
   width: 100%;
-  padding: 0.5rem;
+  margin-top: 1rem;
 }
 
 .agent-message-composer form {
@@ -191,8 +201,6 @@
 .agent-button-group {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
-  margin-left: -0.5rem;
 }
 
 .agent-compose-trigger {
@@ -221,7 +229,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: 90%;
+  width: calc(100% - 4rem);
 }
 
 .agent-message-input {
@@ -272,4 +280,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.agent-status {
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+  margin-top: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.agent-bottom-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-background);
+  border-top: 1px solid var(--color-border);
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.agent-status {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.agent-message-composer {
+  margin-top: 0;
+  flex-shrink: 0;
 }

@@ -13,9 +13,8 @@ interface Message {
 
 type UseAgentProps = {
   initialMessage: string;
-  userInputSchema?: string[];
+  userInputs?: string[];
   run: ReturnType<typeof useRun>;
-  onSubmit: (message: string) => void;
 };
 
 type UseAgentReturn = {
@@ -23,7 +22,11 @@ type UseAgentReturn = {
   Pane: React.FC<{ floating?: boolean }>;
 };
 
-export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps): UseAgentReturn {
+export function useAgent({
+  initialMessage,
+  userInputs: userInputSchema,
+  run,
+}: UseAgentProps): UseAgentReturn {
   const [isPaneOpen, setIsPaneOpen] = useState(false);
   const triggerRef = React.useRef<HTMLSpanElement>(null);
   const [panePosition, setPanePosition] = useState({ top: 0, left: 0 });
@@ -134,61 +137,78 @@ export function useAgent({ initialMessage, userInputSchema, run }: UseAgentProps
               </button>
             </form>
           )}
-          {run.messages
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-            .map((message, index) => (
-              <Message
-                key={index}
-                message={message}
-                isLastMessage={index === run.messages.length - 1}
-              />
-            ))}
-          {run.run?.status === "done" && (
-            <div className="agent-message-composer">
-              {!isComposing ? (
-                <div className="agent-button-group">
-                  <button className="agent-compose-trigger" onClick={() => setIsComposing(true)}>
-                    <span className="agent-button-icon">+</span>
-                    <span>Continue</span>
-                  </button>
-                  <button
-                    className="agent-compose-trigger"
-                    onClick={() => {
-                      run.destroy();
-                      setIsPaneOpen(false);
-                    }}
-                  >
-                    <span className="agent-button-icon">×</span>
-                    <span>Dismiss</span>
-                  </button>
-                </div>
-              ) : (
-                <form
-                  onSubmit={e => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const message = formData.get("message")?.toString();
-                    if (message) {
-                      initRunWithMessage(message);
-                      (e.target as HTMLFormElement).reset();
-                    }
-                  }}
-                >
-                  <div className="agent-compose-container">
-                    <input
-                      className="agent-message-input"
-                      placeholder="Type your message..."
-                      autoFocus
-                      name="message"
-                    />
-                    <button className="agent-send-button" type="submit">
-                      Send
+          <div className="agent-messages-container">
+            {run.messages
+              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+              .map((message, index) => (
+                <Message
+                  key={index}
+                  message={message}
+                  isLastMessage={index === run.messages.length - 1}
+                />
+              ))}
+          </div>
+          <div className="agent-bottom-bar">
+            <p className="agent-status">
+              {run.run?.status === "done"
+                ? "Completed"
+                : run.run?.status === "running"
+                  ? "Running..."
+                  : run.run?.status === "paused"
+                    ? "Paused"
+                    : run.run?.status === "pending"
+                      ? "Pending..."
+                      : run.run?.status === "failed"
+                        ? "An error occurred"
+                        : ""}
+            </p>
+            {run.run?.status === "done" && (
+              <div className="agent-message-composer">
+                {!isComposing ? (
+                  <div className="agent-button-group">
+                    <button className="agent-compose-trigger" onClick={() => setIsComposing(true)}>
+                      <span className="agent-button-icon">+</span>
+                      <span>Continue</span>
+                    </button>
+                    <button
+                      className="agent-compose-trigger"
+                      onClick={() => {
+                        run.destroy();
+                        setIsPaneOpen(false);
+                      }}
+                    >
+                      <span className="agent-button-icon">×</span>
+                      <span>Dismiss</span>
                     </button>
                   </div>
-                </form>
-              )}
-            </div>
-          )}
+                ) : (
+                  <form
+                    onSubmit={e => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const message = formData.get("message")?.toString();
+                      if (message) {
+                        initRunWithMessage(message);
+                        (e.target as HTMLFormElement).reset();
+                      }
+                    }}
+                  >
+                    <div className="agent-compose-container">
+                      <input
+                        className="agent-message-input"
+                        placeholder="Type your message..."
+                        autoFocus
+                        name="message"
+                      />
+                      <button className="agent-send-button" type="submit">
+                        Send
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

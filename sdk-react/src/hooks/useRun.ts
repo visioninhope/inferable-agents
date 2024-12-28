@@ -124,7 +124,13 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
       ]);
 
       if (messageResponse.status === 200) {
-        setMessages(messageResponse.body);
+        setMessages(messages => {
+          if (messages.length === messageResponse.body.length) {
+            return messages;
+          }
+
+          return messageResponse.body;
+        });
       } else {
         options.onError?.(
           new Error(
@@ -134,7 +140,13 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
       }
 
       if (runResponse.status === 200) {
-        setRun(runResponse.body);
+        setRun(run => {
+          if (JSON.stringify(run) === JSON.stringify(runResponse.body)) {
+            return run;
+          }
+
+          return runResponse.body;
+        });
       } else {
         options.onError?.(new Error(`Could not get run. Status: ${runResponse.status}`));
       }
