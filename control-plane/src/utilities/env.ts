@@ -62,6 +62,7 @@ const envSchema = z
 
     JWKS_URL: z.string().url().optional(),
     JWT_IGNORE_EXPIRATION: truthy.default(false),
+    CLERK_SECRET_KEY: z.string().optional(),
 
     BEDROCK_AVAILABLE: truthy.default(false),
 
@@ -100,6 +101,7 @@ const envSchema = z
     const EE_REQUIRED = [
       "APP_ORIGIN",
       "JWKS_URL",
+      "CLERK_SECRET_KEY",
       "HYPERDX_API_KEY",
       "ROLLBAR_ACCESS_TOKEN",
       "FLAGSMITH_ENVIRONMENT_KEY",
