@@ -119,19 +119,28 @@ The `useRun` hook returns an object with the following properties:
   createMessage: Function;  // Function to add new messages to the run
   messages: Message[];      // Array of all messages in the run
   run?: Run;               // Current run status and metadata
+  result?: T;              // Typed result of the run if available
+  init: () => Promise<void>; // Function to initialize the run and start polling
+  destroy: () => void;     // Function to destroy the run and stop polling
 }
 ```
 
 #### Basic Usage
 
 ```typescript
-const { messages, run, createMessage } = useRun({
+const { messages, run, createMessage, init } = useRun({
   clusterId: "your-cluster-id",
   authType: "custom",
   customAuthToken: "your-custom-auth-token",
   // apiSecret: 'your-api-secret', // Alternative auth method
   // pollInterval: 1000, // Optional: defaults to 1000ms
+  // resultSchema: z.object({...}), // Optional: schema for typed results
 });
+
+// Initialize the run
+useEffect(() => {
+  init();
+}, []);
 ```
 
 #### Adding Messages
@@ -143,6 +152,27 @@ await createMessage({
   message: "Hello!",
   type: "human",
 });
+```
+
+#### Type-safe Results
+
+You can provide a Zod schema to get type-safe results from your run:
+
+```typescript
+const resultSchema = z.object({
+  summary: z.string(),
+  score: z.number(),
+});
+
+const { result } = useRun({
+  clusterId: "your-cluster-id",
+  authType: "custom",
+  customAuthToken: "your-custom-auth-token",
+  resultSchema,
+});
+
+// result will be typed according to the schema
+console.log(result?.summary);
 ```
 
 #### Error Handling

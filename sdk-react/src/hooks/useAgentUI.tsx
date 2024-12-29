@@ -4,19 +4,19 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Message, MessageLine, MinimalMessage } from "../ui/message";
 import { useRun } from "./useRun";
 import { z } from "zod";
-import "./useAgent.css";
+import "./useAgentUI.css";
 
 interface Message {
   role: string;
   content: string;
 }
 
-type UseAgentProps = {
+type UseAgentUIProps = {
   prompt: string;
   run: ReturnType<typeof useRun>;
 };
 
-type UseAgentReturn = {
+type UseAgentUIReturn = {
   Trigger: React.FC<{ children?: React.ReactNode }>;
   Pane: React.FC<{ mode?: "floating" | "fixed" | "minimal" }>;
 };
@@ -31,21 +31,10 @@ const humanStatus = (run: ReturnType<typeof useRun>["run"]) => {
   return "";
 };
 
-export function useAgent({ prompt: initialMessage, run }: UseAgentProps): UseAgentReturn {
+export function useAgentUI({ prompt: initialMessage, run }: UseAgentUIProps): UseAgentUIReturn {
   const [isPaneOpen, setIsPaneOpen] = useState(false);
   const triggerRef = React.useRef<HTMLSpanElement>(null);
-  const [panePosition, setPanePosition] = useState({ top: 0, left: 0 });
   const [isComposing, setIsComposing] = useState(false);
-
-  useEffect(() => {
-    if (isPaneOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPanePosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-      });
-    }
-  }, [isPaneOpen]);
 
   const initRunWithMessage = useCallback(
     (message: string) => {
