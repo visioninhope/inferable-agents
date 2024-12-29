@@ -13,7 +13,6 @@ import { nango } from "../nango";
 import { InstallableIntegration } from "../types";
 import { integrationSchema } from "../schema";
 import { z } from "zod";
-import { upsertIntegrations } from "../integrations";
 
 let app: App | undefined;
 
@@ -36,14 +35,19 @@ export const slack: InstallableIntegration = {
     logger.info("Deactivating Slack integration", {
       clusterId
     })
+
     if (!prevConfig.slack) {
       logger.warn("Can not deactivate Slack integration with no config")
       return
     }
     // Cleanup the Nango connection
-    await deleteNangoConnection(clusterId, prevConfig.slack.nangoConnectionId);
+    await deleteNangoConnection(prevConfig.slack.nangoConnectionId);
   },
-  onActivate: async (clusterId: string, config: z.infer<typeof integrationSchema>) => {
+  onActivate: async (
+    clusterId: string,
+    config: z.infer<typeof integrationSchema>,
+    prevConfig: z.infer<typeof integrationSchema>
+  ) => {
     logger.info("Activating Slack integration", {
       clusterId,
     })
@@ -53,31 +57,24 @@ export const slack: InstallableIntegration = {
       return
     }
 
-    // If another cluster is connected with this teamId, remove it
-    const [conflict] = await db.select({
-      cluster_id: integrations.cluster_id,
-      slack: integrations.slack,
-    })
-      .from(integrations)
-      .where(
-        and(
-          sql`slack->>'teamId' = ${config.slack.teamId}`,
-          ne(integrations.cluster_id, clusterId)
-        ));
-
-    if (conflict) {
-      logger.info("Removing conflicting Slack integration", {
-        teamId: config.slack.teamId,
-        conflictClusterId: conflict.cluster_id,
-      });
-
-      await upsertIntegrations({
-        clusterId: conflict.cluster_id,
-        config: {
-          slack: null,
-        }
+    // It can be possible for the same Nango session token to be used to create multiple connections
+    // e.g, if the "try again" button.
+    // This check will cleanup a previous connection if it is not the same
+    if (
+      prevConfig.slack
+        && config.slack
+        && prevConfig.slack.nangoConnectionId !== config.slack.nangoConnectionId
+    ) {
+      logger.warn("Slack integration has been overridden. Cleaning up previous Nango connection", {
+        prevNangoConnectionId: prevConfig.slack.nangoConnectionId,
+        nangoConnectionId: config.slack.nangoConnectionId
       })
+
+      await deleteNangoConnection(prevConfig.slack.nangoConnectionId);
     }
+
+    // If the user connects another cluster with the same Slack workspace, we cleanup the conflicting integrations
+    await cleanupConflictingIntegrations(clusterId, config);
   },
   handleCall: async () => {
     logger.warn("Slack integration does not support calls");
@@ -297,15 +294,53 @@ const getAccessToken = async (connectionId: string) => {
   return result;
 };
 
-const deleteNangoConnection = async (clusterId: string, connectionId: string) => {
+const cleanupConflictingIntegrations = async (clusterId: string, config: z.infer<typeof integrationSchema>) => {
+  if (!config.slack) {
+    return;
+  }
+
+  const conflicts = await db
+    .select({
+      cluster_id: integrations.cluster_id,
+      slack: integrations.slack,
+    })
+    .from(integrations)
+    .where(
+      and(
+        sql`slack->>'teamId' = ${config.slack.teamId}`,
+        ne(integrations.cluster_id, clusterId)
+      )
+    );
+
+  if (conflicts.length) {
+    logger.info("Removed conflicting Slack integrations", {
+      conflicts: conflicts.map((conflict) => conflict.cluster_id)
+    })
+
+    // Cleanup Slack integrations from DB
+    await db
+    .delete(integrations)
+    .where(
+      and(
+        sql`slack->>'teamId' = ${config.slack.teamId}`,
+        ne(integrations.cluster_id, clusterId)
+      )
+    );
+
+    // Cleanup Nango connections
+    await Promise.allSettled(conflicts.map(async (conflict) => {
+      if (conflict.slack) {
+        await deleteNangoConnection(conflict.slack.nangoConnectionId);
+      }
+    }));
+
+  }
+}
+
+const deleteNangoConnection = async (connectionId: string) => {
   if (!nango) {
     throw new Error("Nango is not configured");
   }
-
-  logger.info("Removing Slack integration", {
-    connectionId,
-    clusterId
-  });
 
   await nango.deleteConnection(
     env.NANGO_SLACK_INTEGRATION_ID,
