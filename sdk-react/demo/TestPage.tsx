@@ -20,11 +20,7 @@ export function TestPage() {
   const [pingCount, setPingCount] = useState(1);
 
   const FormAgent = useAgent({
-    prompt: `Ping the server, and return the system status at the time of the ping. ${JSON.stringify(
-      {
-        pingCount,
-      }
-    )}`,
+    prompt: `Ping the server ${pingCount} times, and return the system status at the time of the ping.`,
     run: basicRun,
   });
 
@@ -42,6 +38,7 @@ export function TestPage() {
         <BasicAgent.Trigger>Check system ({mode})</BasicAgent.Trigger>
         <BasicAgent.Pane mode={mode} />
       </div>
+
       <h1>useAgent with form</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "500px" }}>
         <label htmlFor="pingCount">How many times should I ping the server?</label>
