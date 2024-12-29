@@ -24,6 +24,13 @@ export function TestPage() {
     run: basicRun,
   });
 
+  const [message, setMessage] = useState("Hello, what are your tools?");
+
+  const InitialMessageAgent = useAgent({
+    prompt: message,
+    run: basicRun,
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <h1>Basic useAgent</h1>
@@ -49,7 +56,20 @@ export function TestPage() {
           onChange={e => setPingCount(Number(e.target.value))}
         />
         <FormAgent.Trigger>Check system</FormAgent.Trigger>
-        <FormAgent.Pane mode={mode} />
+        <FormAgent.Pane mode="fixed" />
+      </div>
+
+      <h1>useAgent with Initial Chat Message</h1>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "500px" }}>
+        <label htmlFor="message">What should I say?</label>
+        <input
+          type="text"
+          name="message"
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+        />
+        <InitialMessageAgent.Trigger>Check system</InitialMessageAgent.Trigger>
+        <InitialMessageAgent.Pane mode="fixed" />
       </div>
     </div>
   );
