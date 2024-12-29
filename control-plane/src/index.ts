@@ -35,7 +35,10 @@ app.register(initServer().plugin(router.router), parent => {
 
 const allowedOrigins = [env.APP_ORIGIN];
 
-const corsBypassRegex = new RegExp(/\/clusters\/.*\/runs/);
+const corsBypassRegexes = [
+  new RegExp(/\/clusters\/.*\/runs/),
+  new RegExp(/\/workflows\/.*\/calls/),
+];
 
 app.register(cors, {
   delegator: (req, callback) => {
@@ -46,7 +49,7 @@ app.register(cors, {
       return;
     }
 
-    if (corsBypassRegex.test(req.url ?? "")) {
+    if (corsBypassRegexes.some(regex => regex.test(req.url ?? ""))) {
       callback(null, {
         origin: true,
       });
