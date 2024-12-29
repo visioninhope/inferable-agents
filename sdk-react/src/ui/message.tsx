@@ -94,7 +94,7 @@ export function Message({ message }: MessageProps) {
   const parsedMessage = messageSchema.safeParse(message);
 
   if (!parsedMessage.success) {
-    return <div className="message-error">Invalid message format</div>;
+    return <div className="message-error">Could not parse message: {JSON.stringify(message)}</div>;
   }
 
   const data = parsedMessage.data;

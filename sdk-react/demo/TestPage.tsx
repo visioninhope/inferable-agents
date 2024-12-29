@@ -3,22 +3,34 @@ import { useRun } from "../src";
 import { useAgent } from "../src/hooks/useAgent";
 
 export function TestPage() {
-  const run = useRun({
+  const basicRun = useRun({
     clusterId: "01J7M4V93BBZP3YJYSKPDEGZ2T",
     baseUrl: "https://api.inferable.ai",
     authType: "custom",
     customAuthToken: "test",
   });
 
-  const { Trigger, Pane } = useAgent({
+  const BasicAgent = useAgent({
     prompt: "Ping the server, and return the system status at the time of the ping.",
-    run,
+    run: basicRun,
   });
 
   const [mode, setMode] = useState<"minimal" | "fixed" | "floating">("floating");
 
+  const [pingCount, setPingCount] = useState(1);
+
+  const FormAgent = useAgent({
+    prompt: `Ping the server, and return the system status at the time of the ping. ${JSON.stringify(
+      {
+        pingCount,
+      }
+    )}`,
+    run: basicRun,
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <h1>Basic useAgent</h1>
       <div style={{ display: "flex", gap: "10px" }}>
         {["minimal", "fixed", "floating"].map(s => (
           <button key={s} onClick={() => setMode(s as "minimal" | "fixed" | "floating")}>
@@ -27,8 +39,20 @@ export function TestPage() {
         ))}
       </div>
       <div>
-        <Trigger>Check system ({mode})</Trigger>
-        <Pane mode={mode} />
+        <BasicAgent.Trigger>Check system ({mode})</BasicAgent.Trigger>
+        <BasicAgent.Pane mode={mode} />
+      </div>
+      <h1>useAgent with form</h1>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "500px" }}>
+        <label htmlFor="pingCount">How many times should I ping the server?</label>
+        <input
+          type="number"
+          name="pingCount"
+          value={pingCount}
+          onChange={e => setPingCount(Number(e.target.value))}
+        />
+        <FormAgent.Trigger>Check system</FormAgent.Trigger>
+        <FormAgent.Pane mode={mode} />
       </div>
     </div>
   );
