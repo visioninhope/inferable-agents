@@ -3,7 +3,7 @@ import { useRun } from "../src";
 import { useAgent } from "../src/hooks/useAgent";
 
 export function TestPage(props: {}) {
-  const runConfig = useRun({
+  const run = useRun({
     clusterId: "01J7M4V93BBZP3YJYSKPDEGZ2T",
     baseUrl: "https://api.inferable.ai",
     authType: "custom",
@@ -11,14 +11,13 @@ export function TestPage(props: {}) {
   });
 
   const { Trigger, Pane } = useAgent({
-    initialMessage: "System Status",
-    run: runConfig,
-    userInputs: ["Times to ping"],
+    prompt: "Ping the server, and return the system status at the time of the ping.",
+    run,
   });
 
   return (
     <div>
-      <Trigger>Get the system status</Trigger>
+      <Trigger>Check system</Trigger>
       <Pane floating />
     </div>
   );

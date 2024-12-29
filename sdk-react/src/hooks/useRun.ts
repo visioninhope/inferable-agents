@@ -102,8 +102,8 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
 
   const runId = useRef<string>();
 
-  useInterval(async () => {
-    if (!runId.current || !initialized) {
+  const poll = useCallback(async () => {
+    if (!runId.current) {
       return;
     }
 
@@ -153,7 +153,19 @@ export function useRun<T extends z.ZodObject<any>>(options: UseRunOptions<T>): U
     } catch (error) {
       options.onError?.(error instanceof Error ? error : new Error(String(error)));
     }
-  }, options.pollInterval || 1000);
+
+    await new Promise(resolve => setTimeout(resolve, options.pollInterval || 1000));
+
+    return poll();
+  }, [client]);
+
+  useEffect(() => {
+    if (!runId.current || !initialized) {
+      return;
+    }
+
+    poll();
+  }, [poll, initialized, runId]);
 
   const createMessage = useCallback(
     async (input: CreateMessageInput) => {

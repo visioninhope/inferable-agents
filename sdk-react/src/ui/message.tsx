@@ -27,9 +27,6 @@ const messageSchema = z.object({
 
 type MessageProps = {
   message: unknown;
-  cellNumber?: number;
-  isLastMessage?: boolean;
-  className?: string;
 };
 
 const msgs = (m: z.infer<typeof messageSchema>) => {
@@ -93,7 +90,7 @@ export const MessageLine = ({
   );
 };
 
-export function Message({ message, cellNumber, isLastMessage = false, className }: MessageProps) {
+export function Message({ message }: MessageProps) {
   const parsedMessage = messageSchema.safeParse(message);
 
   if (!parsedMessage.success) {
