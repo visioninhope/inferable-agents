@@ -18,7 +18,7 @@ export function TestPage(props: {}) {
   return (
     <div>
       <Trigger>Check system</Trigger>
-      <Pane floating />
+      <Pane mode="minimal" />
     </div>
   );
 }

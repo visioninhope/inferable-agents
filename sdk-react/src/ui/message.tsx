@@ -110,3 +110,17 @@ export function Message({ message }: MessageProps) {
     <MessageLine key={id} id={id} content={content} type={data.type} />
   ));
 }
+
+export const MinimalMessage = ({ message }: MessageProps) => {
+  const parsedMessage = messageSchema.safeParse(message);
+
+  if (!parsedMessage.success) {
+    return <pre className="message-line">Loading...</pre>;
+  }
+
+  return msgs(parsedMessage.data)?.map(({ id, content }) => (
+    <pre className="message-line" key={id} id={id}>
+      {content}
+    </pre>
+  ));
+};

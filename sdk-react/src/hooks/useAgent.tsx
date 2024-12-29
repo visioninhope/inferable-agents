@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Message, MessageLine } from "../ui/message";
+import { Message, MessageLine, MinimalMessage } from "../ui/message";
 import { useRun } from "./useRun";
 import { z } from "zod";
 import "./useAgent.css";
@@ -18,7 +18,7 @@ type UseAgentProps = {
 
 type UseAgentReturn = {
   Trigger: React.FC<{ children?: React.ReactNode }>;
-  Pane: React.FC<{ floating?: boolean }>;
+  Pane: React.FC<{ mode?: "floating" | "fixed" | "minimal" }>;
 };
 
 const humanStatus = (run: ReturnType<typeof useRun>["run"]) => {
@@ -82,35 +82,52 @@ export function useAgent({ prompt: initialMessage, run }: UseAgentProps): UseAge
     );
   };
 
-  const Pane: React.FC<{ floating?: boolean }> = ({ floating }) => {
+  const Pane: React.FC<{ mode?: "floating" | "fixed" | "minimal" }> = ({ mode = "floating" }) => {
     if (!isPaneOpen) return null;
 
-    const paneStyle = floating
-      ? {
-          position: "absolute" as const,
-          top: panePosition.top,
-          left: panePosition.left,
-          right: "auto",
-          width: "500px",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-        }
-      : {
-          position: "fixed" as const,
-          width: "60%",
-          right: "0",
-          bottom: "0",
-          top: "0",
-          height: "100%",
-          margin: "0",
-        };
+    const paneStyle = {
+      floating: {
+        position: "absolute" as const,
+        top: panePosition.top,
+        left: panePosition.left,
+        right: "auto",
+        width: "500px",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      },
+      fixed: {
+        position: "fixed" as const,
+        width: "60%",
+        right: "0",
+        bottom: "0",
+        top: "0",
+        height: "100%",
+        margin: "0",
+      },
+      minimal: {
+        position: "absolute" as const,
+        top: panePosition.top,
+        left: panePosition.left,
+        width: "100%",
+        maxWidth: "500px",
+        boxShadow: "none",
+      },
+    }[mode];
+
+    const sortedMessages = run.messages.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    const lastAgentMessage =
+      mode === "minimal" ? sortedMessages.filter(m => m.type === "agent").pop() : null;
 
     return (
       <div className="agent-pane" style={paneStyle}>
         <div className="agent-content">
           <div className="agent-messages-container">
-            {run.messages
-              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-              .map((message, index) =>
+            {mode === "minimal" ? (
+              <MinimalMessage message={lastAgentMessage} />
+            ) : (
+              sortedMessages.map((message, index) =>
                 index === 0 ? (
                   <MessageLine
                     id={message.id}
@@ -120,7 +137,8 @@ export function useAgent({ prompt: initialMessage, run }: UseAgentProps): UseAge
                 ) : (
                   <Message key={index} message={message} />
                 )
-              )}
+              )
+            )}
           </div>
           <div className="agent-bottom-bar">
             <div className="agent-message-composer">
