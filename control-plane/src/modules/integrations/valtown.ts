@@ -22,6 +22,7 @@ const privateKeySchema = z.object({
     dp: z.string(),
     dq: z.string(),
     qi: z.string(),
+    alg: z.string().optional(),
   }),
 });
 
@@ -61,7 +62,12 @@ export const signedHeaders = ({
     return {};
   }
 
-  const privateKeyObject = privateKeySchema.parse({ key: privateKey, format: "jwk" });
+  const obj = {
+    key: privateKey,
+    format: "jwk",
+  };
+
+  const privateKeyObject = privateKeySchema.parse(obj);
 
   const sign = createSign("SHA256");
   sign.update(`${timestamp}${method}${path}${body}`);
