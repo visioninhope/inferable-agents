@@ -43,23 +43,42 @@ export class InferableService {
     this.functions.push(options);
   }
 
-  private isAuthenticated(request: Request): boolean {
-    const signatureFromHeader = request.headers.get("X-Signature");
+  private isAuthenticated({
+    xTimestamp,
+    xSignature,
+    method,
+    path,
+    body,
+  }: {
+    xTimestamp: string;
+    xSignature: string;
+    method: string;
+    path: string;
+    body: string;
+  }): boolean {
+    const signatureFromHeader = xSignature;
 
     if (!signatureFromHeader) {
       return false;
     }
 
-    const timestamp = request.headers.get("X-Timestamp");
-    const method = request.method;
-    const path = request.url;
-    const body = request.body;
+    console.log("About to verify", {
+      xTimestamp,
+      method,
+      path,
+      body,
+      signatureFromHeader,
+      publicKey: this.options.publicKey,
+    });
 
     const verifier = createVerify("SHA256");
-    verifier.update(`${timestamp}${method}${path}${body}`);
-    verifier.end()
-
-    return verifier.verify(this.options.publicKey, signatureFromHeader, "hex");
+    const message = `${xTimestamp}${method}${path}${body}`;
+    console.log("Message to verify:", message);
+    verifier.update(message);
+    verifier.end();
+    const result = verifier.verify(this.options.publicKey, signatureFromHeader, "hex");
+    console.log("Verification result:", result);
+    return result;
   }
 
   getServer(): (request: Request) => Promise<Response> {
@@ -71,13 +90,6 @@ export class InferableService {
 
       if (!hasPublicKey) {
         console.warn("No public key provided. Authentication is disabled. See https://docs.inferable.ai/valtown to learn how to enable it.");
-      }
-
-      if (hasPublicKey && !this.isAuthenticated(request)) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { "content-type": "application/json" },
-        });
       }
 
       // Metadata route
@@ -99,6 +111,29 @@ export class InferableService {
 
       // Execution route
       if (path.startsWith("/exec/functions/")) {
+        const body = await request.body?.getReader().read();
+        const bodyText = body ? new TextDecoder().decode(body.value) : "";
+
+        if (!bodyText) {
+          return new Response(JSON.stringify({ error: "No body" }), {
+            status: 400,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        if (hasPublicKey && !this.isAuthenticated({
+          xTimestamp: request.headers.get("X-Timestamp") || "",
+          xSignature: request.headers.get("X-Signature") || "",
+          method: request.method,
+          path,
+          body: bodyText,
+        })) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
         const functionName = path.split("/")[3];
 
         if (request.method !== "POST") {
