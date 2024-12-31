@@ -15,9 +15,15 @@ export class InferableService {
   constructor(
     private options: {
       description: string;
-      publicKey: JWKSPublicKey;
+      publicKey?: JWKSPublicKey;
     },
-  ) {}
+  ) {
+    if (options.publicKey) {
+      if (!options.publicKey.alg || !options.publicKey.kty || !options.publicKey.n || !options.publicKey.e) {
+        throw new Error("Invalid public key");
+      }
+    }
+  }
 
   registerFunction(options: {
     name: string;
