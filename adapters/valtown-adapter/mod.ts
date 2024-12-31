@@ -2,31 +2,22 @@ const {
   createVerify,
 } = await import('node:crypto');
 
+type JWKSPublicKey = {
+  alg: string;
+  kty: string;
+  n: string;
+  e: string;
+}
+
 export class InferableService {
   private functions: Parameters<InferableService["registerFunction"]>[0][] = [];
 
   constructor(
     private options: {
       description: string;
-      publicKey: string;
+      publicKey: JWKSPublicKey;
     },
-  ) {
-    if (this.options.publicKey) {
-      const hasPrefix = this.options.publicKey.startsWith("-----BEGIN PUBLIC KEY-----");
-
-      if (!hasPrefix) {
-        const base64Content = this.options.publicKey;
-        const lines = base64Content.match(/.{1,64}/g) || [];
-        const formatted = [
-          "-----BEGIN PUBLIC KEY-----",
-          ...lines,
-          "-----END PUBLIC KEY-----",
-        ].join("\n");
-
-        this.options.publicKey = formatted;
-      }
-    }
-  }
+  ) {}
 
   registerFunction(options: {
     name: string;
@@ -76,7 +67,10 @@ export class InferableService {
     console.log("Message to verify:", message);
     verifier.update(message);
     verifier.end();
-    const result = verifier.verify(this.options.publicKey, signatureFromHeader, "hex");
+    const result = verifier.verify({
+      key: this.options.publicKey,
+      format: "jwk",
+    }, signatureFromHeader, "hex");
     console.log("Verification result:", result);
     return result;
   }
