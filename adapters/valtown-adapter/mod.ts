@@ -10,7 +10,23 @@ export class InferableService {
       description: string;
       publicKey: string;
     },
-  ) {}
+  ) {
+    if (this.options.publicKey) {
+      const hasPrefix = this.options.publicKey.startsWith("-----BEGIN PUBLIC KEY-----");
+
+      if (!hasPrefix) {
+        const base64Content = this.options.publicKey;
+        const lines = base64Content.match(/.{1,64}/g) || [];
+        const formatted = [
+          "-----BEGIN PUBLIC KEY-----",
+          ...lines,
+          "-----END PUBLIC KEY-----",
+        ].join("\n");
+
+        this.options.publicKey = formatted;
+      }
+    }
+  }
 
   registerFunction(options: {
     name: string;
