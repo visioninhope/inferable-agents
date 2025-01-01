@@ -29,9 +29,8 @@ import { trackCustomerTelemetry } from "../track-customer-telemetry";
 import {
   getWorkflowMessages,
   hasInvocations,
+  insertRunMessage,
   lastAgentMessage,
-  prepMessagesForRetry,
-  upsertRunMessage,
 } from "./workflow-messages";
 import { getRunMetadata } from "./metadata";
 
@@ -382,7 +381,7 @@ export const addMessageAndResume = async ({
     await assertRunReady({ clusterId, runId });
   }
 
-  await upsertRunMessage({
+  await insertRunMessage({
     userId,
     clusterId,
     runId,
@@ -645,21 +644,7 @@ export const getRunConfigMetrics = async ({
     .limit(1000);
 };
 
-export const createRetry = async ({
-  clusterId,
-  runId,
-  messageId,
-}: {
-  clusterId: string;
-  runId: string;
-  messageId: string;
-}) => {
-  const { deleted } = await prepMessagesForRetry({
-    clusterId,
-    runId,
-    messageId,
-  });
-
+export const createRetry = async ({ clusterId, runId }: { clusterId: string; runId: string }) => {
   await db
     .update(workflows)
     .set({
@@ -672,10 +657,6 @@ export const createRetry = async ({
     clusterId,
     id: runId,
   });
-
-  return {
-    deleted,
-  };
 };
 
 export const getRunCustomAuthToken = async ({
