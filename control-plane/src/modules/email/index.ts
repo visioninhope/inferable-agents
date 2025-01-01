@@ -1,15 +1,19 @@
 import { Consumer } from "sqs-consumer";
 import { env } from "../../utilities/env";
-import { sqs } from "../sqs";
+import { BaseMessage, sqs, withObservability } from "../sqs";
 import { z } from "zod";
-import { Message } from "@aws-sdk/client-sqs";
 import { logger } from "../observability/logger";
 import { safeParse } from "../../utilities/safe-parse";
+import { ParsedMail, simpleParser } from "mailparser";
+import { getUserForCluster } from "../clerk";
+import { AuthenticationError } from "../../utilities/errors";
+import { createRunWithMessage } from "../workflows/workflows";
+import { flagsmith } from "../flagsmith";
 
 const sesMessageSchema = z.object({
   notificationType: z.string(),
   mail: z.object({
-    timestamp: z.string().datetime(),
+    timestamp: z.string(),
     source: z.string().email(),
     messageId: z.string(),
     destination: z.array(z.string().email()),
@@ -30,7 +34,7 @@ const sesMessageSchema = z.object({
     }),
   }),
   receipt: z.object({
-    timestamp: z.string().datetime(),
+    timestamp: z.string(),
     processingTimeMillis: z.number(),
     recipients: z.array(z.string().email()),
     spamVerdict: z.object({ status: z.string() }),
@@ -54,11 +58,11 @@ const snsNotificationSchema = z.object({
   TopicArn: z.string(),
   Subject: z.string(),
   Message: z.string(),
-  Timestamp: z.string().datetime(),
+  Timestamp: z.string(),
   SignatureVersion: z.string(),
   Signature: z.string(),
-  SigningCertURL: z.string().url(),
-  UnsubscribeURL: z.string().url(),
+  SigningCertURL: z.string(),
+  UnsubscribeURL: z.string(),
 });
 
 const emailIngestionConsumer = env.SQS_EMAIL_INGESTION_QUEUE_URL
@@ -67,7 +71,7 @@ const emailIngestionConsumer = env.SQS_EMAIL_INGESTION_QUEUE_URL
       batchSize: 5,
       visibilityTimeout: 60,
       heartbeatInterval: 30,
-      handleMessage: handleEmailIngestion,
+      handleMessage: withObservability(env.SQS_EMAIL_INGESTION_QUEUE_URL, handleEmailIngestion),
       sqs,
     })
   : undefined;
@@ -80,52 +84,132 @@ export const stop = async () => {
   emailIngestionConsumer?.stop();
 };
 
-async function handleEmailIngestion(message: Message) {
-  try {
-    const notificationJson = safeParse(message.Body);
-    if (!notificationJson.success) {
-      logger.error("SNS notification is not valid JSON", {
-        error: notificationJson.error,
-      });
-      return;
-    }
-
-    const notification = snsNotificationSchema.safeParse(notificationJson.data);
-    if (!notification.success) {
-      logger.error("Could not parse SNS notification", {
-        error: notification.error,
-      });
-      return;
-    }
-
-
-    const sesJson = safeParse(notification.data.Message);
-    if (!sesJson.success) {
-      logger.error("SES message is not valid JSON", {
-        error: sesJson.error,
-      });
-      return;
-    }
-
-    const sesMessage = sesMessageSchema.safeParse(sesJson.data);
-    if (!sesMessage.success) {
-      logger.error("Could not parse SES message", {
-        error: sesMessage.error,
-      });
-      return;
-    }
-
-    logger.info("Ingesting email event", {
-      messageId: sesMessage.data.mail.messageId,
-      source: sesMessage.data.mail.source,
-      destination: sesMessage.data.mail.destination,
-      subject: sesMessage.data.mail.commonHeaders.subject,
+async function handleEmailIngestion(raw: unknown) {
+  const message = await parseMessage(raw);
+  if (!message.body) {
+    logger.info("Email had no body. Skipping", {
     });
+    return;
+  }
 
+  const user = await authenticateUser(message.source, message.clusterId);
 
-  } catch (error) {
-    logger.error("Error while ingesting email event", {
-      error,
+  const flags = await flagsmith?.getIdentityFlags(message.clusterId, {
+    clusterId: message.clusterId,
+  });
+
+  const useEmail = flags?.isFeatureEnabled("experimental_email_trigger");
+
+  if (!useEmail) {
+    logger.info("Email trigger is disabled. Skipping", {
+      clusterId: message.clusterId,
     });
+    return;
+  }
+
+  await handleNewChain({
+    userId: user.id,
+    body: message.body,
+    clusterId: message.clusterId
+  });
+}
+
+export async function parseMessage(message: unknown) {
+  const notification = snsNotificationSchema.safeParse(message);
+  if (!notification.success) {
+    throw new Error("Could not parse SNS notification message");
+  }
+
+  const sesJson = safeParse(notification.data.Message);
+  if (!sesJson.success) {
+    throw new Error("SES message is not valid JSON");
+  }
+
+  const sesMessage = sesMessageSchema.safeParse(sesJson.data);
+  if (!sesMessage.success) {
+    throw new Error("Could not parse SES message");
+  }
+
+  const ingestionAddresses = sesMessage.data.mail.destination.filter(
+    (email) => email.endsWith(env.INFERABLE_EMAIL_DOMAIN)
+  )
+
+  if (ingestionAddresses.length > 1) {
+    throw new Error("Found multiple Inferable email addresses in destination");
+  }
+
+  const clusterId = ingestionAddresses.pop()?.replace(env.INFERABLE_EMAIL_DOMAIN, "").replace("@", "");
+
+  if (!clusterId) {
+    throw new Error("Could not extract clusterId from email address");
+  }
+
+  const mail = await parseMailContent(sesMessage.data.content);
+  if (!mail) {
+    throw new Error("Could not parse email content");
+  }
+
+  let body = mail.text
+  if (!body && mail.html) {
+    body = mail.html
+  }
+
+  return {
+    body,
+    clusterId,
+    ingestionAddresses,
+    source: sesMessage.data.mail.source,
+    messageId: sesMessage.data.mail.messageId,
   }
 }
+
+const parseMailContent = (message: string):  Promise<ParsedMail> => {
+  return new Promise((resolve, reject) => {
+    simpleParser(message, (error, parsed) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(parsed);
+      }
+    });
+  })
+};
+
+
+const authenticateUser = async (emailAddress: string, clusterId: string) => {
+  if (!env.CLERK_SECRET_KEY) {
+    throw new Error("CLERK_SECRET_KEY must be set for email authentication");
+  }
+
+  const clerkUser = await getUserForCluster({
+    emailAddress,
+    clusterId,
+  });
+
+  if (!clerkUser) {
+    logger.info("Could not find Email in Clerk.", {
+      emailAddress,
+    });
+    throw new AuthenticationError("Could not authenticate Email sender");
+  }
+
+  return clerkUser;
+};
+
+const handleNewChain = async ({
+  userId,
+  body,
+  clusterId,
+}: {
+  userId: string;
+  body: string;
+  clusterId: string;
+}) => {
+  await createRunWithMessage({
+    userId,
+    clusterId,
+    message: body,
+    type: "human",
+  })
+}
+
