@@ -102,6 +102,29 @@ export const jobs = pgTable(
   })
 );
 
+// an immutable history of job state transitions
+export const jobStates = pgTable(
+  "job_states",
+  {
+    job_id: varchar("job_id", { length: 1024 }).notNull(),
+    sequence: integer("sequence").notNull(),
+    from_state: text("from_state", {
+      enum: ["pending", "running", "success", "failure", "stalled"],
+    }).notNull(),
+    to_state: text("to_state", {
+      enum: ["pending", "running", "success", "failure", "stalled"],
+    }).notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull(),
+    snapshot: json("snapshot").notNull(),
+  },
+  table => ({
+    pk: primaryKey({
+      columns: [table.job_id, table.sequence],
+      name: "job_states_pkey",
+    }),
+  })
+);
+
 export const machines = pgTable(
   "machines",
   {
