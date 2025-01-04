@@ -18,10 +18,11 @@ import {
 import { Pool } from "pg";
 import { env } from "../utilities/env";
 import { logger } from "./observability/logger";
+import { Snapshot } from "xstate";
 
 export const createMutex = advisoryLock(env.DATABASE_URL);
 
-export const pool = new Pool({
+export const dbOptions = () => ({
   connectionString: env.DATABASE_URL,
   ssl: env.DATABASE_SSL_DISABLED
     ? false
@@ -30,6 +31,14 @@ export const pool = new Pool({
       },
   allowExitOnIdle: env.DATABASE_ALLOW_EXIT_ON_IDLE,
   max: env.DATABASE_MAX_CONNECTIONS,
+});
+
+export const pool = new Pool(dbOptions());
+
+pool.on("error", err => {
+  logger.error("Database connection error on pool", {
+    error: err,
+  });
 });
 
 pool.on("error", err => {
@@ -82,6 +91,8 @@ export const jobs = pgTable(
     run_context: json("run_context"),
     approval_requested: boolean("approval_requested").notNull().default(false),
     approved: boolean("approved"),
+    xstate_snapshot: json("xstate_snapshot").$type<Snapshot<unknown>>(),
+    stall_check_at: timestamp("stall_check_at", { withTimezone: true }),
   },
   table => ({
     pk: primaryKey({
@@ -99,29 +110,6 @@ export const jobs = pgTable(
       table.target_fn,
       table.status
     ),
-  })
-);
-
-// an immutable history of job state transitions
-export const jobStates = pgTable(
-  "job_states",
-  {
-    job_id: varchar("job_id", { length: 1024 }).notNull(),
-    sequence: integer("sequence").notNull(),
-    from_state: text("from_state", {
-      enum: ["pending", "running", "success", "failure", "stalled"],
-    }).notNull(),
-    to_state: text("to_state", {
-      enum: ["pending", "running", "success", "failure", "stalled"],
-    }).notNull(),
-    created_at: timestamp("created_at", { withTimezone: true }).notNull(),
-    snapshot: json("snapshot").notNull(),
-  },
-  table => ({
-    pk: primaryKey({
-      columns: [table.job_id, table.sequence],
-      name: "job_states_pkey",
-    }),
   })
 );
 

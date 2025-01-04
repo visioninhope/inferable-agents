@@ -3,6 +3,7 @@ import * as data from "../data";
 import * as events from "../observability/events";
 import { logger } from "../observability/logger";
 import { resumeRun } from "../workflows/workflows";
+import { nextState } from "./job-state";
 
 type PersistResultParams = {
   result: string;
@@ -137,176 +138,52 @@ export async function persistJobResult({
   return updateResult.length;
 }
 
-export async function selfHealJobs(params?: { machineStallTimeout?: number }) {
-  // TODO: these queries need to be chunked. If there are 100k jobs, we don't want to update them all at once
-
-  logger.debug("Running Self-healing job");
-
-  // Jobs are failed if they are running and have timed out
-  const stalledByTimeout = await data.db
-    .update(data.jobs)
-    .set({
-      status: "stalled",
+export async function selfHealJobs() {
+  const jobs = await data.db
+    .select({
+      clusterId: data.jobs.cluster_id,
+      jobId: data.jobs.id,
+      status: data.jobs.status,
+      timeoutIntervalSeconds: data.jobs.timeout_interval_seconds,
+      lastRetrievedAt: data.jobs.last_retrieved_at,
+      resultType: data.jobs.result_type,
+      remainingAttempts: data.jobs.remaining_attempts,
+      xstateSnapshot: data.jobs.xstate_snapshot,
     })
+    .from(data.jobs)
     .where(
       and(
         eq(data.jobs.status, "running"),
         lt(
           data.jobs.last_retrieved_at,
-          sql`now() - interval '1 second' * timeout_interval_seconds`
-        ),
-        // only timeout jobs that have a timeout set
-        isNotNull(data.jobs.timeout_interval_seconds),
-        // Don't time out jobs that have pending approval requests
-        or(eq(data.jobs.approval_requested, false), isNotNull(data.jobs.approved))
+          sql`now() - interval '1 second' * ${data.jobs.timeout_interval_seconds}`
+        )
       )
-    )
-    .returning({
-      id: data.jobs.id,
-      service: data.jobs.service,
-      targetFn: data.jobs.target_fn,
-      clusterId: data.jobs.cluster_id,
-      remainingAttempts: data.jobs.remaining_attempts,
-      runId: data.jobs.workflow_id,
-    });
+    );
 
-  const stalledMachines = await data.db
-    .update(data.machines)
-    .set({
-      status: "inactive",
+  await Promise.all(
+    jobs.map(async job => {
+      const lastRetrievedAt = job.lastRetrievedAt;
+
+      if (!lastRetrievedAt) {
+        logger.error("Running job has no last retrieved at", {
+          jobId: job.jobId,
+          clusterId: job.clusterId,
+        });
+
+        return Promise.resolve();
+      } else {
+        await data.db
+          .update(data.jobs)
+          .set({
+            ...job,
+            ...nextState({
+              ...job,
+              lastRetrievedAt,
+            }),
+          })
+          .where(and(eq(data.jobs.id, job.jobId), eq(data.jobs.cluster_id, job.clusterId)));
+      }
     })
-    .where(
-      and(
-        lt(
-          data.machines.last_ping_at,
-          sql`now() - interval '1 second' * ${params?.machineStallTimeout ?? 90}`
-        ),
-        eq(data.machines.status, "active")
-      )
-    )
-    .returning({
-      id: data.machines.id,
-      clusterId: data.machines.cluster_id,
-    });
-
-  // mark jobs with stalled machines as failed
-  const stalledByMachine = await data.db.execute<{
-    id: string;
-    service: string;
-    target_fn: string;
-    cluster_id: string;
-    remaining_attempts: number;
-    runId: string | undefined;
-  }>(
-    sql`
-      UPDATE jobs as j
-      SET status = 'stalled'
-      FROM machines as m
-      WHERE
-        j.status = 'running' AND
-        j.executing_machine_id = m.id AND
-        m.status = 'inactive' AND
-        j.cluster_id = m.cluster_id AND
-        j.remaining_attempts > 0
-    `
   );
-
-  const stalledRecoveredJobs = await data.db
-    .update(data.jobs)
-    .set({
-      status: "pending",
-      remaining_attempts: sql`remaining_attempts - 1`,
-    })
-    .where(and(eq(data.jobs.status, "stalled"), gt(data.jobs.remaining_attempts, 0)))
-    .returning({
-      id: data.jobs.id,
-      service: data.jobs.service,
-      targetFn: data.jobs.target_fn,
-      targetArgs: data.jobs.target_args,
-      clusterId: data.jobs.cluster_id,
-      remainingAttempts: data.jobs.remaining_attempts,
-    });
-
-  const stalledFailedJobs = await data.db
-    .update(data.jobs)
-    .set({
-      status: "failure",
-    })
-    .where(and(eq(data.jobs.status, "stalled"), lte(data.jobs.remaining_attempts, 0)))
-    .returning({
-      id: data.jobs.id,
-      service: data.jobs.service,
-      targetFn: data.jobs.target_fn,
-      clusterId: data.jobs.cluster_id,
-      remainingAttempts: data.jobs.remaining_attempts,
-      runId: data.jobs.workflow_id,
-    });
-
-  stalledByTimeout.forEach(row => {
-    events.write({
-      service: row.service,
-      clusterId: row.clusterId,
-      jobId: row.id,
-      type: "jobStalled",
-      workflowId: row.runId ?? undefined,
-      meta: {
-        attemptsRemaining: row.remainingAttempts ?? undefined,
-        reason: "timeout",
-      },
-    });
-  });
-
-  stalledByMachine.rows.forEach(row => {
-    events.write({
-      service: row.service,
-      clusterId: row.cluster_id,
-      jobId: row.id,
-      type: "jobStalled",
-      workflowId: row.runId ?? undefined,
-      meta: {
-        attemptsRemaining: row.remaining_attempts ?? undefined,
-        reason: "machine stalled",
-      },
-    });
-  });
-
-  stalledMachines.forEach(row => {
-    events.write({
-      type: "machineStalled",
-      clusterId: row.clusterId,
-      machineId: row.id,
-    });
-  });
-
-  stalledRecoveredJobs.forEach(async row => {
-    events.write({
-      service: row.service,
-      clusterId: row.clusterId,
-      jobId: row.id,
-      type: "jobRecovered",
-    });
-  });
-
-  stalledFailedJobs.forEach(row => {
-    events.write({
-      service: row.service,
-      clusterId: row.clusterId,
-      jobId: row.id,
-      type: "jobStalledTooManyTimes",
-    });
-
-    if (row.runId) {
-      resumeRun({ id: row.runId, clusterId: row.clusterId });
-    }
-  });
-
-  return {
-    stalledFailedByTimeout: stalledByTimeout.map(row => row.id),
-    stalledRecovered: stalledRecoveredJobs.map(row => row.id),
-    stalledMachines: stalledMachines.map(row => ({
-      id: row.id,
-      clusterId: row.clusterId,
-    })),
-    stalledFailedByMachine: stalledByMachine.rows.map(row => row.id),
-  };
 }

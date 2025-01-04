@@ -3,42 +3,45 @@ import { createActor } from "xstate";
 
 describe("jobStateMachine", () => {
   const defaultParams = {
+    status: "pending" as const,
     timeoutIntervalSeconds: 300,
     remainingAttempts: 3,
-    lastRetrievedAt: null,
+    lastRetrievedAt: Date.now(),
+    hasResult: false,
   };
 
-  it("should start in pending state", () => {
+  it("should start in running state", () => {
     const machine = jobStateMachine(defaultParams);
     const actor = createActor(machine);
     actor.start();
 
-    expect(actor.getSnapshot().value).toBe("pending");
+    expect(actor.getSnapshot().value).toBe("running");
   });
 
-  it("should transition from pending to running", () => {
+  it("should stay in running when timeout hasn't been exceeded and no result", () => {
+    const now = Date.now();
+    const timeoutMs = 1000;
+
     const machine = jobStateMachine({
       ...defaultParams,
-      lastRetrievedAt: Date.now(),
+      timeoutIntervalSeconds: timeoutMs / 1000,
+      lastRetrievedAt: now - timeoutMs / 2, // Half the timeout
+      hasResult: false,
     });
     const actor = createActor(machine);
     actor.start();
-
-    actor.send({ type: "RUN" });
 
     expect(actor.getSnapshot().value).toBe("running");
   });
 
-  it("should transition to success on completion", () => {
+  it("should transition to success when result is available", () => {
     const machine = jobStateMachine({
       ...defaultParams,
-      lastRetrievedAt: Date.now(),
+      hasResult: true,
     });
     const actor = createActor(machine);
     actor.start();
 
-    actor.send({ type: "RUN" });
-    actor.send({ type: "COMPLETE" });
     expect(actor.getSnapshot().value).toBe("success");
   });
 
@@ -55,48 +58,39 @@ describe("jobStateMachine", () => {
     const actor = createActor(machine);
     actor.start();
 
-    actor.send({ type: "RUN" });
     expect(actor.getSnapshot().value).toBe("stalled");
   });
 
-  it("should attempt recovery when stalled with remaining attempts", () => {
-    const machine = jobStateMachine(defaultParams);
+  it("should transition to pending when stalled with remaining attempts", () => {
+    const now = Date.now();
+    const timeoutMs = 1000;
+
+    const machine = jobStateMachine({
+      ...defaultParams,
+      timeoutIntervalSeconds: timeoutMs / 1000,
+      lastRetrievedAt: now - timeoutMs - 1,
+      remainingAttempts: 2,
+    });
     const actor = createActor(machine);
     actor.start();
-
-    actor.send({ type: "STALL" });
-    actor.send({ type: "ATTEMPT_RECOVER" });
 
     expect(actor.getSnapshot().value).toBe("pending");
-    expect(actor.getSnapshot().context.remainingAttempts).toBe(2);
+    expect(actor.getSnapshot().context.remainingAttempts).toBe(1);
   });
 
-  it("should transition to failed when no recovery attempts remain", () => {
+  it("should transition to failed when stalled with no remaining attempts", () => {
+    const now = Date.now();
+    const timeoutMs = 1000;
+
     const machine = jobStateMachine({
       ...defaultParams,
-      remainingAttempts: 1,
+      timeoutIntervalSeconds: timeoutMs / 1000,
+      lastRetrievedAt: now - timeoutMs - 1,
+      remainingAttempts: 0,
     });
     const actor = createActor(machine);
     actor.start();
 
-    actor.send({ type: "STALL" });
-    actor.send({ type: "ATTEMPT_RECOVER" });
-    actor.send({ type: "STALL" });
-    actor.send({ type: "ATTEMPT_RECOVER" });
-
-    expect(actor.getSnapshot().value).toBe("failed");
-  });
-
-  it("should fail if lastRetrievedAt is null in running state", () => {
-    const machine = jobStateMachine({
-      ...defaultParams,
-      lastRetrievedAt: null,
-    });
-    const actor = createActor(machine);
-    actor.start();
-
-    actor.send({ type: "RUN" });
-
-    expect(actor.getSnapshot().value).toBe("failed");
+    expect(actor.getSnapshot().value).toBe("failure");
   });
 });
