@@ -5,14 +5,14 @@ import { clusterExists, getClusterDetails } from "../cluster";
 import * as clusterAuth from "./cluster";
 import * as clerkAuth from "./clerk";
 import * as customAuth from "./custom";
-import { getRunCustomAuthToken, getRun } from "../workflows/workflows";
+import { getRun } from "../workflows/workflows";
 import { logger } from "../observability/logger";
 import { env } from "../../utilities/env";
 
 const CLERK_ADMIN_ROLE = "org:admin";
 
 export type Auth = {
-  type: "clerk" | "api" | "custom";
+  type: "clerk" | "cluster" | "custom" | "management";
   entityId: string;
   organizationId: string;
   canAccess(opts: {
@@ -38,7 +38,7 @@ export type Auth = {
     };
   }): Promise<Auth>;
   canCreate(opts: { cluster?: boolean; run?: boolean; config?: boolean; call?: boolean }): Auth;
-  isMachine(): ApiKeyAuth;
+  isMachine(): ClusterKeyAuth;
   isClerk(): ClerkAuth;
   isAdmin(): Auth;
   isCustomAuth(): CustomAuth;
@@ -49,8 +49,13 @@ export type ClerkAuth = Auth & {
   organizationRole: string;
 };
 
-export type ApiKeyAuth = Auth & {
-  type: "api";
+export type ClusterKeyAuth = Auth & {
+  type: "cluster";
+  clusterId: string;
+};
+
+export type ManagementAuth = Auth & {
+  type: "management";
   clusterId: string;
 };
 
@@ -114,7 +119,7 @@ export const extractAuthState = async (token: string): Promise<Auth | undefined>
     }
 
     return {
-      type: "api",
+      type: "management",
       entityId: "MANAGEMENT_API_SECRET",
       organizationId: "ROOT",
       canAccess: async function () {
@@ -147,8 +152,8 @@ export const extractAuthState = async (token: string): Promise<Auth | undefined>
 
     if (clusterAuthDetails) {
       return {
-        type: "api",
-        entityId: clusterAuthDetails.id,
+        type: "cluster",
+        entityId: `cluster:${clusterAuthDetails.id}`,
         clusterId: clusterAuthDetails.clusterId,
         organizationId: clusterAuthDetails.organizationId,
         canAccess: async function (opts) {
@@ -220,7 +225,7 @@ export const extractAuthState = async (token: string): Promise<Auth | undefined>
         isCustomAuth: function () {
           throw new AuthenticationError("API key is not custom auth");
         },
-      } as ApiKeyAuth;
+      } as ClusterKeyAuth;
     }
   }
 
@@ -230,7 +235,7 @@ export const extractAuthState = async (token: string): Promise<Auth | undefined>
   if (clerkAuthDetails) {
     return {
       type: "clerk",
-      entityId: clerkAuthDetails.userId,
+      entityId: `clerk:${clerkAuthDetails.userId}`,
       organizationId: clerkAuthDetails.orgId,
       organizationRole: clerkAuthDetails.orgRole,
       canAccess: async function (opts) {
@@ -361,7 +366,7 @@ export const extractCustomAuthState = async (
 
   return {
     type: "custom",
-    entityId: "CUSTOM_AUTH",
+    entityId: `custom:${context.userId}`,
     clusterId,
     organizationId: cluster.organization_id,
     token,
@@ -380,16 +385,16 @@ export const extractCustomAuthState = async (
       }
 
       if (opts.run) {
-        const existingToken = await getRunCustomAuthToken({
+        const existingRun = await getRun({
           clusterId: opts.run.clusterId,
           runId: opts.run.runId,
         });
 
-        if (!existingToken) {
-          throw new AuthenticationError("Custom auth can only access runs created by custom auth");
+        if (!existingRun) {
+          throw new AuthenticationError("Custom auth does not have access to this run");
         }
 
-        if (existingToken !== this.token) {
+        if (existingRun.userId !== this.entityId) {
           throw new AuthenticationError("Custom auth does not have access to this run");
         }
       }
@@ -417,16 +422,16 @@ export const extractCustomAuthState = async (
         throw new AuthenticationError("Custom auth can only manage runs");
       }
 
-      const existingToken = await getRunCustomAuthToken({
+      const existingRun = await getRun({
         clusterId: opts.run.clusterId,
         runId: opts.run.runId,
       });
 
-      if (!existingToken) {
-        throw new AuthenticationError("Custom auth can only access runs created by custom auth");
+      if (!existingRun) {
+        throw new AuthenticationError("Custom auth does not have access to this run");
       }
 
-      if (existingToken !== this.token) {
+      if (existingRun.userId !== this.entityId) {
         throw new AuthenticationError("Custom auth does not have access to this run");
       }
 
