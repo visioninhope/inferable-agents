@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Blocks, Cpu, Network } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Blocks, Cpu, Network, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { SmallLiveGreenCircle } from "./circles";
 import { Button } from "./ui/button";
@@ -70,6 +64,33 @@ function ControlPlaneBox() {
   );
 }
 
+function NewServicePill({ hasServices }: { hasServices: boolean }) {
+  return (
+    <div className="relative">
+      <div className="absolute left-8 top-[1.5rem] w-8 h-[2px] bg-border" />
+      <div
+        className={cn(
+          "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md ml-16",
+          hasServices ? "bg-white" : "bg-blue-50/30 border-blue-100 animate-pulse"
+        )}
+      >
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Plus className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <div className="text-base font-medium">New Service</div>
+            <div className="text-sm text-muted-foreground">
+              Create a new service in this cluster
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute left-8 bottom-[-1rem] w-[2px] h-4 bg-border" />
+    </div>
+  );
+}
+
 function ServiceCard({
   service,
   clusterId,
@@ -92,9 +113,7 @@ function ServiceCard({
       <div
         className={cn(
           "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md ml-16",
-          isActive
-            ? "bg-green-50/30 border-green-100"
-            : "bg-gray-50/30 border-gray-100"
+          isActive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
         )}
       >
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
@@ -107,9 +126,7 @@ function ServiceCard({
               )}
             </div>
             <div>
-              <div className="text-base font-medium">
-                {toServiceName(service.name)}
-              </div>
+              <div className="text-base font-medium">{toServiceName(service.name)}</div>
               <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">
                 <span>
                   {service.functions?.length || 0} Function
@@ -118,9 +135,7 @@ function ServiceCard({
                 <span
                   className={cn(
                     "px-2 py-0.5 rounded-full text-xs font-medium",
-                    isActive
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
+                    isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                   )}
                 >
                   {isActive ? "Active" : "Inactive"}
@@ -141,7 +156,7 @@ function ServiceCard({
             <TableBody>
               {service.functions
                 ?.sort((a, b) => a.name.localeCompare(b.name))
-                .map((func) => (
+                .map(func => (
                   <TableRow key={func.name} className="hover:bg-secondary/40">
                     <TableCell className="w-2/3">
                       <div className="space-y-1.5">
@@ -171,11 +186,9 @@ function ServiceCard({
                         </div>
                       ) : (
                         <span className="font-mono text-sm">
-                          {formatDistance(
-                            new Date(service.timestamp),
-                            new Date(),
-                            { addSuffix: true }
-                          )}
+                          {formatDistance(new Date(service.timestamp), new Date(), {
+                            addSuffix: true,
+                          })}
                         </span>
                       )}
                     </TableCell>
@@ -226,6 +239,8 @@ export default function ServicesOverview({ clusterId }: { clusterId: string }) {
           <div className="absolute left-8 top-0 w-[2px] h-full bg-border" />
         )}
 
+        <NewServicePill hasServices={sortedServices.length > 0} />
+
         {sortedServices.map((service, index) => (
           <ServiceCard
             key={service.name}
@@ -240,11 +255,7 @@ export default function ServicesOverview({ clusterId }: { clusterId: string }) {
   );
 }
 
-export function ClusterDetails({
-  clusterId,
-}: {
-  clusterId: string;
-}): JSX.Element {
+export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Element {
   const { getToken } = useAuth();
   const [clusterDetails, setClusterDetails] = useState<
     ClientInferResponses<typeof contract.getCluster, 200>["body"] | null
@@ -270,12 +281,11 @@ export function ClusterDetails({
         const headers = { authorization: `Bearer ${token}` };
         const params = { clusterId };
 
-        const [clusterResult, machinesResponse, servicesResponse] =
-          await Promise.all([
-            client.getCluster({ headers, params }),
-            client.listMachines({ headers, params }),
-            client.listServices({ headers, params }),
-          ]);
+        const [clusterResult, machinesResponse, servicesResponse] = await Promise.all([
+          client.getCluster({ headers, params }),
+          client.listMachines({ headers, params }),
+          client.listServices({ headers, params }),
+        ]);
 
         if (clusterResult.status === 200) {
           setClusterDetails(clusterResult.body);
@@ -311,7 +321,7 @@ export function ClusterDetails({
 
     // Start polling loop
     while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 10 seconds
+      await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
       await fetchData(false);
     }
   }, [fetchData]);
@@ -320,7 +330,7 @@ export function ClusterDetails({
     const abortController = new AbortController();
 
     if (!hasInitialDataLoaded) {
-      pollWithDelay().catch((error) => {
+      pollWithDelay().catch(error => {
         if (!abortController.signal.aborted) {
           console.error("Polling error:", error);
         }
@@ -333,7 +343,7 @@ export function ClusterDetails({
   }, [pollWithDelay, hasInitialDataLoaded]);
 
   const liveMachineCount = machines.filter(
-    (m) => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
+    m => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
   ).length;
 
   return (
@@ -348,9 +358,7 @@ export function ClusterDetails({
               {isInitialLoading ? (
                 <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 shadow-sm">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-xs font-medium text-amber-700">
-                    Loading
-                  </span>
+                  <span className="text-xs font-medium text-amber-700">Loading</span>
                 </div>
               ) : liveMachineCount > 0 ? (
                 <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
@@ -368,17 +376,12 @@ export function ClusterDetails({
               </div>
               <div className="flex flex-col items-start gap-0.5">
                 <span className="font-semibold text-gray-900">Machines</span>
-                <span className="text-xs text-gray-500 font-mono">
-                  {liveMachineCount} Active
-                </span>
+                <span className="text-xs text-gray-500 font-mono">{liveMachineCount} Active</span>
               </div>
             </div>
           </Button>
         </SheetTrigger>
-        <SheetContent
-          style={{ minWidth: 800 }}
-          className="overflow-y-auto h-screen"
-        >
+        <SheetContent style={{ minWidth: 800 }} className="overflow-y-auto h-screen">
           <SheetHeader className="pb-6">
             <SheetTitle>
               <div className="flex items-center gap-3">
@@ -416,9 +419,7 @@ export function ClusterDetails({
               {isInitialLoading ? (
                 <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 shadow-sm">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-xs font-medium text-amber-700">
-                    Loading
-                  </span>
+                  <span className="text-xs font-medium text-amber-700">Loading</span>
                 </div>
               ) : services.length > 0 ? (
                 <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
@@ -435,24 +436,16 @@ export function ClusterDetails({
                 <Blocks className="w-5 h-5 text-gray-700" />
               </div>
               <div className="flex flex-col items-start gap-0.5">
-                <span className="font-semibold text-gray-900">
-                  Services
-                </span>
+                <span className="font-semibold text-gray-900">Services</span>
                 <span className="text-xs text-gray-500 font-mono">
-                  {services.reduce(
-                    (acc, service) => acc + (service.functions?.length || 0),
-                    0
-                  )}{" "}
+                  {services.reduce((acc, service) => acc + (service.functions?.length || 0), 0)}{" "}
                   Functions
                 </span>
               </div>
             </div>
           </Button>
         </SheetTrigger>
-        <SheetContent
-          style={{ minWidth: "80%" }}
-          className="overflow-y-auto h-screen"
-        >
+        <SheetContent style={{ minWidth: "80%" }} className="overflow-y-auto h-screen">
           <SheetHeader className="pb-6">
             <SheetTitle>
               <div className="flex items-center gap-3">
@@ -474,8 +467,105 @@ export function ClusterDetails({
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <ServicesOverview clusterId={clusterId} />
+              <>
+                <div className="p-6 rounded-xl border border-blue-100 bg-blue-50/30">
+                  <h3 className="text-lg font-semibold mb-4">Creating a New Service</h3>
+                  <div className="space-y-4 text-sm text-gray-600">
+                    <p>To create a new service in your cluster:</p>
+                    <ol className="list-decimal ml-4 space-y-2">
+                      <li>Install the Inferable CLI if you haven't already</li>
+                      <li>Navigate to your project directory</li>
+                      <li>
+                        Run <code className="px-2 py-1 bg-blue-100 rounded">inferable init</code> to
+                        create a new service
+                      </li>
+                      <li>Follow the CLI prompts to configure your service</li>
+                      <li>
+                        Deploy your service using{" "}
+                        <code className="px-2 py-1 bg-blue-100 rounded">inferable deploy</code>
+                      </li>
+                    </ol>
+                    <p className="mt-4">
+                      For more detailed instructions, visit our{" "}
+                      <a href="#" className="text-blue-600 hover:underline">
+                        documentation
+                      </a>
+                      .
+                    </p>
+                  </div>
+                </div>
+                <ServicesOverview clusterId={clusterId} />
+              </>
             )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "group relative flex items-center w-full px-5 py-6 hover:bg-gray-50/80 border rounded-xl transition-all duration-200 hover:shadow-lg",
+              services.length === 0
+                ? "bg-blue-50/30 border-blue-200 animate-pulse"
+                : "bg-white border-gray-200"
+            )}
+          >
+            <div className="flex items-center gap-4 w-full">
+              <div className="h-5 w-5 shrink-0 rounded-xl flex items-center justify-center">
+                <Plus className="w-5 h-5 text-gray-700" />
+              </div>
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="font-semibold text-gray-900">Add Service</span>
+                <span className="text-xs text-gray-500">Create a new service</span>
+              </div>
+            </div>
+          </Button>
+        </SheetTrigger>
+        <SheetContent style={{ minWidth: 800 }} className="overflow-y-auto h-screen">
+          <SheetHeader className="pb-6">
+            <SheetTitle>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-mono text-xl">Create New Service</div>
+                  <div className="text-sm text-muted-foreground">
+                    Get started with a new service in your cluster
+                  </div>
+                </div>
+              </div>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-6">
+            <div className="p-6 rounded-xl border border-blue-100 bg-blue-50/30">
+              <h3 className="text-lg font-semibold mb-4">Creating a New Service</h3>
+              <div className="space-y-4 text-sm text-gray-600">
+                <p>To create a new service in your cluster:</p>
+                <ol className="list-decimal ml-4 space-y-2">
+                  <li>Install the Inferable CLI if you haven't already</li>
+                  <li>Navigate to your project directory</li>
+                  <li>
+                    Run <code className="px-2 py-1 bg-blue-100 rounded">inferable init</code> to
+                    create a new service
+                  </li>
+                  <li>Follow the CLI prompts to configure your service</li>
+                  <li>
+                    Deploy your service using{" "}
+                    <code className="px-2 py-1 bg-blue-100 rounded">inferable deploy</code>
+                  </li>
+                </ol>
+                <p className="mt-4">
+                  For more detailed instructions, visit our{" "}
+                  <a href="#" className="text-blue-600 hover:underline">
+                    documentation
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -490,16 +580,13 @@ function MachineCard({
   machine: ClientInferResponseBody<typeof contract.listMachines, 200>[number];
   clusterId: string;
 }) {
-  const isLive =
-    Date.now() - new Date(machine.lastPingAt!).getTime() < 1000 * 60;
+  const isLive = Date.now() - new Date(machine.lastPingAt!).getTime() < 1000 * 60;
 
   return (
     <div
       className={cn(
         "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md",
-        isLive
-          ? "bg-green-50/30 border-green-100"
-          : "bg-gray-50/30 border-gray-100"
+        isLive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
       )}
     >
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
@@ -510,10 +597,7 @@ function MachineCard({
             <div className="text-xs text-muted-foreground">{machine.ip}</div>
           </div>
         </div>
-        <EventsOverlayButton
-          clusterId={clusterId}
-          query={{ machineId: machine.id }}
-        />
+        <EventsOverlayButton clusterId={clusterId} query={{ machineId: machine.id }} />
       </div>
       <div className="flex items-center gap-2 text-xs">
         <div
@@ -557,7 +641,7 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
         setMachines(machinesResponse.body);
         setLiveMachineCount(
           machinesResponse.body.filter(
-            (m) => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
+            m => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
           ).length
         );
       } else {
@@ -606,24 +690,16 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {machines && machines.length > 0 ? (
           machines
-            .sort(
-              (a, b) =>
-                new Date(b.lastPingAt!).getTime() -
-                new Date(a.lastPingAt!).getTime()
-            )
-            .map((m) => (
-              <MachineCard key={m.id} machine={m} clusterId={clusterId} />
-            ))
+            .sort((a, b) => new Date(b.lastPingAt!).getTime() - new Date(a.lastPingAt!).getTime())
+            .map(m => <MachineCard key={m.id} machine={m} clusterId={clusterId} />)
         ) : (
           <div className="col-span-full flex items-center justify-center p-8 rounded-xl bg-gray-50 border border-gray-200">
             <div className="flex flex-col items-center gap-3">
               <DeadRedCircle />
-              <span className="text-sm text-gray-600">
-                Your machines are offline
-              </span>
+              <span className="text-sm text-gray-600">Your machines are offline</span>
               <p className="text-xs text-muted-foreground max-w-[300px] text-center">
-                No active machines found in this cluster. Make sure your
-                machines are running and properly configured.
+                No active machines found in this cluster. Make sure your machines are running and
+                properly configured.
               </p>
             </div>
           </div>
@@ -636,13 +712,7 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
 export function ClusterHealthPane({
   clusterDetails,
 }: {
-  clusterDetails:
-    | ClientInferResponses<typeof contract.getCluster, 200>["body"]
-    | null;
+  clusterDetails: ClientInferResponses<typeof contract.getCluster, 200>["body"] | null;
 }): JSX.Element {
-  return (
-    <div>
-      {clusterDetails?.id && <MachinesOverview clusterId={clusterDetails.id} />}
-    </div>
-  );
+  return <div>{clusterDetails?.id && <MachinesOverview clusterId={clusterDetails.id} />}</div>;
 }
