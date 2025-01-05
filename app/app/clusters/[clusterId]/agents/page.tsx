@@ -189,18 +189,27 @@ export default function Page({ params }: { params: { clusterId: string } }) {
   }
 
   return (
-    <div className="ml-0 max-w-[1200px]">
-      <h1 className="text-xl">Agents</h1>
-      <div className="flex space-x-4 mb-4">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            router.push(`/clusters/${params.clusterId}/agents/new`);
-          }}
-        >
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Create New Agent
-        </Button>
+    <div>
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl">Agents</h1>
+          <div className="flex justify-end">
+            <Button
+              size="lg"
+              onClick={() => {
+                router.push(`/clusters/${params.clusterId}/agents/new`);
+              }}
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Create New Agent
+            </Button>
+          </div>
+        </div>
+        <p className="text-gray-500 mb-6">
+          Create and manage Agents for your Inferable cluster.
+        </p>
+      </div>
+      <div className="flex space-x-4 mt-4">
         {isFeatureEnabled("feature.cluster_context") && (
           <Button
             variant="secondary"
