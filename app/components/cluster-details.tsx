@@ -520,8 +520,7 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
 }
 
 export function CreateNewServiceOptions({ clusterId }: { clusterId: string }) {
-  const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<"idle" | "creating" | "created" | "error">("idle");
+  const [status, setStatus] = useState<"creating" | "created" | "error">();
   const { getToken } = useAuth();
   const [actualCommand, setActualCommand] = useState<string>(
     "npx @inferable/demo@latest run --secret=sk_inf_***"
@@ -551,8 +550,6 @@ export function CreateNewServiceOptions({ clusterId }: { clusterId: string }) {
         setDisplayCommand(redactedCommand);
         await navigator.clipboard.writeText(newCommand);
         setStatus("created");
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
       } else {
         setStatus("error");
         createErrorToast(result, "Failed to create API key");
@@ -568,7 +565,7 @@ export function CreateNewServiceOptions({ clusterId }: { clusterId: string }) {
       case "creating":
         return "Creating API key...";
       case "created":
-        return copied ? "Copied!" : "API key created";
+        return "Copied to clipboard ✅";
       case "error":
         return "Error creating key";
       default:
@@ -595,12 +592,30 @@ export function CreateNewServiceOptions({ clusterId }: { clusterId: string }) {
           <Button
             onClick={handleCopy}
             variant="outline"
-            className="w-full bg-white hover:bg-gray-50 border-gray-200 h-auto py-3 font-mono text-sm group"
+            className={cn(
+              "w-full h-auto py-4 font-mono text-sm group relative overflow-hidden transition-all",
+              "bg-black hover:bg-black/80 border-gray-800 text-white hover:text-white",
+              "flex items-center gap-2",
+              status === "creating" && "opacity-70 cursor-wait"
+            )}
             disabled={status === "creating"}
           >
-            <span className="truncate block w-full text-left">{displayCommand}</span>
+            <span className="flex-1 text-left truncate">{displayCommand}</span>
+            <span
+              className={cn(
+                "text-xs px-2 py-1 rounded-md transition-colors",
+                status === "created"
+                  ? "bg-green-500/20 text-green-300"
+                  : status === "error"
+                    ? "bg-red-500/20 text-red-300"
+                    : status === "creating"
+                      ? "bg-yellow-500/20 text-yellow-300"
+                      : "bg-gray-700 text-gray-300"
+              )}
+            >
+              {getStatusText()}
+            </span>
           </Button>
-          <div className="text-center text-xs text-gray-500">{getStatusText()}</div>
         </div>
       </div>
 
