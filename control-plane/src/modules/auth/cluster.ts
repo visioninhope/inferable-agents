@@ -8,18 +8,13 @@ const clusterKeyContextCache = createCache<{
   clusterId: string;
   id: string;
   organizationId: string;
-}>(
-  Symbol("clusterKeyContextCache"),
-);
+}>(Symbol("clusterKeyContextCache"));
 
-export const isApiSecret = (authorization: string): boolean =>
-  authorization.startsWith("sk_");
+export const isApiSecret = (authorization: string): boolean => authorization.startsWith("sk_");
 
 export const verify = async (
-  secret: string,
-): Promise<
-  { clusterId: string; id: string; organizationId: string } | undefined
-> => {
+  secret: string
+): Promise<{ clusterId: string; id: string; organizationId: string } | undefined> => {
   const secretHash = hashFromSecret(secret);
 
   const cached = await clusterKeyContextCache.get(secretHash);
@@ -37,12 +32,7 @@ export const verify = async (
     })
     .from(data.apiKeys)
     .leftJoin(data.clusters, eq(data.apiKeys.cluster_id, data.clusters.id))
-    .where(
-      and(
-        eq(data.apiKeys.secret_hash, secretHash),
-        isNull(data.apiKeys.revoked_at),
-      ),
-    )
+    .where(and(eq(data.apiKeys.secret_hash, secretHash), isNull(data.apiKeys.revoked_at)))
     .limit(1);
 
   if (!result || !!result.deletedAt) {
@@ -56,11 +46,15 @@ export const verify = async (
     return undefined;
   }
 
-  await clusterKeyContextCache.set(secretHash, {
-    clusterId: result.clusterId,
-    id: result.id,
-    organizationId: result.organizationId,
-  }, 60);
+  await clusterKeyContextCache.set(
+    secretHash,
+    {
+      clusterId: result.clusterId,
+      id: result.id,
+      organizationId: result.organizationId,
+    },
+    60
+  );
 
   return {
     organizationId: result.organizationId!,
@@ -79,7 +73,7 @@ export const createApiKey = async ({
   name: string;
 }): Promise<{ id: string; key: string }> => {
   const id = randomBytes(16).toString("hex");
-  const key = `sk_${randomBytes(32).toString("base64").replace(/[+/=]/g, "")}`;
+  const key = `sk_inf_${randomBytes(32).toString("base64").replace(/[+/=]/g, "")}`;
 
   await data.db.insert(data.apiKeys).values({
     id,
@@ -121,17 +115,9 @@ export const listApiKeys = async ({
   return apiKeys;
 };
 
-export const revokeApiKey = async ({
-  clusterId,
-  keyId,
-}: {
-  clusterId: string;
-  keyId: string;
-}) => {
+export const revokeApiKey = async ({ clusterId, keyId }: { clusterId: string; keyId: string }) => {
   await data.db
     .update(data.apiKeys)
     .set({ revoked_at: new Date() })
-    .where(
-      and(eq(data.apiKeys.cluster_id, clusterId), eq(data.apiKeys.id, keyId)),
-    );
+    .where(and(eq(data.apiKeys.cluster_id, clusterId), eq(data.apiKeys.id, keyId)));
 };

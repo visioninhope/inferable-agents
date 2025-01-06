@@ -19,12 +19,11 @@ import {
 import { cn, createErrorToast } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { ClientInferResponseBody, ClientInferResponses } from "@ts-rest/core";
-import { formatDistance, formatRelative } from "date-fns";
+import { formatDistance } from "date-fns";
 import { AppWindowIcon } from "lucide-react";
 import ToolContextButton from "./chat/ToolContextButton";
-import { DeadGrayCircle, DeadRedCircle, LiveGreenCircle } from "./circles";
+import { DeadRedCircle } from "./circles";
 import ErrorDisplay from "./error-display";
-import { EventsOverlayButton } from "./events-overlay";
 import { ServerConnectionStatus } from "./server-connection-pane";
 
 function toServiceName(name: string) {
@@ -467,35 +466,7 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <>
-                <div className="p-6 rounded-xl border border-blue-100 bg-blue-50/30">
-                  <h3 className="text-lg font-semibold mb-4">Creating a New Service</h3>
-                  <div className="space-y-4 text-sm text-gray-600">
-                    <p>To create a new service in your cluster:</p>
-                    <ol className="list-decimal ml-4 space-y-2">
-                      <li>Install the Inferable CLI if you haven't already</li>
-                      <li>Navigate to your project directory</li>
-                      <li>
-                        Run <code className="px-2 py-1 bg-blue-100 rounded">inferable init</code> to
-                        create a new service
-                      </li>
-                      <li>Follow the CLI prompts to configure your service</li>
-                      <li>
-                        Deploy your service using{" "}
-                        <code className="px-2 py-1 bg-blue-100 rounded">inferable deploy</code>
-                      </li>
-                    </ol>
-                    <p className="mt-4">
-                      For more detailed instructions, visit our{" "}
-                      <a href="#" className="text-blue-600 hover:underline">
-                        documentation
-                      </a>
-                      .
-                    </p>
-                  </div>
-                </div>
-                <ServicesOverview clusterId={clusterId} />
-              </>
+              <ServicesOverview clusterId={clusterId} />
             )}
           </div>
         </SheetContent>
@@ -540,32 +511,7 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
             </SheetTitle>
           </SheetHeader>
           <div className="space-y-6">
-            <div className="p-6 rounded-xl border border-blue-100 bg-blue-50/30">
-              <h3 className="text-lg font-semibold mb-4">Creating a New Service</h3>
-              <div className="space-y-4 text-sm text-gray-600">
-                <p>To create a new service in your cluster:</p>
-                <ol className="list-decimal ml-4 space-y-2">
-                  <li>Install the Inferable CLI if you haven't already</li>
-                  <li>Navigate to your project directory</li>
-                  <li>
-                    Run <code className="px-2 py-1 bg-blue-100 rounded">inferable init</code> to
-                    create a new service
-                  </li>
-                  <li>Follow the CLI prompts to configure your service</li>
-                  <li>
-                    Deploy your service using{" "}
-                    <code className="px-2 py-1 bg-blue-100 rounded">inferable deploy</code>
-                  </li>
-                </ol>
-                <p className="mt-4">
-                  For more detailed instructions, visit our{" "}
-                  <a href="#" className="text-blue-600 hover:underline">
-                    documentation
-                  </a>
-                  .
-                </p>
-              </div>
-            </div>
+            <CreateNewServiceOptions clusterId={clusterId} />
           </div>
         </SheetContent>
       </Sheet>
@@ -573,43 +519,112 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
   );
 }
 
-function MachineCard({
-  machine,
-  clusterId,
-}: {
-  machine: ClientInferResponseBody<typeof contract.listMachines, 200>[number];
-  clusterId: string;
-}) {
-  const isLive = Date.now() - new Date(machine.lastPingAt!).getTime() < 1000 * 60;
+export function CreateNewServiceOptions({ clusterId }: { clusterId: string }) {
+  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "creating" | "created" | "error">("idle");
+  const { getToken } = useAuth();
+  const [actualCommand, setActualCommand] = useState<string>(
+    "npx @inferable/demo@latest run --secret=sk_inf_***"
+  );
+  const [displayCommand, setDisplayCommand] = useState<string>(
+    "npx @inferable/demo@latest run --secret=sk_inf_***"
+  );
+
+  const handleCopy = async () => {
+    try {
+      setStatus("creating");
+      const name = `autogenerated-demo-${Math.random().toString(36).substring(2, 10)}`;
+
+      const result = await client.createApiKey({
+        headers: { authorization: `Bearer ${await getToken()}` },
+        params: { clusterId },
+        body: { name },
+      });
+
+      if (result.status === 200) {
+        const newCommand = `npx @inferable/demo@latest run --secret=${result.body.key}`;
+        const key = result.body.key;
+        const redactedKey = key.substring(0, 10) + "*".repeat(key.length - 10);
+        const redactedCommand = `npx @inferable/demo@latest run --secret=${redactedKey}`;
+
+        setActualCommand(newCommand);
+        setDisplayCommand(redactedCommand);
+        await navigator.clipboard.writeText(newCommand);
+        setStatus("created");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        setStatus("error");
+        createErrorToast(result, "Failed to create API key");
+      }
+    } catch (err) {
+      setStatus("error");
+      createErrorToast(err, "Failed to create API key");
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case "creating":
+        return "Creating API key...";
+      case "created":
+        return copied ? "Copied!" : "API key created";
+      case "error":
+        return "Error creating key";
+      default:
+        return "Click to copy";
+    }
+  };
 
   return (
-    <div
-      className={cn(
-        "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md",
-        isLive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
-      )}
-    >
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-        <div className="flex items-center gap-3">
-          <div>{isLive ? <LiveGreenCircle /> : <DeadGrayCircle />}</div>
+    <div className="space-y-4">
+      <div className="rounded-xl p-5 shadow-sm border border-gray-200 bg-gray-50/50 transition-all duration-200 hover:shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <Cpu className="w-5 h-5 text-gray-600" />
+          </div>
           <div>
-            <div className="text-sm font-medium font-mono">{machine.id}</div>
-            <div className="text-xs text-muted-foreground">{machine.ip}</div>
+            <div className="text-base font-medium text-gray-900">Local Service</div>
+            <div className="text-sm text-gray-500">
+              Run your service locally on your own machine
+            </div>
           </div>
         </div>
-        <EventsOverlayButton clusterId={clusterId} query={{ machineId: machine.id }} />
-      </div>
-      <div className="flex items-center gap-2 text-xs">
-        <div
-          className={cn(
-            "px-2 py-1 rounded-full font-medium",
-            isLive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-          )}
-        >
-          {isLive ? "Active" : "Inactive"}
+
+        <div className="mt-4 space-y-2">
+          <Button
+            onClick={handleCopy}
+            variant="outline"
+            className="w-full bg-white hover:bg-gray-50 border-gray-200 h-auto py-3 font-mono text-sm group"
+            disabled={status === "creating"}
+          >
+            <span className="truncate block w-full text-left">{displayCommand}</span>
+          </Button>
+          <div className="text-center text-xs text-gray-500">{getStatusText()}</div>
         </div>
-        <div className="text-muted-foreground">
-          Last heartbeat: {formatRelative(machine.lastPingAt!, new Date())}
+      </div>
+
+      <div className="rounded-xl p-5 shadow-sm border border-gray-200 bg-gray-50/50 transition-all duration-200 hover:shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <Network className="w-5 h-5 text-gray-600" />
+          </div>
+          <div>
+            <div className="text-base font-medium text-gray-900">Remote Service</div>
+            <div className="text-sm text-gray-500">
+              Deploy your service to run on Inferable's infrastructure
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            className="w-full bg-white hover:bg-gray-50 border-gray-200"
+            disabled
+          >
+            <span className="text-sm">Coming Soon</span>
+          </Button>
         </div>
       </div>
     </div>
