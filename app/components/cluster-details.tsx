@@ -1,15 +1,9 @@
 "use client";
 
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Blocks, Cpu, Network } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Blocks, Cpu, Network, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { SmallLiveGreenCircle } from "./circles";
+import { DeadGrayCircle, DeadRedCircle, LiveGreenCircle, SmallLiveGreenCircle } from "./circles";
 import { Button } from "./ui/button";
 
 import { client } from "@/client/client";
@@ -28,7 +22,6 @@ import { ClientInferResponseBody, ClientInferResponses } from "@ts-rest/core";
 import { formatDistance, formatRelative } from "date-fns";
 import { AppWindowIcon } from "lucide-react";
 import ToolContextButton from "./chat/ToolContextButton";
-import { DeadGrayCircle, DeadRedCircle, LiveGreenCircle } from "./circles";
 import ErrorDisplay from "./error-display";
 import { EventsOverlayButton } from "./events-overlay";
 import { ServerConnectionStatus } from "./server-connection-pane";
@@ -70,6 +63,33 @@ function ControlPlaneBox() {
   );
 }
 
+function NewServicePill({ hasServices }: { hasServices: boolean }) {
+  return (
+    <div className="relative">
+      <div className="absolute left-8 top-[1.5rem] w-8 h-[2px] bg-border" />
+      <div
+        className={cn(
+          "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md ml-16",
+          hasServices ? "bg-white" : "bg-blue-50/30 border-blue-100 animate-pulse"
+        )}
+      >
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Plus className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <div className="text-base font-medium">New Service</div>
+            <div className="text-sm text-muted-foreground">
+              Create a new service in this cluster
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="absolute left-8 bottom-[-1rem] w-[2px] h-4 bg-border" />
+    </div>
+  );
+}
+
 function ServiceCard({
   service,
   clusterId,
@@ -92,9 +112,7 @@ function ServiceCard({
       <div
         className={cn(
           "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md ml-16",
-          isActive
-            ? "bg-green-50/30 border-green-100"
-            : "bg-gray-50/30 border-gray-100"
+          isActive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
         )}
       >
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
@@ -107,9 +125,7 @@ function ServiceCard({
               )}
             </div>
             <div>
-              <div className="text-base font-medium">
-                {toServiceName(service.name)}
-              </div>
+              <div className="text-base font-medium">{toServiceName(service.name)}</div>
               <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">
                 <span>
                   {service.functions?.length || 0} Function
@@ -118,9 +134,7 @@ function ServiceCard({
                 <span
                   className={cn(
                     "px-2 py-0.5 rounded-full text-xs font-medium",
-                    isActive
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
+                    isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                   )}
                 >
                   {isActive ? "Active" : "Inactive"}
@@ -141,7 +155,7 @@ function ServiceCard({
             <TableBody>
               {service.functions
                 ?.sort((a, b) => a.name.localeCompare(b.name))
-                .map((func) => (
+                .map(func => (
                   <TableRow key={func.name} className="hover:bg-secondary/40">
                     <TableCell className="w-2/3">
                       <div className="space-y-1.5">
@@ -171,11 +185,9 @@ function ServiceCard({
                         </div>
                       ) : (
                         <span className="font-mono text-sm">
-                          {formatDistance(
-                            new Date(service.timestamp),
-                            new Date(),
-                            { addSuffix: true }
-                          )}
+                          {formatDistance(new Date(service.timestamp), new Date(), {
+                            addSuffix: true,
+                          })}
                         </span>
                       )}
                     </TableCell>
@@ -226,6 +238,8 @@ export default function ServicesOverview({ clusterId }: { clusterId: string }) {
           <div className="absolute left-8 top-0 w-[2px] h-full bg-border" />
         )}
 
+        <NewServicePill hasServices={sortedServices.length > 0} />
+
         {sortedServices.map((service, index) => (
           <ServiceCard
             key={service.name}
@@ -240,11 +254,7 @@ export default function ServicesOverview({ clusterId }: { clusterId: string }) {
   );
 }
 
-export function ClusterDetails({
-  clusterId,
-}: {
-  clusterId: string;
-}): JSX.Element {
+export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Element {
   const { getToken } = useAuth();
   const [clusterDetails, setClusterDetails] = useState<
     ClientInferResponses<typeof contract.getCluster, 200>["body"] | null
@@ -270,12 +280,11 @@ export function ClusterDetails({
         const headers = { authorization: `Bearer ${token}` };
         const params = { clusterId };
 
-        const [clusterResult, machinesResponse, servicesResponse] =
-          await Promise.all([
-            client.getCluster({ headers, params }),
-            client.listMachines({ headers, params }),
-            client.listServices({ headers, params }),
-          ]);
+        const [clusterResult, machinesResponse, servicesResponse] = await Promise.all([
+          client.getCluster({ headers, params }),
+          client.listMachines({ headers, params }),
+          client.listServices({ headers, params }),
+        ]);
 
         if (clusterResult.status === 200) {
           setClusterDetails(clusterResult.body);
@@ -311,7 +320,7 @@ export function ClusterDetails({
 
     // Start polling loop
     while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 10 seconds
+      await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
       await fetchData(false);
     }
   }, [fetchData]);
@@ -320,7 +329,7 @@ export function ClusterDetails({
     const abortController = new AbortController();
 
     if (!hasInitialDataLoaded) {
-      pollWithDelay().catch((error) => {
+      pollWithDelay().catch(error => {
         if (!abortController.signal.aborted) {
           console.error("Polling error:", error);
         }
@@ -333,7 +342,7 @@ export function ClusterDetails({
   }, [pollWithDelay, hasInitialDataLoaded]);
 
   const liveMachineCount = machines.filter(
-    (m) => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
+    m => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
   ).length;
 
   return (
@@ -348,9 +357,7 @@ export function ClusterDetails({
               {isInitialLoading ? (
                 <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 shadow-sm">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-xs font-medium text-amber-700">
-                    Loading
-                  </span>
+                  <span className="text-xs font-medium text-amber-700">Loading</span>
                 </div>
               ) : liveMachineCount > 0 ? (
                 <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
@@ -368,17 +375,12 @@ export function ClusterDetails({
               </div>
               <div className="flex flex-col items-start gap-0.5">
                 <span className="font-semibold text-gray-900">Machines</span>
-                <span className="text-xs text-gray-500 font-mono">
-                  {liveMachineCount} Active
-                </span>
+                <span className="text-xs text-gray-500 font-mono">{liveMachineCount} Active</span>
               </div>
             </div>
           </Button>
         </SheetTrigger>
-        <SheetContent
-          style={{ minWidth: 800 }}
-          className="overflow-y-auto h-screen"
-        >
+        <SheetContent style={{ minWidth: 800 }} className="overflow-y-auto h-screen">
           <SheetHeader className="pb-6">
             <SheetTitle>
               <div className="flex items-center gap-3">
@@ -416,9 +418,7 @@ export function ClusterDetails({
               {isInitialLoading ? (
                 <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100 shadow-sm">
                   <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-xs font-medium text-amber-700">
-                    Loading
-                  </span>
+                  <span className="text-xs font-medium text-amber-700">Loading</span>
                 </div>
               ) : services.length > 0 ? (
                 <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full border border-green-100 shadow-sm">
@@ -435,24 +435,16 @@ export function ClusterDetails({
                 <Blocks className="w-5 h-5 text-gray-700" />
               </div>
               <div className="flex flex-col items-start gap-0.5">
-                <span className="font-semibold text-gray-900">
-                  Services
-                </span>
+                <span className="font-semibold text-gray-900">Services</span>
                 <span className="text-xs text-gray-500 font-mono">
-                  {services.reduce(
-                    (acc, service) => acc + (service.functions?.length || 0),
-                    0
-                  )}{" "}
+                  {services.reduce((acc, service) => acc + (service.functions?.length || 0), 0)}{" "}
                   Functions
                 </span>
               </div>
             </div>
           </Button>
         </SheetTrigger>
-        <SheetContent
-          style={{ minWidth: "80%" }}
-          className="overflow-y-auto h-screen"
-        >
+        <SheetContent style={{ minWidth: "80%" }} className="overflow-y-auto h-screen">
           <SheetHeader className="pb-6">
             <SheetTitle>
               <div className="flex items-center gap-3">
@@ -479,53 +471,174 @@ export function ClusterDetails({
           </div>
         </SheetContent>
       </Sheet>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant="outline"
+            className={
+              "group relative flex items-center w-full px-5 py-6 hover:bg-gray-50/80 border rounded-xl transition-all duration-200 hover:shadow-lg"
+            }
+          >
+            <div className="flex items-center gap-4 w-full">
+              <div className="h-5 w-5 shrink-0 rounded-xl flex items-center justify-center">
+                <Plus className="w-5 h-5 text-gray-700" />
+              </div>
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="font-semibold text-gray-900">Add Service</span>
+              </div>
+            </div>
+          </Button>
+        </SheetTrigger>
+        <SheetContent style={{ minWidth: 800 }} className="overflow-y-auto h-screen">
+          <SheetHeader className="pb-6">
+            <SheetTitle>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-mono text-xl">Create New Service</div>
+                  <div className="text-sm text-muted-foreground">
+                    Get started with a new service in your cluster
+                  </div>
+                </div>
+              </div>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-6">
+            <CreateNewServiceOptions clusterId={clusterId} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function MachineCard({
-  machine,
-  clusterId,
-}: {
-  machine: ClientInferResponseBody<typeof contract.listMachines, 200>[number];
-  clusterId: string;
-}) {
-  const isLive =
-    Date.now() - new Date(machine.lastPingAt!).getTime() < 1000 * 60;
+export function CreateNewServiceOptions({ clusterId }: { clusterId: string }) {
+  const [status, setStatus] = useState<"creating" | "created" | "error">();
+  const { getToken } = useAuth();
+  const [actualCommand, setActualCommand] = useState<string>(
+    "npx @inferable/demo@latest run --secret=sk_inf_***"
+  );
+  const [displayCommand, setDisplayCommand] = useState<string>(
+    "npx @inferable/demo@latest run --secret=sk_inf_***"
+  );
+
+  const handleCopy = async () => {
+    try {
+      setStatus("creating");
+      const name = `autogenerated-demo-${Math.random().toString(36).substring(2, 10)}`;
+
+      const result = await client.createApiKey({
+        headers: { authorization: `Bearer ${await getToken()}` },
+        params: { clusterId },
+        body: { name },
+      });
+
+      if (result.status === 200) {
+        const newCommand = `npx @inferable/demo@latest run --secret=${result.body.key}`;
+        const key = result.body.key;
+        const redactedKey = key.substring(0, 10) + "*".repeat(key.length - 10);
+        const redactedCommand = `npx @inferable/demo@latest run --secret=${redactedKey}`;
+
+        setActualCommand(newCommand);
+        setDisplayCommand(redactedCommand);
+        await navigator.clipboard.writeText(newCommand);
+        setStatus("created");
+      } else {
+        setStatus("error");
+        createErrorToast(result, "Failed to create API key");
+      }
+    } catch (err) {
+      setStatus("error");
+      createErrorToast(err, "Failed to create API key");
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case "creating":
+        return "Creating API key...";
+      case "created":
+        return "Copied to clipboard ✅";
+      case "error":
+        return "Error creating key";
+      default:
+        return "Click to copy";
+    }
+  };
 
   return (
-    <div
-      className={cn(
-        "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md",
-        isLive
-          ? "bg-green-50/30 border-green-100"
-          : "bg-gray-50/30 border-gray-100"
-      )}
-    >
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-        <div className="flex items-center gap-3">
-          <div>{isLive ? <LiveGreenCircle /> : <DeadGrayCircle />}</div>
+    <div className="space-y-4">
+      <div className="rounded-xl p-5 shadow-sm border border-gray-200 bg-gray-50/50 transition-all duration-200 hover:shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <Cpu className="w-5 h-5 text-gray-600" />
+          </div>
           <div>
-            <div className="text-sm font-medium font-mono">{machine.id}</div>
-            <div className="text-xs text-muted-foreground">{machine.ip}</div>
+            <div className="text-base font-medium text-gray-900">Local Demo Service</div>
+            <div className="text-sm text-gray-500">
+              Try out Inferable with our demo service running locally on your machine
+            </div>
           </div>
         </div>
-        <EventsOverlayButton
-          clusterId={clusterId}
-          query={{ machineId: machine.id }}
-        />
-      </div>
-      <div className="flex items-center gap-2 text-xs">
-        <div
-          className={cn(
-            "px-2 py-1 rounded-full font-medium",
-            isLive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-          )}
-        >
-          {isLive ? "Active" : "Inactive"}
+
+        <div className="mt-4 space-y-2">
+          <Button
+            onClick={handleCopy}
+            variant="outline"
+            className={cn(
+              "w-full h-auto py-4 font-mono text-sm group relative overflow-hidden transition-all",
+              "bg-black hover:bg-black/80 border-gray-800 text-white hover:text-white",
+              "flex items-center gap-2",
+              status === "creating" && "opacity-70 cursor-wait"
+            )}
+            disabled={status === "creating"}
+          >
+            <span className="flex-1 text-left truncate">{displayCommand}</span>
+            <span
+              className={cn(
+                "text-xs px-2 py-1 rounded-md transition-colors",
+                status === "created"
+                  ? "bg-green-500/20 text-green-300"
+                  : status === "error"
+                    ? "bg-red-500/20 text-red-300"
+                    : status === "creating"
+                      ? "bg-yellow-500/20 text-yellow-300"
+                      : "bg-gray-700 text-gray-300"
+              )}
+            >
+              {getStatusText()}
+            </span>
+          </Button>
         </div>
-        <div className="text-muted-foreground">
-          Last heartbeat: {formatRelative(machine.lastPingAt!, new Date())}
+      </div>
+
+      <div className="rounded-xl p-5 shadow-sm border border-gray-200 bg-gray-50/50 transition-all duration-200 hover:shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <Blocks className="w-5 h-5 text-gray-600" />
+          </div>
+          <div>
+            <div className="text-base font-medium text-gray-900">Custom Local Service</div>
+            <div className="text-sm text-gray-500">
+              Create your own service with custom functions running locally
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <a
+            href="https://docs.inferable.ai/pages/from-scratch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <Button variant="outline" className="w-full bg-white hover:bg-gray-50 border-gray-200">
+              <span className="text-sm">View Documentation</span>
+            </Button>
+          </a>
         </div>
       </div>
     </div>
@@ -557,7 +670,7 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
         setMachines(machinesResponse.body);
         setLiveMachineCount(
           machinesResponse.body.filter(
-            (m) => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
+            m => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
           ).length
         );
       } else {
@@ -606,24 +719,16 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {machines && machines.length > 0 ? (
           machines
-            .sort(
-              (a, b) =>
-                new Date(b.lastPingAt!).getTime() -
-                new Date(a.lastPingAt!).getTime()
-            )
-            .map((m) => (
-              <MachineCard key={m.id} machine={m} clusterId={clusterId} />
-            ))
+            .sort((a, b) => new Date(b.lastPingAt!).getTime() - new Date(a.lastPingAt!).getTime())
+            .map(m => <MachineCard key={m.id} machine={m} clusterId={clusterId} />)
         ) : (
           <div className="col-span-full flex items-center justify-center p-8 rounded-xl bg-gray-50 border border-gray-200">
             <div className="flex flex-col items-center gap-3">
               <DeadRedCircle />
-              <span className="text-sm text-gray-600">
-                Your machines are offline
-              </span>
+              <span className="text-sm text-gray-600">Your machines are offline</span>
               <p className="text-xs text-muted-foreground max-w-[300px] text-center">
-                No active machines found in this cluster. Make sure your
-                machines are running and properly configured.
+                No active machines found in this cluster. Make sure your machines are running and
+                properly configured.
               </p>
             </div>
           </div>
@@ -633,16 +738,53 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
   );
 }
 
+function MachineCard({
+  machine,
+  clusterId,
+}: {
+  machine: ClientInferResponseBody<typeof contract.listMachines, 200>[number];
+  clusterId: string;
+}) {
+  const isLive = Date.now() - new Date(machine.lastPingAt!).getTime() < 1000 * 60;
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md",
+        isLive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
+      )}
+    >
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div>{isLive ? <LiveGreenCircle /> : <DeadGrayCircle />}</div>
+          <div>
+            <div className="text-sm font-medium font-mono">{machine.id}</div>
+            <div className="text-xs text-muted-foreground">{machine.ip}</div>
+          </div>
+        </div>
+        <EventsOverlayButton clusterId={clusterId} query={{ machineId: machine.id }} />
+      </div>
+      <div className="flex items-center gap-2 text-xs">
+        <div
+          className={cn(
+            "px-2 py-1 rounded-full font-medium",
+            isLive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+          )}
+        >
+          {isLive ? "Active" : "Inactive"}
+        </div>
+        <div className="text-muted-foreground">
+          Last heartbeat: {formatRelative(machine.lastPingAt!, new Date())}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ClusterHealthPane({
   clusterDetails,
 }: {
-  clusterDetails:
-    | ClientInferResponses<typeof contract.getCluster, 200>["body"]
-    | null;
+  clusterDetails: ClientInferResponses<typeof contract.getCluster, 200>["body"] | null;
 }): JSX.Element {
-  return (
-    <div>
-      {clusterDetails?.id && <MachinesOverview clusterId={clusterDetails.id} />}
-    </div>
-  );
+  return <div>{clusterDetails?.id && <MachinesOverview clusterId={clusterDetails.id} />}</div>;
 }
