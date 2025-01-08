@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 
-function hashValue(value: object): string {
+function hashValue(value: any): string {
   const str = JSON.stringify(value);
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
@@ -10,7 +10,7 @@ function hashValue(value: object): string {
   return hash.toString(36);
 }
 
-export function useHashState<T extends object>(initialValue: T) {
+export function useHashState<T>(initialValue: T) {
   const [state, setState] = useState<T>(initialValue);
   const lastHashRef = useRef<string>(hashValue(initialValue));
 
