@@ -13,6 +13,7 @@ const service = client.service({
 
 service.register({
   name: "getDatabaseContext",
+  description: "Gets the database context, which includes the tables and schema.",
   func: async () => {
     console.log("SQLite: Getting database context");
 
@@ -28,6 +29,8 @@ service.register({
 
 service.register({
   name: "executeSql",
+  description:
+    "Executes a SQL query on the database. If you don't know the schema, use getDatabaseContext first.",
   func: async (input: { sql: string }) => {
     console.log("SQLite: Executing SQL", input.sql);
 
