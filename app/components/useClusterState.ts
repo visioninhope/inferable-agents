@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { client } from "@/client/client";
 import type { contract } from "@/client/contract";
 import { ClientInferResponseBody } from "@ts-rest/core";
+import { useHashState } from "@/lib/use-hash-state";
+import { toast } from "react-hot-toast";
 
 export interface ClusterState {
   machines: ClientInferResponseBody<typeof contract.listMachines, 200>;
@@ -12,10 +14,10 @@ export interface ClusterState {
 }
 
 export function useClusterState(clusterId: string): ClusterState {
-  const [machines, setMachines] = useState<
+  const [machines, setMachines] = useHashState<
     ClientInferResponseBody<typeof contract.listMachines, 200>
   >([]);
-  const [services, setServices] = useState<
+  const [services, setServices] = useHashState<
     ClientInferResponseBody<typeof contract.listServices, 200>
   >([]);
   const [liveMachineCount, setLiveMachineCount] = useState(0);
