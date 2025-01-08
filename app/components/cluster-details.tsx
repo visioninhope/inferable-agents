@@ -41,8 +41,7 @@ function toFunctionName(name: string, serviceName: string) {
 
 function ControlPlaneBox() {
   return (
-    <div className="rounded-xl bg-black p-5 shadow-md border border-border/50 text-sm w-[300px] mb-8 relative hover:shadow-lg transition-all duration-200">
-      <div className="absolute left-[31px] bottom-[-34px] w-[2px] h-[28px] bg-border" />
+    <div className="rounded-xl bg-black p-5 shadow-md border border-border/50 text-sm w-[300px] mb-4 relative hover:shadow-lg transition-all duration-200">
       <div className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
           <Network className="w-6 h-6 text-white" />
@@ -80,96 +79,92 @@ function ServiceCard({
     Date.now() - new Date(service.timestamp).getTime() < 1000 * 60;
 
   return (
-    <div className="relative">
-      <div className="absolute left-8 top-[1.5rem] w-8 h-[2px] bg-border" />
-
-      <div
-        className={cn(
-          "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md ml-16",
-          isActive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
-        )}
-      >
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              {service.name === "InferableApplications" ? (
-                <AppWindowIcon className="w-5 h-5 text-primary" />
-              ) : (
-                <Blocks className="w-5 h-5 text-primary" />
-              )}
-            </div>
-            <div>
-              <div className="text-base font-medium">{toServiceName(service.name)}</div>
-              <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">
-                <span>
-                  {service.functions?.length || 0} Function
-                  {service.functions?.length !== 1 ? "s" : ""}
-                </span>
-                <span
-                  className={cn(
-                    "px-2 py-0.5 rounded-full text-xs font-medium",
-                    isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-                  )}
-                >
-                  {isActive ? "Active" : "Inactive"}
-                </span>
-              </div>
+    <div
+      className={cn(
+        "rounded-xl p-5 shadow-sm border transition-all duration-200 hover:shadow-md",
+        isActive ? "bg-green-50/30 border-green-100" : "bg-gray-50/30 border-gray-100"
+      )}
+    >
+      <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            {service.name === "InferableApplications" ? (
+              <AppWindowIcon className="w-5 h-5 text-primary" />
+            ) : (
+              <Blocks className="w-5 h-5 text-primary" />
+            )}
+          </div>
+          <div>
+            <div className="text-base font-medium">{toServiceName(service.name)}</div>
+            <div className="text-sm text-muted-foreground font-mono flex items-center gap-2">
+              <span>
+                {service.functions?.length || 0} Function
+                {service.functions?.length !== 1 ? "s" : ""}
+              </span>
+              <span
+                className={cn(
+                  "px-2 py-0.5 rounded-full text-xs font-medium",
+                  isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                )}
+              >
+                {isActive ? "Active" : "Inactive"}
+              </span>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-2/3">Function</TableHead>
-                <TableHead className="w-1/3">Last Update</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {service.functions
-                ?.sort((a, b) => a.name.localeCompare(b.name))
-                .map(func => (
-                  <TableRow key={func.name} className="hover:bg-secondary/40">
-                    <TableCell className="w-2/3">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {toFunctionName(func.name, service.name)}
-                          </span>
-                          <ToolContextButton
-                            clusterId={clusterId}
-                            service={service.name}
-                            functionName={func.name}
-                          />
-                        </div>
-                        <div
-                          className="truncate text-xs text-muted-foreground max-w-[40vw] font-mono"
-                          title={func.description || "No description"}
-                        >
-                          {func.description || "No description"}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="w-1/3">
-                      {new Date(service.timestamp) > new Date() ? (
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500" />
-                          <span>Permanent Sync</span>
-                        </div>
-                      ) : (
-                        <span className="font-mono text-sm">
-                          {formatDistance(new Date(service.timestamp), new Date(), {
-                            addSuffix: true,
-                          })}
+      <div className="space-y-4">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-2/3">Function</TableHead>
+              <TableHead className="w-1/3">Last Update</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {service.functions
+              ?.sort((a, b) => a.name.localeCompare(b.name))
+              .map(func => (
+                <TableRow key={func.name} className="hover:bg-secondary/40">
+                  <TableCell className="w-2/3">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {toFunctionName(func.name, service.name)}
                         </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
+                        <ToolContextButton
+                          clusterId={clusterId}
+                          service={service.name}
+                          functionName={func.name}
+                        />
+                      </div>
+                      <div
+                        className="truncate text-xs text-muted-foreground max-w-[40vw] font-mono"
+                        title={func.description || "No description"}
+                      >
+                        {func.description || "No description"}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="w-1/3">
+                    {new Date(service.timestamp) > new Date() ? (
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        <span>Permanent Sync</span>
+                      </div>
+                    ) : (
+                      <span className="font-mono text-sm">
+                        {formatDistance(new Date(service.timestamp), new Date(), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
@@ -181,111 +176,73 @@ export default function ServicesOverview({ clusterId }: { clusterId: string }) {
 
   return (
     <div>
-      <ControlPlaneBox />
-      {sortedServices.length === 0 && (
-        <div className="text-sm text-muted-foreground ml-8">No services connected yet</div>
+      {sortedServices.length === 0 ? (
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full h-[120px] flex flex-col items-center justify-center gap-2 border border-dashed border-gray-200 rounded-xl transition-all duration-200 hover:border-gray-300 hover:bg-gray-50/50"
+            >
+              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                <PlusCircleIcon className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-medium text-gray-900">No Services Connected</h3>
+                <p className="text-sm text-gray-500">Click here to add your first service</p>
+              </div>
+            </Button>
+          </SheetTrigger>
+          <SheetContent style={{ minWidth: 800 }} className="overflow-y-auto h-screen">
+            <SheetHeader className="pb-6">
+              <SheetTitle>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="font-mono text-xl">Create New Service</div>
+                    <div className="text-sm text-muted-foreground">
+                      Get started with a new service in your cluster
+                    </div>
+                  </div>
+                </div>
+              </SheetTitle>
+            </SheetHeader>
+            <div className="space-y-6">
+              <CreateNewServiceOptions clusterId={clusterId} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {sortedServices.map((service, index) => (
+            <ServiceCard
+              key={service.name}
+              service={service}
+              clusterId={clusterId}
+              index={index}
+              total={sortedServices.length}
+            />
+          ))}
+        </div>
       )}
-      <div className="relative grid grid-cols-1 gap-4">
-        {sortedServices.length > 0 && (
-          <div className="absolute left-8 top-0 w-[2px] h-full bg-border" />
-        )}
-
-        {sortedServices.map((service, index) => (
-          <ServiceCard
-            key={service.name}
-            service={service}
-            clusterId={clusterId}
-            index={index}
-            total={sortedServices.length}
-          />
-        ))}
-      </div>
     </div>
   );
 }
 
 export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Element {
-  const { getToken } = useAuth();
-  const [clusterDetails, setClusterDetails] = useState<
-    ClientInferResponses<typeof contract.getCluster, 200>["body"] | null
-  >(null);
-  const { machines, services } = useClusterState(clusterId);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
-
-  const fetchData = useCallback(
-    async (isInitialFetch: boolean = false) => {
-      if (!clusterId) return;
-      if (isInitialFetch) {
-        setIsInitialLoading(true);
-      }
-
-      try {
-        const token = await getToken();
-        const headers = { authorization: `Bearer ${token}` };
-        const params = { clusterId };
-
-        const clusterResult = await client.getCluster({ headers, params });
-
-        if (clusterResult.status === 200) {
-          setClusterDetails(clusterResult.body);
-        } else {
-          ServerConnectionStatus.addEvent({
-            type: "getCluster",
-            success: false,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch cluster data:", error);
-      } finally {
-        if (isInitialFetch) {
-          setIsInitialLoading(false);
-          setHasInitialDataLoaded(true);
-        }
-      }
-    },
-    [clusterId, getToken]
-  );
-
-  const pollWithDelay = useCallback(async () => {
-    // Initial fetch
-    await fetchData(true);
-
-    // Start polling loop
-    while (true) {
-      await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
-      await fetchData(false);
-    }
-  }, [fetchData]);
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    if (!hasInitialDataLoaded) {
-      pollWithDelay().catch(error => {
-        if (!abortController.signal.aborted) {
-          console.error("Polling error:", error);
-        }
-      });
-    }
-
-    return () => {
-      abortController.abort();
-    };
-  }, [pollWithDelay, hasInitialDataLoaded]);
-
-  const liveMachineCount = machines.filter(
-    m => Date.now() - new Date(m.lastPingAt!).getTime() < 1000 * 60
-  ).length;
-
-  const noServicesAndMachines = !services.length && !machines.length;
+  const {
+    machines,
+    services,
+    isLoading: isInitialLoading,
+    liveMachineCount,
+  } = useClusterState(clusterId);
 
   return (
     <div className="flex flex-col space-y-3 w-full">
       <Sheet>
         <SheetTrigger asChild>
           <Button
-            disabled={!machines.length}
             variant="outline"
             className="group relative flex items-center w-full px-5 py-6 bg-white hover:bg-gray-50/80 border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-lg"
           >
@@ -324,9 +281,9 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
                   <Cpu className="w-5 h-5 text-primary" />
                 </div>
                 <div className="space-y-1">
-                  <div className="font-mono text-xl">Cluster Health</div>
+                  <div className="font-mono text-xl">Machines</div>
                   <div className="text-sm text-muted-foreground">
-                    Monitor and manage your cluster&apos;s machines
+                    Machines are instances with the Inferable SDK installed and polling.
                   </div>
                 </div>
               </div>
@@ -338,7 +295,7 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <ClusterHealthPane clusterDetails={clusterDetails} />
+              <MachinesOverview clusterId={clusterId} />
             )}
           </div>
         </SheetContent>
@@ -349,7 +306,6 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
           <Button
             variant="outline"
             className="group relative flex items-center w-full px-5 py-6 bg-white hover:bg-gray-50/80 border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-lg"
-            disabled={!services.length}
           >
             <div className="absolute -top-1.5 -right-1.5">
               {isInitialLoading ? (
@@ -415,8 +371,8 @@ export function ClusterDetails({ clusterId }: { clusterId: string }): JSX.Elemen
             variant="outline"
             data-add-services-trigger
             className={cn(
-              "group relative flex items-center w-full px-5 py-6 hover:bg-gray-50/80 border rounded-xl transition-all duration-200 hover:shadow-lg",
-              noServicesAndMachines && "border-primary duration-2000"
+              "group relative flex items-center w-full px-5 py-6 bg-white hover:bg-gray-50/80 border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-lg",
+              !services.length && !machines.length && "border-primary"
             )}
           >
             <div className="flex items-center gap-4 w-full">
@@ -601,21 +557,6 @@ function MachinesOverview({ clusterId }: { clusterId: string }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Machines</h2>
-        <div className="flex items-center gap-4">
-          <p className="text-sm text-muted-foreground">
-            You have {liveMachineCount} machine
-            {liveMachineCount === 1 ? "" : "s"} connected
-          </p>
-          {liveMachineCount > 0 && (
-            <div className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-              {liveMachineCount} Active
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {machines && machines.length > 0 ? (
           machines
@@ -679,12 +620,4 @@ function MachineCard({
       </div>
     </div>
   );
-}
-
-export function ClusterHealthPane({
-  clusterDetails,
-}: {
-  clusterDetails: ClientInferResponses<typeof contract.getCluster, 200>["body"] | null;
-}): JSX.Element {
-  return <div>{clusterDetails?.id && <MachinesOverview clusterId={clusterDetails.id} />}</div>;
 }
