@@ -19,7 +19,7 @@ import jsonpath from "jsonpath";
 import { stdlib } from "./runs/agent/tools/stdlib";
 
 // The time without a ping before a service is considered expired
-const SERVICE_LIVE_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+const SERVICE_LIVE_THRESHOLD_MS = 60 * 1000; // 1 minute
 
 export type FunctionConfig = z.infer<typeof FunctionConfigSchema>;
 

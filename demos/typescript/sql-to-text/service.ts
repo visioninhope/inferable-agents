@@ -13,16 +13,13 @@ const service = client.service({
 
 service.register({
   name: "getDatabaseContext",
+  description: "Gets the database context, which includes the tables and schema.",
   func: async () => {
     console.log("SQLite: Getting database context");
 
     return {
-      tables: db
-        .prepare("SELECT name FROM sqlite_master WHERE type='table'")
-        .all(),
-      schema: db
-        .prepare("SELECT sql FROM sqlite_master WHERE type='table'")
-        .all(),
+      tables: db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all(),
+      schema: db.prepare("SELECT sql FROM sqlite_master WHERE type='table'").all(),
     };
   },
   schema: {
@@ -32,13 +29,13 @@ service.register({
 
 service.register({
   name: "executeSql",
+  description:
+    "Executes a SQL query on the database. If you don't know the schema, use getDatabaseContext first.",
   func: async (input: { sql: string }) => {
     console.log("SQLite: Executing SQL", input.sql);
 
     const mutation =
-      input.sql.includes("UPDATE") ||
-      input.sql.includes("INSERT") ||
-      input.sql.includes("DELETE");
+      input.sql.includes("UPDATE") || input.sql.includes("INSERT") || input.sql.includes("DELETE");
 
     if (mutation) {
       return db.prepare(input.sql).run();

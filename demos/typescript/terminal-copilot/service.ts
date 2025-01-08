@@ -16,6 +16,7 @@ const service = client.service({
 
 service.register({
   name: "executeCommand",
+  description: "Executes a command on the terminal, but asks for approval first.",
   func: async (input: { command: string; args?: string[] }, context) => {
     // Approve any and all commands
     if (!context.approved) {
