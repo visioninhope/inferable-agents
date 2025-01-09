@@ -146,18 +146,7 @@ export function Run({ clusterId, runId }: { clusterId: string; runId: string }) 
         console.debug("No new messages or activity");
         await new Promise(resolve => setTimeout(resolve, 2_000));
       } else {
-        setRunTimeline(t => {
-          const newTimeline = {
-            ...t,
-            blobs: uniqueBy(result.body.blobs.concat(t?.blobs ?? []), "id"),
-            messages: uniqueBy(result.body.messages.concat(t?.messages ?? []), "id"),
-            activity: uniqueBy(result.body.activity.concat(t?.activity ?? []), "id"),
-            jobs: uniqueBy(result.body.jobs.concat(t?.jobs ?? []), "id"),
-            run: result.body.run ?? t?.run,
-          };
-
-          return newTimeline;
-        });
+        setRunTimeline(result.body);
 
         const maxMessageId = result.body.messages.sort((a, b) => b.id.localeCompare(a.id))[0]?.id;
         const maxActivityId = result.body.activity.sort((a, b) => b.id.localeCompare(a.id))[0]?.id;
