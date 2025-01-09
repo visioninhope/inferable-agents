@@ -9,7 +9,6 @@ import { ClientInferResponseBody } from "@ts-rest/core";
 import { RefreshCcw, TestTube2Icon, WorkflowIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useHashState } from "@/lib/use-hash-state";
 
 import { useRouter } from "next/navigation";
 import { ulid } from "ulid";
@@ -87,7 +86,7 @@ export function Run({ clusterId, runId }: { clusterId: string; runId: string }) 
 
   const [focusedJobId, setFocusedJobId] = useQueryState("jobId");
 
-  const [runTimeline, setRunTimeline] = useHashState<ClientInferResponseBody<
+  const [runTimeline, setRunTimeline] = useState<ClientInferResponseBody<
     typeof contract.getRunTimeline,
     200
   > | null>(null);
