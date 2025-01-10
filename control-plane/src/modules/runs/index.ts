@@ -128,6 +128,22 @@ export const deleteRun = async ({ clusterId, runId }: { clusterId: string; runId
   await db.delete(runs).where(and(eq(runs.cluster_id, clusterId), eq(runs.id, runId)));
 };
 
+export const updateRunFeedback = async (run: {
+  id: string;
+  clusterId: string;
+  feedbackComment?: string;
+  feedbackScore?: number;
+}) => {
+  await db
+    .update(runs)
+    .set({ feedback_comment: run.feedbackComment, feedback_score: run.feedbackScore })
+    .where(and(eq(runs.cluster_id, run.clusterId), eq(runs.id, run.id)));
+};
+
+/**
+ * @deprecated This function is deprecated and will be removed in a future version.
+ * Create domain specific functions to update run status, name, etc, or db.update within the module
+ */
 export const updateRun = async (run: {
   id: string;
   clusterId: string;
@@ -137,6 +153,8 @@ export const updateRun = async (run: {
   feedbackComment?: string;
   feedbackScore?: number;
 }) => {
+  logger.error("updateRun is deprecated. but called in production");
+
   const updateSet = {
     name: run.name ?? undefined,
     status: run.status ?? undefined,
@@ -339,15 +357,13 @@ export const addMessageAndResumeWithRun = async ({
   });
 
   // TODO: Move run name generation to event sourcing (pg-listen) https://github.com/inferablehq/inferable/issues/390
-  if (type === "human") {
-    await generateRunName(
-      {
-        id: run.id,
-        clusterId: run.clusterId,
-      },
-      message
-    );
-  }
+  await generateRunName(
+    {
+      id: run.id,
+      clusterId: run.clusterId,
+    },
+    message
+  );
 
   await resumeRun({
     clusterId,
