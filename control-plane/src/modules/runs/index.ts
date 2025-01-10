@@ -10,6 +10,7 @@ import { sqs } from "../sqs";
 import { trackCustomerTelemetry } from "../track-customer-telemetry";
 import { getRunMessages, hasInvocations, insertRunMessage, lastAgentMessage } from "./messages";
 import { getRunTags } from "./tags";
+import { omitBy } from "lodash";
 
 export { start, stop } from "./queues";
 
@@ -150,7 +151,7 @@ export const updateRun = async (run: {
 
   const [updated] = await db
     .update(runs)
-    .set(updateSet)
+    .set(omitBy(updateSet, value => value === undefined))
     .where(and(eq(runs.cluster_id, run.clusterId), eq(runs.id, run.id)))
     .returning({
       id: runs.id,
