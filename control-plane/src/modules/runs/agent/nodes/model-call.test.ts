@@ -11,7 +11,16 @@ describe("handleModelCall", () => {
   const run = {
     id: "test-run",
     clusterId: "test-cluster",
+    modelIdentifier: null,
+    resultSchema: null,
+    debug: false,
+    attachedFunctions: null,
+    status: "running",
+    systemPrompt: null,
+    testMocks: {},
+    test: false,
     reasoningTraces: true,
+    enableResultGrounding: false,
   };
   const state: RunGraphState = {
     messages: [
