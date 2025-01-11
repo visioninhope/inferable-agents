@@ -535,10 +535,26 @@ export const definition = {
         createdAt: z.date(),
         debug: z.boolean(),
         enableCustomAuth: z.boolean(),
-        handleCustomAuthFunction: z.string(),
+        handleCustomAuthFunction: z.string().nullable(),
         enableKnowledgebase: z.boolean(),
         lastPingAt: z.date().nullable(),
         isDemo: z.boolean(),
+        machines: z.array(
+          z.object({
+            id: z.string(),
+            lastPingAt: z.date().nullable(),
+            ip: z.string().nullable(),
+            sdkVersion: z.string().nullable(),
+            sdkLanguage: z.string().nullable(),
+          })
+        ),
+        services: z.array(
+          z.object({
+            service: z.string(),
+            definition: z.unknown().nullable(),
+            timestamp: z.date().nullable(),
+          })
+        ),
       }),
       401: z.undefined(),
       404: z.undefined(),
