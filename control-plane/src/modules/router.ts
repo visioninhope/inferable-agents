@@ -20,7 +20,6 @@ import { posthog } from "./posthog";
 import { addMessageAndResume, assertRunReady, getRun } from "./runs";
 import { editHumanMessage, getRunMessagesForDisplayWithPolling } from "./runs/messages";
 import { runsRouter } from "./runs/router";
-import { getServerStats } from "./server-stats";
 import { getServiceDefinitions, getStandardLibraryToolsMeta } from "./service-definitions";
 import { unqualifiedEntityId } from "./auth/auth";
 
@@ -647,14 +646,6 @@ export const router = initServer().router(contract, {
     return {
       status: 200,
       body: result.structured,
-    };
-  },
-  getServerStats: async () => {
-    const stats = await getServerStats();
-
-    return {
-      status: 200,
-      body: stats,
     };
   },
   getStandardLibraryMeta: async request => {
