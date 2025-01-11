@@ -174,7 +174,7 @@ export const services = pgTable(
   "services",
   {
     cluster_id: varchar("cluster_id")
-      .references(() => clusters.id)
+      .references(() => clusters.id, { onDelete: "cascade" })
       .notNull(),
     service: varchar("service", { length: 1024 }).notNull(),
     queue_url: varchar("queue_url", { length: 1024 }),
@@ -193,7 +193,7 @@ export const integrations = pgTable(
   "integrations",
   {
     cluster_id: varchar("cluster_id")
-      .references(() => clusters.id)
+      .references(() => clusters.id, { onDelete: "cascade" })
       .notNull(),
     toolhouse: json("toolhouse").$type<{
       apiKey: string;
@@ -274,7 +274,7 @@ export const externalMessages = pgTable(
     messageReference: foreignKey({
       columns: [table.message_id, table.run_id, table.cluster_id],
       foreignColumns: [runMessages.id, runMessages.workflow_id, runMessages.cluster_id],
-    }),
+    }).onDelete("cascade"),
     externalMessageIndex: index("externalMessagesIndex").on(table.external_id, table.cluster_id),
   })
 );
@@ -294,7 +294,7 @@ export const runs = pgTable(
     }),
     user_id: varchar("user_id", { length: 1024 }).notNull(),
     cluster_id: varchar("cluster_id")
-      .references(() => clusters.id)
+      .references(() => clusters.id, { onDelete: "cascade" })
       .notNull(),
     created_at: timestamp("created_at", {
       withTimezone: true,
@@ -427,7 +427,7 @@ export const apiKeys = pgTable(
     id: varchar("id", { length: 255 }).notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     cluster_id: varchar("cluster_id")
-      .references(() => clusters.id)
+      .references(() => clusters.id, { onDelete: "cascade" })
       .notNull(),
     secret_hash: varchar("secret_hash", { length: 255 }).notNull(),
     // TODO: Remove this field
@@ -506,7 +506,7 @@ export const agents = pgTable(
   {
     id: varchar("id", { length: 1024 }).notNull(),
     cluster_id: varchar("cluster_id")
-      .references(() => clusters.id)
+      .references(() => clusters.id, { onDelete: "cascade" })
       .notNull(),
     name: varchar("name", { length: 1024 }).notNull(),
     initial_prompt: text("initial_prompt"),
