@@ -287,6 +287,7 @@ export const runs = pgTable(
     id: varchar("id", { length: 1024 }).notNull(),
     // TODO: Rename this to `on_status_change`
     on_status_change: varchar("result_function", { length: 1024 }),
+    on_status_change_statuses: json("on_status_change_statuses").$type<string[]>(),
     result_schema: json("result_schema"),
     name: varchar("name", { length: 1024 }).default("").notNull(),
     system_prompt: varchar("system_prompt", { length: 1024 }),
