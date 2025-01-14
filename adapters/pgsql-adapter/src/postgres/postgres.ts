@@ -1,11 +1,11 @@
 import assert from "assert";
-import { approvalRequest, blob, ContextInput, Inferable } from "inferable";
+import { blob, ContextInput, Inferable, Interrupt } from "inferable";
 import pg from "pg";
 import { z } from "zod";
 import crypto from "crypto";
-import type { DataConnector } from "../types";
+import { isMutativeQuery } from "./isMutative";
 
-export class PostgresClient implements DataConnector {
+export class InferablePGSQLAdapter {
   private client: pg.Client | null = null;
   private initialized = false;
 
@@ -14,9 +14,8 @@ export class PostgresClient implements DataConnector {
       name?: string;
       schema: string;
       connectionString: string;
-      maxResultLength: number;
       privacyMode: boolean;
-      approvalMode: boolean;
+      approvalMode: 'always' | 'mutate' | 'off';
     },
   ) {
     assert(params.schema, "Schema parameter is required");
@@ -32,6 +31,11 @@ export class PostgresClient implements DataConnector {
           "Privacy mode is enabled, table data will not be sent to the model.",
         );
       }
+      console.log(
+        `Approval mode set to '${this.params.approvalMode}' - queries will ${
+          this.params.approvalMode === 'off' ? 'not' : ''
+        } require approval${this.params.approvalMode === 'mutate' ? ' for data-modifying operations' : ''}`,
+      );
 
       process.removeListener("SIGTERM", this.handleSigterm);
       process.on("SIGTERM", this.handleSigterm);
@@ -99,9 +103,14 @@ export class PostgresClient implements DataConnector {
         };
         context.push(tableContext);
       } else {
+        const schema = await client.query(
+          `SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2`,
+          [this.params.schema, table.tablename],
+        );
+
         context.push({
           tableName: table.tablename.substring(0, 100),
-          columns: [],
+          columns: schema.rows.map((col) => col.column_name.substring(0, 100)),
           sampleData: [],
         });
       }
@@ -114,35 +123,26 @@ export class PostgresClient implements DataConnector {
     input: { query: string },
     ctx: ContextInput,
   ) => {
-    if (this.params.approvalMode) {
+    if (!this.initialized) throw new Error("Database not initialized");
+    const client = await this.getClient();
+
+    if (this.params.approvalMode === 'always' ||
+      (this.params.approvalMode === 'mutate' && await isMutativeQuery(client, input.query))
+    ) {
       if (!ctx.approved) {
         console.log("Query requires approval");
-        return approvalRequest();
+        return Interrupt.approval();
       } else {
         console.log("Query approved");
       }
     }
 
-    if (!this.initialized) throw new Error("Database not initialized");
-    const client = await this.getClient();
     const res = await client.query(input.query);
 
     if (this.params.privacyMode) {
       return {
         message:
           "This query was executed in privacy mode. Data was returned to the user directly.",
-        blob: blob({
-          name: "Results",
-          type: "application/json",
-          data: res.rows,
-        }),
-      };
-    }
-
-    if (JSON.stringify(res.rows).length > this.params.maxResultLength) {
-      return {
-        message:
-          "This query returned too much data. Data was returned to the user directly.",
         blob: blob({
           name: "Results",
           type: "application/json",
@@ -165,7 +165,7 @@ export class PostgresClient implements DataConnector {
   createService = (client: Inferable) => {
     const service = client.service({
       name:
-        this.params.name ?? `postgres_database_${this.connectionStringHash()}`,
+        this.params.name ?? `PostgresDatabase${this.connectionStringHash()}`,
     });
 
     service.register({
