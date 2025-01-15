@@ -1,12 +1,6 @@
-'use client';
+"use client";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -39,22 +33,22 @@ import { useState, useCallback, useEffect } from "react";
 import { toast } from "react-hot-toast";
 
 type IntegrationConfig = {
-  [K in 'toolhouse' | 'langfuse' | 'tavily' | 'zapier' | 'valtown' | 'slack' | 'email']: {
+  [K in "langfuse" | "tavily" | "zapier" | "valtown" | "slack" | "email"]: {
     name: string;
     description: string;
     icon: LucideIcon;
     stage: "alpha" | "beta" | "stable";
-  }
+  };
 };
 
 const config: IntegrationConfig = {
-  toolhouse: {
-    name: "Toolhouse",
-    description:
-      "Connect your toolhouse.ai tools directly to your Inferable Runs",
-    icon: Wrench,
-    stage: "beta",
-  },
+  // toolhouse: {
+  //   name: "Toolhouse",
+  //   description:
+  //     "Connect your toolhouse.ai tools directly to your Inferable Runs",
+  //   icon: Wrench,
+  //   stage: "beta",
+  // },
   langfuse: {
     name: "Langfuse",
     description: "Send LLM telemetry to Langfuse for monitoring and analytics",
@@ -94,9 +88,9 @@ const config: IntegrationConfig = {
 };
 
 const stageDescriptions = {
-  "alpha": "In development, lacking docs",
-  "beta": "In testing, has docs",
-  "stable": "Stable, suitable for production use"
+  alpha: "In development, lacking docs",
+  beta: "In testing, has docs",
+  stable: "Stable, suitable for production use",
 } as const;
 
 const getStageStyles = (stage: "alpha" | "beta" | "stable") => {
@@ -146,29 +140,32 @@ export default function IntegrationsPage({
     }
   }, [clusterId, getToken]);
 
-  const handleUninstall = useCallback(async (name: string) => {
-    try {
-      const response = await client.upsertIntegrations({
-        headers: {
-          authorization: `Bearer ${await getToken()}`,
-        },
-        params: { clusterId },
-        body: {
-          [name]: null,
-        },
-      });
+  const handleUninstall = useCallback(
+    async (name: string) => {
+      try {
+        const response = await client.upsertIntegrations({
+          headers: {
+            authorization: `Bearer ${await getToken()}`,
+          },
+          params: { clusterId },
+          body: {
+            [name]: null,
+          },
+        });
 
-      if (response.status === 200) {
-        toast.success(`${name} integration uninstalled successfully`);
-        fetchIntegrations();
-        router.refresh();
-      } else {
+        if (response.status === 200) {
+          toast.success(`${name} integration uninstalled successfully`);
+          fetchIntegrations();
+          router.refresh();
+        } else {
+          toast.error(`Failed to uninstall ${name} integration`);
+        }
+      } catch (error) {
         toast.error(`Failed to uninstall ${name} integration`);
       }
-    } catch (error) {
-      toast.error(`Failed to uninstall ${name} integration`);
-    }
-  }, [clusterId, getToken, router, fetchIntegrations]);
+    },
+    [clusterId, getToken, router, fetchIntegrations]
+  );
 
   useEffect(() => {
     fetchIntegrations();
@@ -218,17 +215,17 @@ export default function IntegrationsPage({
                 </CardHeader>
                 <CardContent className="flex-grow flex items-end">
                   <div className="w-full flex gap-2">
-                    <Link
-                      href={`/clusters/${clusterId}/integrations/${key}`}
-                      className="flex-grow"
-                    >
+                    <Link href={`/clusters/${clusterId}/integrations/${key}`} className="flex-grow">
                       <Button className="w-full" variant="outline">
                         {integration !== null ? "Configure" : "Install"}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
                     {integration !== null && (
-                      <AlertDialog open={integrationToDelete === key} onOpenChange={(open) => !open && setIntegrationToDelete(null)}>
+                      <AlertDialog
+                        open={integrationToDelete === key}
+                        onOpenChange={open => !open && setIntegrationToDelete(null)}
+                      >
                         <Button
                           variant="destructive"
                           size="icon"
@@ -242,7 +239,8 @@ export default function IntegrationsPage({
                             <AlertDialogTitle>Remove {c.name} Integration</AlertDialogTitle>
                             <AlertDialogDescription>
                               Are you sure you want to remove the {c.name} integration?
-                              <br /><br />
+                              <br />
+                              <br />
                               <b>This will remove all associated configuration.</b>
                             </AlertDialogDescription>
                           </AlertDialogHeader>

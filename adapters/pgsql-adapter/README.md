@@ -1,4 +1,12 @@
-# @inferable/pgsql-adapter
+<p align="center">
+<img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
+</p>
+
+# PostgreSQL Adapter for Inferable
+
+![NPM Version](https://img.shields.io/npm/v/%40inferable%2Fpgsql-adapter?color=32CD32)
+[![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 This package provides a PostgreSQL adapter for Inferable allowing you to chat with your PostgreSQL database in natural language.
 
@@ -31,7 +39,6 @@ Options:
       --secret        Inferable API cluster secret                      [string]
       --endpoint      Inferable API endpoint                            [string]
   -h, --help          Show help                                        [boolean]
-
 ```
 
 **Examples**
@@ -88,14 +95,6 @@ process.on('SIGTERM', async () => {
 });
 ```
 
-## API Secret
-
-Make sure to set your Inferable API secret either through environment variables or via the options:
-
-```bash
-export INFERABLE_API_SECRET=your_secret_here
-```
-
 ## Configuration Options
 
 - `connectionString`: PostgreSQL connection string (required)
@@ -109,6 +108,18 @@ export INFERABLE_API_SECRET=your_secret_here
 > Please note, approvalMode = mutate performs a **best effort** check to determine if the query is data-modifying based on the query and the pgsql EXPLAIN output.
 > If the risk of data mutation is too high, please consider using `always` and optionally using a read-only connection string.
 
+## Documentation
+
+[Inferable documentation](https://docs.inferable.ai) contains all the information you need to get started with Inferable.
+
+## Support
+
+For support or questions, please [create an issue in the repository](https://github.com/inferablehq/inferable/issues).
+
+## Contributing
+
+Contributions to the Inferable PostgreSQL Adapter are welcome. Please ensure that your code adheres to the existing style and includes appropriate tests.
+
 ## License
 
-MIT
+This project is licensed under the MIT License.

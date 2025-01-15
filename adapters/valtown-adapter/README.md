@@ -2,7 +2,7 @@
   <img src="https://a.inferable.ai/logo-hex.png" width="200" style="border-radius: 10px" />
 </p>
 
-# Val Town Adapter
+# Val.town Adapter for Inferable
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-inferable.ai-brightgreen)](https://docs.inferable.ai/)
