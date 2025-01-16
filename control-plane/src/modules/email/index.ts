@@ -269,6 +269,8 @@ async function handleEmailIngestion(raw: unknown) {
     if (connection?.email?.validateSPFandDKIM) {
       logger.info("Email did not pass DKIM or SPF checks. Skipping.", {
         messageId: message.messageId,
+        dkimVerdict: message.dkimVerdict,
+        spfVerdict: message.spfVerdict
       });
 
       await sendEmail({
