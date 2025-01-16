@@ -261,7 +261,12 @@ async function handleEmailIngestion(raw: unknown) {
   const connection = await integrationByConnectionId(message.connectionId);
 
   if (!connection) {
-    logger.info("Could not find connection for email. Skipping")
+    logger.info("Could not find connection for email. Skipping", {
+      connectionId: message.connectionId,
+      messageId: message.messageId,
+      inReplyTo: message.inReplyTo,
+      integrationAddress: message.ingestionAddresses
+    })
     return
   }
 
