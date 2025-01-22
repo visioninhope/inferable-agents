@@ -3,14 +3,14 @@ import * as os from "os";
 import { readdir } from "fs/promises";
 
 describe("Bootstrap", () => {
-  it.each(["node", "go", "dotnet", "proxy"])(
+  it.each(["node", "go", "dotnet")(
     "should bootstrap a new %s application",
     async (type) => {
       const dir = `${os.tmpdir()}/${Math.random().toString(36).substring(2, 15)}`;
 
       await Bootstrap.handler({
         dir,
-        type: type as "node" | "go" | "proxy",
+        type: type as "node" | "go",
         "no-cluster": true,
         _: [],
         $0: "",
@@ -19,11 +19,6 @@ describe("Bootstrap", () => {
       const contents = await readdir(dir);
 
       if (type === "node") {
-        expect(contents).toContain("package.json");
-        expect(contents).toContain("node_modules");
-      }
-
-      if (type === "proxy") {
         expect(contents).toContain("package.json");
         expect(contents).toContain("node_modules");
       }

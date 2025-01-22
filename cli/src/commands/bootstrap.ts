@@ -37,10 +37,6 @@ const projectMap: Record<
     url: "https://git.inferable.ai/inferablehq/inferable/raw/refs/heads/main/archives/bootstrap-dotnet.zip",
     ref: "bootstrap-dotnet",
   },
-  proxy: {
-    url: "https://github.com/inferablehq/proxy/archive/refs/heads/main.zip",
-    ref: "proxy-main",
-  },
 };
 
 export const Bootstrap: CommandModule<{}, BootstrapArgs> = {
@@ -52,7 +48,7 @@ export const Bootstrap: CommandModule<{}, BootstrapArgs> = {
       .positional("type", {
         describe: "Project type to create",
         type: "string",
-        choices: ["node", "go", "dotnet", "proxy"],
+        choices: ["node", "go", "dotnet"],
         demandOption: false,
       })
       .option("dir", {
@@ -91,12 +87,11 @@ export const Bootstrap: CommandModule<{}, BootstrapArgs> = {
           ])
         : { dir: providedDir };
 
-    const proxyRepo = projectMap[type];
-    console.log(`Downloading ${proxyRepo.url}...`);
-    await downloadProject(proxyRepo.url, proxyRepo.ref, dir);
+    const projectRepo = projectMap[type];
+    console.log(`Downloading ${projectRepo.url}...`);
+    await downloadProject(projectRepo.url, projectRepo.ref, dir);
 
     switch (type) {
-      case "proxy":
       case "node":
         console.log("Installing dependencies...");
         try {

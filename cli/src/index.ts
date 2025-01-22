@@ -7,17 +7,16 @@ import pkg from "../package.json";
 import { Auth } from "./commands/auth";
 import { Cli } from "./commands/cli";
 import { Clusters } from "./commands/clusters";
-import { Shell } from "./commands/shell";
 import { Bootstrap } from "./commands/bootstrap";
 import { Runs } from "./commands/runs";
 import { Generate } from "./commands/generate";
 import { AppOpen } from "./commands/open";
 
 // Check for updates and notify
-updateNotifier({ 
-  pkg: pkg, 
+updateNotifier({
+  pkg: pkg,
   updateCheckInterval: 1000 * 60 * 60 * 24,
-  shouldNotifyInNpmScript: true, 
+  shouldNotifyInNpmScript: true,
 });
 
 const cli = yargs(hideBin(process.argv))
@@ -26,7 +25,6 @@ const cli = yargs(hideBin(process.argv))
   .hide("version")
   .demandCommand()
   .command(Auth)
-  .command(Shell)
   .command(Cli)
   .command(Bootstrap)
   .command(Generate)
