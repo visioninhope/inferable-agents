@@ -66,4 +66,5 @@ configs:
         email-ingestion {}
         customer-telemetry {}
         external-tool-call {}
+        email-ingestion {}
       }
