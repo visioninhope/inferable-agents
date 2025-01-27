@@ -116,15 +116,11 @@ const embeddingOptions = {
 };
 
 export type ChatIdentifiers = keyof typeof routingOptions;
-export const isChatIdentifier = (
-  identifier: string,
-): identifier is ChatIdentifiers => {
+export const isChatIdentifier = (identifier: string): identifier is ChatIdentifiers => {
   return identifier in routingOptions;
 };
 export type EmbeddingIdentifiers = keyof typeof embeddingOptions;
-export const isEmbeddingIdentifier = (
-  identifier: string,
-): identifier is EmbeddingIdentifiers => {
+export const isEmbeddingIdentifier = (identifier: string): identifier is EmbeddingIdentifiers => {
   return identifier in embeddingOptions;
 };
 
@@ -209,12 +205,18 @@ export const start = () => {
   for (const [key, value] of Object.entries(routingOptions)) {
     if (value.length === 0) {
       throw new Error(`No provider available for ${key}`);
+    } else {
+      logger.info(`Provider available for ${key}`, { value });
     }
   }
 
   for (const [key, value] of Object.entries(embeddingOptions)) {
     if (value.length === 0) {
       throw new Error(`No provider available for ${key}`);
+    } else {
+      logger.info(`Provider available for ${key}`, {
+        value,
+      });
     }
   }
 };

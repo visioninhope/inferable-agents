@@ -1,28 +1,25 @@
-import { env } from "./utilities/env";
 import cors from "@fastify/cors";
 import { initServer } from "@ts-rest/fastify";
 import fastify from "fastify";
 import process from "process";
-import * as auth from "./modules/auth/auth";
 import * as analytics from "./modules/analytics";
-import * as jobs from "./modules/jobs/jobs";
-import * as serviceDefinitions from "./modules/service-definitions";
-import * as events from "./modules/observability/events";
-import * as router from "./modules/router";
-import * as redis from "./modules/redis";
-import * as toolhouse from "./modules/integrations/toolhouse";
-import * as externalCalls from "./modules/jobs/external";
-import * as models from "./modules/models/routing";
-import * as email from "./modules/email";
-import { logContext, logger } from "./modules/observability/logger";
-import * as runs from "./modules/runs";
-import * as slack from "./modules/integrations/slack";
-import { hdx } from "./modules/observability/hyperdx";
+import * as auth from "./modules/auth/auth";
 import { pg } from "./modules/data";
-import { addAttributes } from "./modules/observability/tracer";
 import { flagsmith } from "./modules/flagsmith";
+import * as slack from "./modules/integrations/slack";
+import * as thirdPartyIntegrations from "./modules/integrations/third-party-integrations";
+import * as jobs from "./modules/jobs/jobs";
+import * as models from "./modules/models/routing";
+import * as events from "./modules/observability/events";
+import { hdx } from "./modules/observability/hyperdx";
+import { logContext, logger } from "./modules/observability/logger";
+import { addAttributes } from "./modules/observability/tracer";
+import * as queues from "./modules/queues/index";
+import * as redis from "./modules/redis";
+import * as router from "./modules/router";
+import * as serviceDefinitions from "./modules/service-definitions";
+import { env } from "./utilities/env";
 import { runMigrations } from "./utilities/migrate";
-import { customerTelemetry } from "./modules/customer-telemetry";
 
 let totalRequestRewrites = 0;
 
@@ -170,16 +167,13 @@ const startTime = Date.now();
     events.initialize(),
     jobs.start(),
     serviceDefinitions.start(),
-    runs.start(),
     models.start(),
     redis.start(),
     slack.start(app),
-    externalCalls.start(),
-    email.start(),
-    customerTelemetry.start(),
-    toolhouse.start(),
+    queues.start(),
     flagsmith?.getEnvironmentFlags(),
     analytics.start(),
+    thirdPartyIntegrations.start(),
   ])
     .then(() => {
       logger.info("Dependencies started", { latency: Date.now() - startTime });
@@ -213,14 +207,12 @@ process.on("SIGTERM", async () => {
   });
 
   await Promise.all([
-    runs.stop(),
     app.close(),
     flagsmith?.close(),
     hdx?.shutdown(),
-    customerTelemetry.stop(),
-    externalCalls.stop(),
+    queues.stop(),
     slack.stop(),
-    email.stop(),
+    thirdPartyIntegrations.stop(),
   ]).then(() => {
     pg.stop();
     redis.stop();
