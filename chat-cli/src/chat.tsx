@@ -27,8 +27,13 @@ export const ChatInterface = ({ apiSecret, clusterId, runId, agentId }: ChatProp
     createMessage,
     messages: rawMessages,
     setRunId,
+    jobs,
+    submitApproval,
     run,
+    error,
   } = useRun(inferable);
+
+  const approvalRequired = jobs.filter((job) => job.approvalRequested && job.approved === null);
 
   const buildMsgBody = (msg: typeof rawMessages[number]) => {
     switch (msg.type) {
@@ -40,13 +45,26 @@ export const ChatInterface = ({ apiSecret, clusterId, runId, agentId }: ChatProp
           return (
             <Box flexDirection="column">
               <Text>{msg.data.message}</Text>
+
               {msg.data.invocations.map((invocation, index) => (
+
                 <Collapsible
                     key={index}
                     id={`invocation-${index}`}
                     title={`Calling ${invocation.toolName}()`}
-                    defaultCollapsed={true}
+                    defaultCollapsed={approvalRequired.find((job) => job.id === invocation.id) ? false : true}
+                    disabled={approvalRequired.length > 0}
                   >
+                    {jobs.find((job) => job.id === invocation.id && job.approved === true) && (
+                      <Text color="green">Approved</Text>
+                    )}
+                    {jobs.find((job) => job.id === invocation.id && job.approved === false) && (
+                      <Text color="red">Rejected</Text>
+                    )}
+                    {jobs.find((job) => job.id === invocation.id && job.approved === null && job.approvalRequested) && (
+                      <Text color="yellow">Waiting for approval...</Text>
+                    )}
+
                     {invocation.reasoning && (
                       <Text>Reason: {invocation.reasoning}</Text>
                     )}
@@ -61,7 +79,7 @@ export const ChatInterface = ({ apiSecret, clusterId, runId, agentId }: ChatProp
             </Box>
           );
         }
-        return <Text>{msg.data.message}</Text>;
+        return <Text>{msg.data.message ?? JSON.stringify(msg.data.result, null, 2)}</Text>;
       }
       case 'invocation-result': {
         const prop = Object.keys(msg.data.result)[0];
@@ -125,9 +143,23 @@ export const ChatInterface = ({ apiSecret, clusterId, runId, agentId }: ChatProp
     setInput('');
   };
 
+  // Only allow chat input focus when no approvals are pending
   const { isFocused: inputFocused } = useFocus({
     id: 'chat-input',
-    autoFocus: true
+    autoFocus: approvalRequired.length === 0
+  });
+
+  const [selectedButton, setSelectedButton] = useState<'approve' | 'deny'>('approve');
+
+  useInput((input, key) => {
+    if (approvalRequired.length > 0) {
+      if (key.leftArrow || key.rightArrow) {
+        setSelectedButton(prev => prev === 'approve' ? 'deny' : 'approve');
+      } else if (key.return) {
+        const currentJob = approvalRequired[0];
+        submitApproval(currentJob.id, selectedButton === 'approve');
+      }
+    }
   });
 
   return (
@@ -147,14 +179,35 @@ export const ChatInterface = ({ apiSecret, clusterId, runId, agentId }: ChatProp
         ))}
       </Box>
 
-      {messages?.all('asc')?.at(-1)?.type === 'human' ? (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
+      {approvalRequired.length > 0 ? (
+        <Box flexDirection="column">
+          <Text color="yellow">Approval required for: {approvalRequired[0].targetFn}</Text>
+          <Box flexDirection="row" gap={2}>
+            <Text
+              color={selectedButton === 'approve' ? "green" : "gray"}
+              backgroundColor={selectedButton === 'approve' ? "black" : undefined}
+            >
+              {selectedButton === 'approve' ? '>' : ' '} Approve
+            </Text>
+            <Text
+              color={selectedButton === 'deny' ? "red" : "gray"}
+              backgroundColor={selectedButton === 'deny' ? "black" : undefined}
+            >
+              {selectedButton === 'deny' ? '>' : ' '} Deny
+            </Text>
+          </Box>
+          <Text dimColor>Use arrow keys to select and Enter to confirm</Text>
+        </Box>
+      ) :
+        run?.status === 'paused' || run?.status === 'running' ? (
+          <Text>
+            <Text color="green">
+              <Spinner type="dots" />
+            </Text>
+            {' Loading'}
           </Text>
-          {' Loading'}
-        </Text>
-      ) : (            <Box flexDirection="row" alignItems="center">
+        ) : (
+            <Box flexDirection="row" alignItems="center">
               <Text dimColor={!inputFocused} color={inputFocused ? 'yellow' : 'gray'}>Input: </Text>
               <TextInput
                 value={input}
@@ -164,7 +217,13 @@ export const ChatInterface = ({ apiSecret, clusterId, runId, agentId }: ChatProp
                 focus={inputFocused}
               />
             </Box>
-        )}
+          )}
+
+      {error && (
+        <Box marginTop={1}>
+          <Text color="red">Error: {error.message}</Text>
+        </Box>
+      )}
 
       <Box marginTop={1}>
         <Text dimColor>Ctrl+C to exit | {inputFocused ? "Enter to send message" : "Enter to toggle function"} | tab to navigate messages</Text>
