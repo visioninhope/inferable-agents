@@ -1,4 +1,4 @@
-import { and, count, eq, lt } from "drizzle-orm";
+import { and, count, eq, isNotNull, lt, sql } from "drizzle-orm";
 import { createCache } from "../utilities/cache";
 import { NotFoundError } from "../utilities/errors";
 import * as cron from "./cron";
@@ -31,8 +31,25 @@ export const getClusterDetails = async (clusterId: string) => {
 };
 
 
-const cleanupEphemeralClusters = async () => {
+const markEphemeralClustersForDelete = async () => {
   // Find 10 at a time
+  const clusters = await data.db
+    .update(data.clusters)
+    .set({ deleted_at: new Date(), organization_id: null })
+    .returning({ id: data.clusters.id })
+    .where(
+      and(
+        eq(data.clusters.is_ephemeral, true),
+        lt(data.clusters.created_at, new Date(Date.now() - 1000 * 60 * 60 * 24))
+      )
+    );
+
+  logger.info("Cleaning up ephemeral clusters", {
+    count: clusters.length,
+  });
+};
+
+const cleanupMarkedClusters = async () => {
   const clusters = await data.db
     .select({
       id: data.clusters.id,
@@ -40,17 +57,54 @@ const cleanupEphemeralClusters = async () => {
     .from(data.clusters)
     .where(
       and(
-        eq(data.clusters.is_ephemeral, true),
-        lt(data.clusters.created_at, new Date(Date.now() - 1000 * 60 * 60 * 24))
+        isNotNull(data.clusters.deleted_at),
+        lt(data.clusters.deleted_at, new Date(Date.now() - 1000 * 60 * 60 * 24)) // 24 hours
       )
-    )
-    .limit(10);
+    ).limit(10);
 
-  logger.info("Cleaning up ephemeral clusters", {
+  logger.info("Cleaning up marked clusters", {
     count: clusters.length,
-    clusterIds: clusters.map(cluster => cluster.id),
   });
-};
+
+  Promise.all(
+    clusters.map(async (cluster) => {
+      await deleteCluster(cluster.id);
+    })
+  );
+}
+
+const deleteCluster = async (clusterId: string) => {
+  try {
+    // Start a transaction
+    await data.db.transaction(async (tx) => {
+      // Delete from tables in order, ensuring no foreign key violations
+      await tx.execute(sql`DELETE FROM "analytics_snapshots" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "events" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "agents" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "versioned_entities" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "blobs" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "api_keys" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "embeddings" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "run_messages" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "runs" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "external_messages" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "run_tags" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "integrations" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "services" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "machines" WHERE cluster_id = ${clusterId}`);
+      await tx.execute(sql`DELETE FROM "jobs" WHERE cluster_id = ${clusterId}`);
+
+      // Finally, delete the cluster itself
+      await tx.execute(sql`DELETE FROM "clusters" WHERE id = ${clusterId}`);
+    });
+  } catch (error) {
+    logger.error("Failed to delete cluster and references", {
+      clusterId,
+      error,
+    });
+    throw error;
+  }
+}
 
 const cache = createCache<boolean>(Symbol("clusterExists"));
 
@@ -99,5 +153,6 @@ export const getClusterContextText = async (clusterId: string) => {
 };
 
 export const start = async () => {
-  cron.registerCron(cleanupEphemeralClusters, "cleanup-ephemeral", { interval: 1000 * 60 * 15 }); // 15 minutes
+  cron.registerCron(markEphemeralClustersForDelete, "cleanup-ephemeral", { interval: 1000 * 60 * 15 }); // 15 minutes
+  cron.registerCron(cleanupMarkedClusters, "cleanup-marked", { interval: 1000 * 60 * 15 }); // 15 minutes
 };
