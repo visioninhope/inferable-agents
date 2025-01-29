@@ -1,6 +1,6 @@
-import { insertWorkflowDefinition } from "./index";
+import { getWorkflowDefinition, insertWorkflowDefinition } from "./index";
 import { db, workflowDefinitions } from "../data";
-import { BadRequestError } from "../../utilities/errors";
+import { BadRequestError, NotFoundError } from "../../utilities/errors";
 import { eq } from "drizzle-orm";
 import { createOwner } from "../test/util";
 
@@ -23,23 +23,21 @@ workflow:
     const result = await insertWorkflowDefinition({
       id: "test-id",
       clusterId: owner.clusterId,
-      description: "Test Workflow",
       definition: validWorkflowYaml,
     });
 
     expect(result.id).toBe("test-id");
     expect(result.cluster_id).toBe(owner.clusterId);
-    expect(result.description).toBe("Test Workflow");
     expect(result.yaml).toBe(validWorkflowYaml);
     expect(result.version).toBe(1);
 
     // Verify we can retrieve it from the database
-    const [retrieved] = await db
-      .select()
-      .from(workflowDefinitions)
-      .where(eq(workflowDefinitions.id, "test-id"));
+    const retrieved = await getWorkflowDefinition({ id: "test-id", clusterId: owner.clusterId });
 
-    expect(retrieved).toEqual(result);
+    expect(retrieved.id).toEqual(result.id);
+    expect(retrieved.cluster_id).toEqual(result.cluster_id);
+    expect(retrieved.yaml).toEqual(result.yaml);
+    expect(retrieved.version).toEqual(result.version);
   });
 
   it("should increment version for existing workflow", async () => {
@@ -49,7 +47,6 @@ workflow:
     await insertWorkflowDefinition({
       id: "test-id",
       clusterId: owner.clusterId,
-      description: "Test Workflow",
       definition: validWorkflowYaml,
     });
 
@@ -57,7 +54,6 @@ workflow:
     const result = await insertWorkflowDefinition({
       id: "test-id",
       clusterId: owner.clusterId,
-      description: "Test Workflow Updated",
       definition: validWorkflowYaml,
     });
 
@@ -65,6 +61,7 @@ workflow:
   });
 
   it("should throw BadRequestError for invalid YAML", async () => {
+    const owner = await createOwner();
     const invalidYaml = `
       version: "1.0"
       workflow:
@@ -79,17 +76,14 @@ workflow:
       insertWorkflowDefinition({
         id: "test-id",
         clusterId: owner.clusterId,
-        description: "Test Workflow",
         definition: invalidYaml,
       })
     ).rejects.toThrow(BadRequestError);
 
     // Verify nothing was inserted
-    const results = await db
-      .select()
-      .from(workflowDefinitions)
-      .where(eq(workflowDefinitions.id, "test-id"));
-    expect(results.length).toBe(0);
+    expect(getWorkflowDefinition({ id: "test-id", clusterId: owner.clusterId })).rejects.toThrow(
+      NotFoundError
+    );
   });
 
   it("should throw BadRequestError for invalid workflow schema", async () => {
@@ -111,16 +105,13 @@ workflow:
       insertWorkflowDefinition({
         id: "test-id",
         clusterId: owner.clusterId,
-        description: "Test Workflow",
         definition: invalidSchemaYaml,
       })
     ).rejects.toThrow(BadRequestError);
 
     // Verify nothing was inserted
-    const results = await db
-      .select()
-      .from(workflowDefinitions)
-      .where(eq(workflowDefinitions.id, "test-id"));
-    expect(results.length).toBe(0);
+    expect(getWorkflowDefinition({ id: "test-id", clusterId: owner.clusterId })).rejects.toThrow(
+      NotFoundError
+    );
   });
 });

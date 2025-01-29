@@ -562,7 +562,7 @@ export const workflowDefinitions = pgTable(
   {
     id: varchar("id", { length: 1024 }).notNull(),
     cluster_id: varchar("cluster_id").notNull(),
-    description: varchar("description", { length: 1024 }).notNull(),
+    description: varchar("description", { length: 1024 }),
     yaml: text("yaml").notNull(),
     json: json("json").notNull(),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
