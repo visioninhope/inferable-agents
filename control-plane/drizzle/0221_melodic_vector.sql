@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_definitions" ALTER COLUMN "description" DROP NOT NULL;
