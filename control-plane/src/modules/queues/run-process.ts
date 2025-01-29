@@ -47,11 +47,10 @@ export const runProcessQueue = createQueue<RunProcessMessage>(
   QueueNames.runProcess,
   handleRunProcess,
   {
-    concurrency: 5,
+    concurrency: 20,
     defaultJobOptions: {
       removeOnComplete: true,
       removeOnFail: true,
     },
-  },
-  data => data.runId
+  }
 );
