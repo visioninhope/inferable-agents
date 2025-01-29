@@ -281,7 +281,6 @@ export const externalMessages = pgTable(
 );
 
 export const runs = pgTable(
-  // TODO: Rename to runs
   "runs",
   {
     id: varchar("id", { length: 1024 }).notNull(),
@@ -547,6 +546,7 @@ export const events = pgTable(
     token_usage_output: integer("token_usage_output"),
     attention_level: integer("attention_level"),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    deleted_at: timestamp("deleted_at", { withTimezone: true }),
     meta: json("meta")
       .$type<Record<string, string | boolean | number | object>>()
       .notNull()
