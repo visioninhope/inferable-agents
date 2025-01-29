@@ -559,6 +559,26 @@ export const events = pgTable(
   })
 );
 
+export const workflowDefinitions = pgTable(
+  "workflow_definitions",
+  {
+    id: varchar("id", { length: 1024 }).notNull(),
+    cluster_id: varchar("cluster_id").notNull(),
+    description: varchar("description", { length: 1024 }).notNull(),
+    yaml: text("yaml").notNull(),
+    json: json("json").notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    version: integer("version").notNull(),
+  },
+  table => ({
+    pk: primaryKey({
+      columns: [table.cluster_id, table.id, table.version],
+      name: "workflow_definitions_pkey",
+    }),
+  })
+);
+
 export const analyticsSnapshots = pgTable(
   "analytics_snapshots",
   {

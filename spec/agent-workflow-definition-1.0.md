@@ -1,4 +1,4 @@
-# Agent Task Graph Specification
+# Agent Workflow Definition Specification
 
 Version 1.0.0
 
@@ -9,7 +9,7 @@ This specification defines a declarative format for describing workflows of AI a
 This document is a draft specification.
 
 ## Introduction
-The Agent Workflow Specification defines a YAML-based format for orchestrating multiple AI agents in a coordinated workflow. It enables building complex automation flows while maintaining readability and ease of modification.
+The Agent Workflow Definition Specification defines a YAML-based format for orchestrating multiple AI agents in a coordinated workflow. It enables building complex automation flows while maintaining readability and ease of modification.
 
 ## Conventions
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
