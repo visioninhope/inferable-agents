@@ -142,23 +142,12 @@ export const createRun = async ({
     throw new Error("Failed to create run");
   }
 
-  // Send the run to be processed
-  await runProcessQueue
-    .send({
-      runId: run.id,
-      clusterId,
-      ...injectTraceContext(),
-    })
-    .catch(e => {
-      logger.error("Failed to send run to process queue", { error: e });
-    });
-
   // Insert tags if provided
   if (tags) {
     await db.insert(runTags).values(
       Object.entries(tags).map(([key, value]) => ({
         cluster_id: clusterId,
-        workflow_id: run.id,
+        run_id: run.id,
         key,
         value,
       }))
@@ -604,7 +593,7 @@ export const getWaitingJobIds = async ({
     .from(jobs)
     .where(
       and(
-        eq(jobs.workflow_id, runId),
+        eq(jobs.run_id, runId),
         eq(jobs.cluster_id, clusterId),
         or(
           inArray(jobs.status, ["pending", "running"]),
@@ -639,8 +628,8 @@ export const getAgentMetrics = async ({
       `.as("time_to_completion"),
     })
     .from(runs)
-    .leftJoin(jobs, eq(runs.id, jobs.workflow_id))
-    .leftJoin(runMessages, eq(runs.id, runMessages.workflow_id))
+    .leftJoin(jobs, eq(runs.id, jobs.run_id))
+    .leftJoin(runMessages, eq(runs.id, runMessages.run_id))
     .where(and(eq(runs.cluster_id, clusterId), eq(runs.agent_id, agentId)))
     .groupBy(runs.id, runs.created_at, runs.feedback_score)
     .limit(1000);

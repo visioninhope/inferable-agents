@@ -87,7 +87,7 @@ export const jobs = pgTable(
       .notNull()
       .default(jobDefaults.timeoutIntervalSeconds),
     service: varchar("service", { length: 1024 }).notNull(),
-    workflow_id: varchar("workflow_id", { length: 1024 }).notNull(),
+    run_id: varchar("run_id", { length: 1024 }).notNull(),
     auth_context: json("auth_context"),
     run_context: json("run_context"),
     approval_requested: boolean("approval_requested").notNull().default(false),
@@ -234,24 +234,23 @@ export const integrations = pgTable(
 );
 
 export const runTags = pgTable(
-  // TODO: Rename to `run_tags`
-  "workflow_metadata",
+  "run_tags",
   {
     cluster_id: varchar("cluster_id").notNull(),
-    workflow_id: varchar("workflow_id", { length: 1024 }).notNull(),
+    run_id: varchar("run_id", { length: 1024 }).notNull(),
     key: varchar("key", { length: 1024 }).notNull(),
     value: text("value").notNull(),
   },
   table => ({
     pk: primaryKey({
-      columns: [table.cluster_id, table.workflow_id, table.key],
-      name: "workflow_metadata_cluster_id_workflow_id_key",
+      columns: [table.cluster_id, table.run_id, table.key],
+      name: "run_tags_cluster_id_run_id_key",
     }),
-    workflowReference: foreignKey({
-      columns: [table.workflow_id, table.cluster_id],
+    runReference: foreignKey({
+      columns: [table.run_id, table.cluster_id],
       foreignColumns: [runs.id, runs.cluster_id],
     }).onDelete("cascade"),
-    index: index("workflowMetadataIndex").on(table.key, table.value, table.cluster_id),
+    index: index("runTagsIndex").on(table.key, table.value, table.cluster_id),
   })
 );
 
@@ -275,7 +274,7 @@ export const externalMessages = pgTable(
     }),
     messageReference: foreignKey({
       columns: [table.message_id, table.run_id, table.cluster_id],
-      foreignColumns: [runMessages.id, runMessages.workflow_id, runMessages.cluster_id],
+      foreignColumns: [runMessages.id, runMessages.run_id, runMessages.cluster_id],
     }).onDelete("cascade"),
     externalMessageIndex: index("externalMessagesIndex").on(table.external_id, table.cluster_id),
   })
@@ -283,7 +282,7 @@ export const externalMessages = pgTable(
 
 export const runs = pgTable(
   // TODO: Rename to runs
-  "workflows",
+  "runs",
   {
     id: varchar("id", { length: 1024 }).notNull(),
     // TODO: Rename this to `on_status_change`
@@ -348,13 +347,12 @@ export type RunMessageMetadata = {
 };
 
 export const runMessages = pgTable(
-  // TODO: Rename to `run_messages`
-  "workflow_messages",
+  "run_messages",
   {
     id: varchar("id", { length: 1024 }).notNull(),
     user_id: varchar("user_id", { length: 1024 }).notNull(),
     cluster_id: varchar("cluster_id").notNull(),
-    workflow_id: varchar("workflow_id", { length: 1024 }).notNull(),
+    run_id: varchar("run_id", { length: 1024 }).notNull(),
     created_at: timestamp("created_at", {
       withTimezone: true,
       precision: 6,
@@ -373,11 +371,11 @@ export const runMessages = pgTable(
   },
   table => ({
     pk: primaryKey({
-      columns: [table.cluster_id, table.workflow_id, table.id],
-      name: "workflow_messages_cluster_id_workflow_id_id",
+      columns: [table.cluster_id, table.run_id, table.id],
+      name: "run_messages_cluster_id_run_id_id",
     }),
-    workflowReference: foreignKey({
-      columns: [table.workflow_id, table.cluster_id],
+    runReference: foreignKey({
+      columns: [table.run_id, table.cluster_id],
       foreignColumns: [runs.id, runs.cluster_id],
     }).onDelete("cascade"),
   })
@@ -456,7 +454,7 @@ export const blobs = pgTable(
     id: varchar("id", { length: 1024 }).notNull(),
     name: varchar("name", { length: 1024 }).notNull(),
     cluster_id: varchar("cluster_id").notNull(),
-    workflow_id: varchar("workflow_id", { length: 1024 }),
+    run_id: varchar("run_id", { length: 1024 }),
     job_id: varchar("job_id", { length: 1024 }),
     data: text("data").notNull(),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -478,8 +476,8 @@ export const blobs = pgTable(
       columns: [table.cluster_id, table.job_id],
       foreignColumns: [jobs.cluster_id, jobs.id],
     }).onDelete("cascade"),
-    workflowReference: foreignKey({
-      columns: [table.cluster_id, table.workflow_id],
+    runReference: foreignKey({
+      columns: [table.cluster_id, table.run_id],
       foreignColumns: [runs.cluster_id, runs.id],
     }).onDelete("cascade"),
   })
