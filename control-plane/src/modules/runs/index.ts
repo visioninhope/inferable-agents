@@ -412,10 +412,10 @@ export const addMessageAndResume = async ({
 };
 
 export const resumeRun = async (input: { id: string; clusterId: string }) => {
-  if (env.NODE_ENV === "test") {
-    logger.warn("Skipping run resume. NODE_ENV is set to 'test'.");
-    return;
-  }
+  // if (env.NODE_ENV === "test") {
+  //   logger.warn("Skipping run resume. NODE_ENV is set to 'test'.");
+  //   return;
+  // }
 
   if (input.id === getClusterBackgroundRun(input.clusterId)) {
     logger.debug("Skipping background run resume", {
@@ -494,16 +494,18 @@ export const createRunWithMessage = async ({
     enableResultGrounding,
   });
 
-  await addMessageAndResume({
-    id: ulid(),
-    userId,
-    clusterId,
-    runId: run.id,
-    message,
-    type,
-    metadata: messageMetadata,
-    skipAssert: true,
-  });
+  if (run.created) {
+    await addMessageAndResume({
+      id: ulid(),
+      userId,
+      clusterId,
+      runId: run.id,
+      message,
+      type,
+      metadata: messageMetadata,
+      skipAssert: true,
+    });
+  }
 
   return run;
 };

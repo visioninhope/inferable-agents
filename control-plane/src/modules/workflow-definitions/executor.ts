@@ -28,9 +28,16 @@ const queue = new Queue<{ workflowExecutionId: string; clusterId: string }>("exe
 const worker = new Worker<{ workflowExecutionId: string; clusterId: string }>(
   "executeWorkflow",
   async message => {
+    const parsed = z
+      .object({
+        workflowExecutionId: z.string(),
+        clusterId: z.string(),
+      })
+      .parse(message.data);
+
     await runWorkflow({
-      workflowExecutionId: message.data.workflowExecutionId,
-      clusterId: message.data.clusterId,
+      workflowExecutionId: parsed.workflowExecutionId,
+      clusterId: parsed.clusterId,
     });
   },
   {
@@ -40,11 +47,14 @@ const worker = new Worker<{ workflowExecutionId: string; clusterId: string }>(
 );
 
 export async function onWorkflowExecutionRunStatusChange(target: string, status: string) {
+  logger.info("Workflow execution status changed", { target, status });
+
   if (status === "done") {
-    const [, clusterId, workflowExecutionId] = target
+    const [clusterId, workflowExecutionId] = target
       .split("workflowExecution://clusters/")[1]
       .split("/executions/");
 
+    logger.info("Adding workflow execution to queue", { workflowExecutionId, clusterId });
     await queue.add("executeWorkflow", {
       workflowExecutionId,
       clusterId,
@@ -61,10 +71,20 @@ export const executeDefinition = async ({
   clusterId: string;
   input: Record<string, unknown>;
 }) => {
+  logger.info("Executing workflow definition", { id, clusterId });
   const definition = await getWorkflowDefinition({ id, clusterId });
 
+  const workflowExecutionId = ulid();
+
+  logger.info("Creating workflow execution record", {
+    id,
+    clusterId,
+    version: definition.version,
+    workflowExecutionId,
+  });
+
   await db.insert(workflowExecution).values({
-    id: ulid(),
+    id: workflowExecutionId,
     cluster_id: clusterId,
     workflow_definition_id: id,
     workflow_definition_version: definition.version,
@@ -72,10 +92,12 @@ export const executeDefinition = async ({
     input,
   });
 
+  logger.info("Adding initial workflow execution to queue", { id, clusterId });
+
   await queue.add(
     "executeWorkflow",
     {
-      workflowExecutionId: id,
+      workflowExecutionId,
       clusterId,
     },
     {
@@ -91,6 +113,8 @@ export const runWorkflow = async ({
   workflowExecutionId: string;
   clusterId: string;
 }): Promise<void> => {
+  logger.info("Starting workflow execution", { workflowExecutionId, clusterId });
+
   const [execution] = await db
     .select()
     .from(workflowExecution)
@@ -102,25 +126,24 @@ export const runWorkflow = async ({
     );
 
   if (!execution) {
+    logger.info("Workflow execution not found", { workflowExecutionId, clusterId });
     throw new Error("Workflow execution not found");
   }
 
   const parsedDefinition = WorkflowDefinitionSchema.parse(execution.workflow_definition_json);
-
   const steps = parsedDefinition.workflow.steps;
 
+  logger.info("Executing workflow steps", {
+    workflowExecutionId,
+    clusterId,
+    stepCount: steps.length,
+    stepIds: steps.map(s => s.id),
+  });
+
   await Promise.all(
-    steps.map(step => {
-      if (step.if) {
-        throw new Error("If statements are not supported yet");
-      }
-
-      if (step.for_each) {
-        throw new Error("For each statements are not supported yet");
-      }
-
-      return runStep({ step, definition: parsedDefinition, clusterId, workflowExecutionId });
-    })
+    steps.map(step =>
+      runStep({ step, definition: parsedDefinition, clusterId, workflowExecutionId })
+    )
   );
 };
 
@@ -134,10 +157,19 @@ const runStep = async ({
   definition: z.infer<typeof WorkflowDefinitionSchema>;
   clusterId: string;
   workflowExecutionId: string;
-}): Promise<void> => {
+}): Promise<
+  | {
+      id: string;
+      status: string;
+    }
+  | undefined
+> => {
+  logger.info("Running workflow step", { stepId: step.id, workflowExecutionId, clusterId });
+
   const stepDefinition = definition.workflow.steps.find(s => s.id === step.id);
 
   if (!stepDefinition) {
+    logger.info("Step not found in workflow", { stepId: step.id });
     throw new Error(`Step ${step.id} not found in workflow`);
   }
 
@@ -147,37 +179,37 @@ const runStep = async ({
     definition.workflow.steps.find(s => s.id === id)
   );
 
+  logger.info("Processing step dependencies", {
+    stepId: step.id,
+    dependencyCount: dependsOn?.length ?? 0,
+    dependencies: dependsOn?.map(s => s?.id),
+  });
+
   const dependents = await Promise.all(
     dependsOn?.map(async step => {
       if (!step) {
+        logger.info("Dependent step not found", { stepId: step?.id });
         throw new Error(`Step not found in workflow. Possibly inconsistent workflow definition.`);
       }
 
-      const run = await createRunWithMessage({
-        id: runIdForStep({ stepId: step.id, workflowExecutionId }),
-        clusterId,
-        name: step.id,
-        systemPrompt: step.agent.systemPrompt,
-        resultSchema: step.agent.resultSchema,
-        attachedFunctions: step.agent.attachedFunctions?.map(f =>
-          [f.service, f.function].join("_")
-        ),
-        tags: step.agent.tags,
-        context: step.agent.context,
-        message: "What's 1 + 1?",
-        type: "human",
+      logger.info("Creating run for dependent step", {
+        stepId: step.id,
+        runId: runIdForStep({ stepId: step.id, workflowExecutionId }),
       });
 
-      return run;
+      return runStep({ step, definition, clusterId, workflowExecutionId });
     }) ?? []
   );
 
-  const allDependentsCompleted = dependents.every(run => run.status === "done");
+  const allDependentsCompleted = dependents.every(run => run?.status === "done");
 
-  if (!allDependentsCompleted) {
-    logger.info(`Waiting for dependents to complete for step ${currentStep.id}`);
-  } else {
-    await createRunWithMessage({
+  if (allDependentsCompleted) {
+    logger.info("All dependencies completed, creating run for step", {
+      stepId: currentStep.id,
+      runId: runIdForStep({ stepId: step.id, workflowExecutionId: workflowExecutionId }),
+    });
+
+    return createRunWithMessage({
       id: runIdForStep({ stepId: step.id, workflowExecutionId: workflowExecutionId }),
       clusterId,
       name: step.id,
@@ -188,6 +220,10 @@ const runStep = async ({
       context: step.agent.context,
       message: "What's 1 + 1?",
       type: "human",
+      onStatusChangeHandler: workflowExecutionTarget({
+        workflowExecutionId,
+        clusterId,
+      }),
     });
   }
 };
@@ -202,4 +238,10 @@ function runIdForStep({
   return `wf-run-${workflowExecutionId}-${stepId}`;
 }
 
-export const start = () => worker.run();
+export const start = () => {
+  worker.run();
+};
+
+export const stop = () => {
+  worker.close();
+};

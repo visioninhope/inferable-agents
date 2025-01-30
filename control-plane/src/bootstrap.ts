@@ -19,6 +19,7 @@ import * as clusters from "./modules/cluster";
 import * as redis from "./modules/redis";
 import * as router from "./modules/router";
 import * as serviceDefinitions from "./modules/service-definitions";
+import * as workflowExecutor from "./modules/workflow-definitions/executor";
 import { env } from "./utilities/env";
 import { runMigrations } from "./utilities/migrate";
 
@@ -175,7 +176,8 @@ const startTime = Date.now();
     flagsmith?.getEnvironmentFlags(),
     analytics.start(),
     thirdPartyIntegrations.start(),
-    clusters.start()
+    clusters.start(),
+    workflowExecutor.start(),
   ])
     .then(() => {
       logger.info("Dependencies started", { latency: Date.now() - startTime });
@@ -215,6 +217,7 @@ process.on("SIGTERM", async () => {
     queues.stop(),
     slack.stop(),
     thirdPartyIntegrations.stop(),
+    workflowExecutor.stop(),
   ]).then(() => {
     pg.stop();
     redis.stop();

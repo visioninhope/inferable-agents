@@ -1,7 +1,8 @@
 import { ulid } from "ulid";
 import { insertWorkflowDefinition } from ".";
 import { createOwner } from "../test/util";
-import { executeDefinition } from "./executor";
+import { executeDefinition, start } from "./executor";
+import { getRunsByTag } from "../runs/tags";
 
 describe("executor", () => {
   const yamlDefinition = `version: "1.0"
@@ -14,28 +15,48 @@ workflow:
       id: "step1"
       agent:
         systemPrompt: "You are a helpful assistant"
-        input: "Process this data: 1 + 1"
+        input: "Hello, how are you?"
         resultSchema:
-          result: "string"
+          $schema: "http://json-schema.org/draft-07/schema#"
+          type: "object"
+          properties:
+            result:
+              type: "string"
+              description: "The result of the step"
     - type: "run"
       id: "step2"
       agent:
-        systemPrompt: "You are a multiplier"
-        input: "Multiply the output from step1: {{ steps.step1.result }}"
+        systemPrompt: "What would you say to the user?"
+        input: "Say analysis of the user's input"
         resultSchema:
-          analysis: "string"
+          $schema: "http://json-schema.org/draft-07/schema#"
+          type: "object"
+          properties:
+            analysis:
+              type: "string"
+              description: "The analysis of the step"
       depends_on: ["step1"]
     - type: "run"
       id: "step3"
       agent:
-        systemPrompt: "You are a divider"
-        input: "Divide the output from step2: {{ steps.step2.result }}"
+        systemPrompt: "Meow meow meow"
+        input: "Say meow meow meow"
         resultSchema:
-          analysis: "string"
+          $schema: "http://json-schema.org/draft-07/schema#"
+          type: "object"
+          properties:
+            analysis:
+              type: "string"
+              description: "The analysis of the step"
       depends_on: ["step2"]
   output:
     final_conclusion: "{{ steps.step3.analysis }}"
 `;
+
+  beforeAll(async () => {
+    await start();
+  });
+
   it("should execute a workflow", async () => {
     const owner = await createOwner();
 
@@ -51,6 +72,19 @@ workflow:
       input: {},
     });
 
-    expect(result).toBeDefined();
+    let runs = await getRunsByTag({
+      clusterId: owner.clusterId,
+      key: "workflow",
+      value: "test-workflow",
+    });
+
+    while (runs.length < 3) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      runs = await getRunsByTag({
+        clusterId: owner.clusterId,
+        key: "workflow",
+        value: "test-workflow",
+      });
+    }
   });
 });

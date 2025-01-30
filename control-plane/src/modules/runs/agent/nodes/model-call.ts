@@ -6,8 +6,6 @@ import { addAttributes, withSpan } from "../../../observability/tracer";
 import { AgentError } from "../../../../utilities/errors";
 import { ulid } from "ulid";
 
-import { validateFunctionSchema } from "inferable";
-import { JsonSchemaInput } from "inferable/bin/types";
 import { Model } from "../../../models";
 import { ToolUseBlock } from "@anthropic-ai/sdk/resources";
 
@@ -15,6 +13,7 @@ import { Schema, Validator } from "jsonschema";
 import { buildModelSchema, ModelOutput } from "./model-output";
 import { getSystemPrompt } from "./system-prompt";
 import { handleContextWindowOverflow } from "../overflow";
+import { validateFunctionSchema } from "./validation";
 
 type RunStateUpdate = Partial<RunGraphState>;
 
@@ -43,18 +42,18 @@ const _handleModelCall = async (
   });
 
   if (!!state.run.resultSchema) {
-    const resultSchemaErrors = validateFunctionSchema(
-      state.run.resultSchema as JsonSchemaInput
-    );
+    const resultSchemaErrors = validateFunctionSchema(state.run.resultSchema);
     if (resultSchemaErrors.length > 0) {
-      throw new AgentError("Result schema is not invalid JSONSchema");
+      throw new AgentError(
+        `Result schema is not invalid: ${resultSchemaErrors.map(e => e.error).join(", ")}`
+      );
     }
   }
 
   const schema = buildModelSchema({
     state,
     relevantSchemas: relevantTools,
-    resultSchema: state.run.resultSchema as JsonSchemaInput,
+    resultSchema: state.run.resultSchema,
   });
 
   const systemPrompt = getSystemPrompt(state, relevantTools);
