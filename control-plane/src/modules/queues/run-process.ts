@@ -93,6 +93,5 @@ export const runProcessQueue = createQueue<RunProcessMessage>(
       removeOnComplete: true,
       removeOnFail: true,
     },
-  },
-  data => data.runId
+  }
 );
