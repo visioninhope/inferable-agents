@@ -13,22 +13,25 @@ import { createRunWithMessage } from "../runs";
 import { StepSchema, WorkflowDefinitionSchema } from "./schema";
 
 export const workflowExecutionTarget = ({
-  executionId,
+  workflowExecutionId,
   clusterId,
 }: {
-  executionId: string;
+  workflowExecutionId: string;
   clusterId: string;
-}) => `workflowExecution://clusters/${clusterId}/executions/${executionId}`;
+}) => `workflowExecution://clusters/${clusterId}/executions/${workflowExecutionId}`;
 
 export const isWorkflowExecutionTarget = (target: string) =>
   target.startsWith("workflowExecution://");
 
-const queue = new Queue<{ executionId: string; clusterId: string }>("executeWorkflow");
+const queue = new Queue<{ workflowExecutionId: string; clusterId: string }>("executeWorkflow");
 
-const worker = new Worker<{ executionId: string; clusterId: string }>(
+const worker = new Worker<{ workflowExecutionId: string; clusterId: string }>(
   "executeWorkflow",
   async message => {
-    await runWorkflow({ executionId: message.data.executionId, clusterId: message.data.clusterId });
+    await runWorkflow({
+      workflowExecutionId: message.data.workflowExecutionId,
+      clusterId: message.data.clusterId,
+    });
   },
   {
     autorun: false,
@@ -38,12 +41,12 @@ const worker = new Worker<{ executionId: string; clusterId: string }>(
 
 export async function onWorkflowExecutionRunStatusChange(target: string, status: string) {
   if (status === "done") {
-    const [, clusterId, executionId] = target
+    const [, clusterId, workflowExecutionId] = target
       .split("workflowExecution://clusters/")[1]
       .split("/executions/");
 
     await queue.add("executeWorkflow", {
-      executionId,
+      workflowExecutionId,
       clusterId,
     });
   }
@@ -72,7 +75,7 @@ export const executeDefinition = async ({
   await queue.add(
     "executeWorkflow",
     {
-      executionId: id,
+      workflowExecutionId: id,
       clusterId,
     },
     {
@@ -82,16 +85,21 @@ export const executeDefinition = async ({
 };
 
 export const runWorkflow = async ({
-  executionId,
+  workflowExecutionId,
   clusterId,
 }: {
-  executionId: string;
+  workflowExecutionId: string;
   clusterId: string;
 }): Promise<void> => {
   const [execution] = await db
     .select()
     .from(workflowExecution)
-    .where(and(eq(workflowExecution.id, executionId), eq(workflowExecution.cluster_id, clusterId)));
+    .where(
+      and(
+        eq(workflowExecution.id, workflowExecutionId),
+        eq(workflowExecution.cluster_id, clusterId)
+      )
+    );
 
   if (!execution) {
     throw new Error("Workflow execution not found");
@@ -111,7 +119,7 @@ export const runWorkflow = async ({
         throw new Error("For each statements are not supported yet");
       }
 
-      return runStep({ step, definition: parsedDefinition, clusterId });
+      return runStep({ step, definition: parsedDefinition, clusterId, workflowExecutionId });
     })
   );
 };
@@ -120,10 +128,12 @@ const runStep = async ({
   step,
   definition,
   clusterId,
+  workflowExecutionId,
 }: {
   step: z.infer<typeof StepSchema>;
   definition: z.infer<typeof WorkflowDefinitionSchema>;
   clusterId: string;
+  workflowExecutionId: string;
 }): Promise<void> => {
   const stepDefinition = definition.workflow.steps.find(s => s.id === step.id);
 
@@ -144,7 +154,7 @@ const runStep = async ({
       }
 
       const run = await createRunWithMessage({
-        id: runIdForStep(step),
+        id: runIdForStep({ stepId: step.id, workflowExecutionId }),
         clusterId,
         name: step.id,
         systemPrompt: step.agent.systemPrompt,
@@ -168,7 +178,7 @@ const runStep = async ({
     logger.info(`Waiting for dependents to complete for step ${currentStep.id}`);
   } else {
     await createRunWithMessage({
-      id: runIdForStep(step),
+      id: runIdForStep({ stepId: step.id, workflowExecutionId: workflowExecutionId }),
       clusterId,
       name: step.id,
       systemPrompt: step.agent.systemPrompt,
@@ -182,8 +192,14 @@ const runStep = async ({
   }
 };
 
-function runIdForStep(step: z.infer<typeof StepSchema>) {
-  return `run-${step.type}-${step.id}`;
+function runIdForStep({
+  stepId,
+  workflowExecutionId,
+}: {
+  stepId: string;
+  workflowExecutionId: string;
+}) {
+  return `wf-run-${workflowExecutionId}-${stepId}`;
 }
 
 export const start = () => worker.run();
