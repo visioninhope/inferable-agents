@@ -188,7 +188,6 @@ const runStep = async ({
   const dependents = await Promise.all(
     dependsOn?.map(async step => {
       if (!step) {
-        logger.info("Dependent step not found", { stepId: step?.id });
         throw new Error(`Step not found in workflow. Possibly inconsistent workflow definition.`);
       }
 
@@ -214,11 +213,11 @@ const runStep = async ({
       clusterId,
       name: step.id,
       systemPrompt: step.agent.systemPrompt,
-      resultSchema: step.agent.resultSchema,
+      resultSchema: step.agent.resultSchema ?? undefined,
       attachedFunctions: step.agent.attachedFunctions?.map(f => [f.service, f.function].join("_")),
       tags: step.agent.tags,
       context: step.agent.context,
-      message: "What's 1 + 1?",
+      message: step.agent.input,
       type: "human",
       onStatusChangeHandler: workflowExecutionTarget({
         workflowExecutionId,
