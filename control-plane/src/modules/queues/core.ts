@@ -9,7 +9,7 @@ import { BaseMessage } from "../sqs";
 
 export type QueueHandler<T> = (data: T) => Promise<void>;
 
-const defaultConnection = new IORedis(env.REDIS_URL, {
+export const ioredis = new IORedis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
 });
 
@@ -32,7 +32,7 @@ export class QueueWrapper<T extends BaseMessage> {
     private jobIdKey?: (data: T) => string
   ) {
     this.queue = new Queue(name, {
-      connection: defaultConnection,
+      connection: ioredis,
       ...defaultQueueOptions,
       ...options,
     });
@@ -76,7 +76,7 @@ export class QueueWrapper<T extends BaseMessage> {
         }
       },
       {
-        connection: defaultConnection,
+        connection: ioredis,
         telemetry,
         concurrency: this.options.concurrency,
       }

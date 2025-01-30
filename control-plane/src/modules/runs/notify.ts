@@ -8,6 +8,11 @@ import { runMessages } from "../data";
 import * as slack from "../integrations/slack";
 import * as email from "../email";
 import AsyncRetry from "async-retry";
+import {
+  isWorkflowExecutionTarget,
+  onWorkflowExecutionRunStatusChange,
+} from "../workflow-definitions/executor";
+import { runWorkflowQueue } from "../queues/run-workflow";
 
 export const notifyApprovalRequest = async ({
   jobId,
@@ -78,13 +83,12 @@ export const notifyStatusChange = async ({
   let notify;
   if (run.onStatusChange.startsWith("https://")) {
     notify = async (payload: unknown) => {
-
       await AsyncRetry(
         async (_, attempt: number) => {
           logger.info("Sending status change webhook", {
             url: run.onStatusChange,
             attempt,
-          })
+          });
 
           return await fetch(run.onStatusChange!, {
             method: "POST",
@@ -93,14 +97,16 @@ export const notifyStatusChange = async ({
             },
             body: JSON.stringify(payload),
           });
-
         },
         {
           retries: 5,
-        },
+        }
       );
     };
-
+  } else if (isWorkflowExecutionTarget(run.onStatusChange)) {
+    notify = async () => {
+      await onWorkflowExecutionRunStatusChange(run.onStatusChange!, status);
+    };
   } else {
     const [resultService, resultFunction] = run.onStatusChange?.split("_") ?? [];
 

@@ -26,6 +26,9 @@ export const StepSchema = z.object({
 export const WorkflowDefinitionSchema = z.object({
   version: z.literal("1.0"),
   workflow: z.object({
+    name: z.string(),
+    input: z.record(z.any()).optional(),
     steps: z.array(StepSchema),
+    output: z.record(z.any()).optional(),
   }),
 });

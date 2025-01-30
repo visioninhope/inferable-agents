@@ -577,6 +577,26 @@ export const workflowDefinitions = pgTable(
   })
 );
 
+export const workflowExecution = pgTable(
+  "workflow_execution",
+  {
+    id: varchar("id", { length: 1024 }).notNull(),
+    cluster_id: varchar("cluster_id").notNull(),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    workflow_definition_id: varchar("workflow_definition_id", { length: 1024 }).notNull(),
+    workflow_definition_version: integer("workflow_definition_version").notNull(),
+    workflow_definition_json: json("workflow_definition_json").notNull(),
+    input: json("input"),
+    output: json("output"),
+  },
+  table => ({
+    pk: primaryKey({
+      columns: [table.cluster_id, table.id],
+      name: "workflow_execution_pkey",
+    }),
+  })
+);
+
 export const analyticsSnapshots = pgTable(
   "analytics_snapshots",
   {
