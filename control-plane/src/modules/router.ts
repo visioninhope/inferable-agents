@@ -10,7 +10,7 @@ import * as management from "./management";
 import { buildModel } from "./models";
 import * as events from "./observability/events";
 import { posthog } from "./posthog";
-import { addMessageAndResume } from "./runs";
+import { addMessageAndResume, getRunResult } from "./runs";
 import { getRunMessagesForDisplayWithPolling } from "./runs/messages";
 import { getServiceDefinitions } from "./service-definitions";
 import { unqualifiedEntityId } from "./auth/auth";
@@ -59,6 +59,7 @@ import { getSession, nango, webhookSchema } from "./integrations/nango";
 import { env } from "../utilities/env";
 import { integrationByConnectionId } from "./email";
 import { NEW_CONNECTION_ID } from "./integrations/constants";
+import { createWorkflowExecution } from "./workflows/executions";
 
 const readFile = util.promisify(fs.readFile);
 
@@ -332,9 +333,15 @@ export const router = initServer().router(contract, {
       },
     });
 
+    const result = run.status === "done" ? await getRunResult({ clusterId, runId: run.id }) : null;
+
     return {
       status: 201,
-      body: { id: run.id },
+      body: {
+        id: run.id,
+        status: run.status,
+        result: result ?? null,
+      },
     };
   },
   deleteRun: async request => {
@@ -1746,6 +1753,20 @@ export const router = initServer().router(contract, {
     return {
       status: 200,
       body: result.structured,
+    };
+  },
+  createWorkflowExecution: async request => {
+    const { clusterId, workflowName } = request.params;
+    const { executionId } = request.body;
+
+    const machine = request.request.getAuth().isMachine();
+    machine.canManage({ cluster: { clusterId } });
+
+    const result = await createWorkflowExecution(clusterId, workflowName, { executionId });
+
+    return {
+      status: 201,
+      body: result,
     };
   },
 });
