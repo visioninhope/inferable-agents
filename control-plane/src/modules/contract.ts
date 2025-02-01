@@ -52,6 +52,56 @@ export const VersionedTextsSchema = z.object({
   ),
 });
 
+export const onStatusChangeSchema = z.preprocess(
+  function temporaryPreprocessForBackwardsCompatibility(val) {
+    if (val && typeof val === "object" && "type" in val) {
+      return val;
+    }
+
+    if (val && typeof val === "object" && "function" in val) {
+      return {
+        type: "function",
+        statuses: "statuses" in val ? val.statuses : ["done", "failed"],
+        function: val.function,
+      };
+    }
+
+    if (val && typeof val === "object" && "webhook" in val) {
+      return {
+        type: "webhook",
+        statuses: "statuses" in val ? val.statuses : ["done", "failed"],
+        webhook: val.webhook,
+      };
+    }
+
+    return val;
+  },
+  z.union([
+    z.object({
+      type: z.literal("function"),
+      statuses: z.array(z.enum(["pending", "running", "paused", "done", "failed"])),
+      function: functionReference.describe("A function to call when the run status changes"),
+    }),
+    z.object({
+      type: z.literal("webhook"),
+      statuses: z.array(z.enum(["pending", "running", "paused", "done", "failed"])),
+      webhook: z
+        .string()
+        .regex(/^https?:\/\/.+$/)
+        .describe("A webhook URL to call when the run status changes"),
+    }),
+    z.object({
+      type: z.literal("workflow"),
+      statuses: z.array(z.enum(["pending", "running", "paused", "done", "failed"])),
+      workflow: z
+        .object({
+          executionId: z.string().describe("The execution ID of the workflow"),
+        })
+        .describe("A workflow to run when the run status changes"),
+    }),
+  ])
+);
+
 export const integrationSchema = z.object({
   toolhouse: z
     .object({
@@ -746,16 +796,16 @@ export const definition = {
           "The run ID. If not provided, a new run will be created. If provided, the run will be created with the given. If the run already exists, it will be returned."
         )
         .refine(
-          val => !val || /^[0-9A-Za-z-_]{16,128}$/.test(val),
-          "Run ID must contain only alphanumeric characters, dashes, and underscores. Must be between 16 and 128 characters long."
+          val => !val || /^[0-9A-Za-z-_.]{4,128}$/.test(val),
+          "Run ID must contain only alphanumeric characters, dashes, underscores, and periods. Must be between 4 and 128 characters long."
         ),
       runId: z
         .string()
         .optional()
         .describe("Deprecated. Use `id` instead.")
         .refine(
-          val => !val || /^[0-9A-Za-z-_]{16,128}$/.test(val),
-          "Run ID must contain only alphanumeric characters, dashes, and underscores. Must be between 16 and 128 characters long."
+          val => !val || /^[0-9A-Za-z-_.]{4,128}$/.test(val),
+          "Run ID must contain only alphanumeric characters, dashes, underscores, and periods. Must be between 4 and 128 characters long."
         ),
       initialPrompt: z
         .string()
@@ -781,21 +831,7 @@ export const definition = {
         .describe(
           "An array of functions to make available to the run. By default all functions in the cluster will be available"
         ),
-      onStatusChange: z
-        .object({
-          statuses: z
-            .array(z.enum(["pending", "running", "paused", "done", "failed"]))
-            .describe(" A list of Run statuses which should trigger the handler")
-            .optional()
-            .default(["done", "failed"]),
-          function: functionReference
-            .describe("A function to call when the run status changes")
-            .optional(),
-          webhook: z
-            .string()
-            .describe("A webhook URL to call when the run status changes")
-            .optional(),
-        })
+      onStatusChange: onStatusChangeSchema
         .optional()
         .describe("Mechanism for receiving notifications when the run status changes"),
       tags: z.record(z.string()).optional().describe("Run tags which can be used to filter runs"),
@@ -1392,7 +1428,7 @@ export const definition = {
     }),
     body: z
       .object({
-        executionId: z.string().regex(userDefinedIdRegex),
+        executionId: z.string(),
       })
       .passthrough(),
     responses: {

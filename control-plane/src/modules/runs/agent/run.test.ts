@@ -32,9 +32,15 @@ describe("processRun", () => {
       clusterId: owner.clusterId,
       status: "running" as const,
       attachedFunctions: ["testService_someFunction"],
-      onStatusChange: "testService_someOtherFunction",
-      onStatusChangeStatuses: null,
       modelIdentifier: null,
+      onStatusChange: {
+        type: "function" as const,
+        statuses: ["running", "pending", "paused", "done", "failed"] as any,
+        function: {
+          service: "testService",
+          function: "someOtherFunction",
+        },
+      },
       resultSchema: {
         type: "object",
         properties: {
@@ -50,7 +56,7 @@ describe("processRun", () => {
           output: {
             test: "test",
           },
-        }
+        },
       },
       test: true,
       reasoningTraces: false,
@@ -59,9 +65,7 @@ describe("processRun", () => {
       context: null,
     };
 
-    await db
-    .insert(runs)
-    .values({
+    await db.insert(runs).values({
       id: run.id,
       cluster_id: run.clusterId,
       user_id: "1",
@@ -74,7 +78,7 @@ describe("processRun", () => {
       type: "human",
       data: {
         message: "Call someFunction",
-      }
+      },
     });
 
     const mockModelResponses = [
@@ -99,19 +103,13 @@ describe("processRun", () => {
 
     // Find the Job in the DB
     const onStatusChangeJob = await db
-    .select()
-    .from(jobs)
-    .where(
-      and(
-        eq(jobs.cluster_id, run.clusterId),
-        eq(jobs.target_fn, "someOtherFunction")
-      )
-    );
+      .select()
+      .from(jobs)
+      .where(and(eq(jobs.cluster_id, run.clusterId), eq(jobs.target_fn, "someOtherFunction")));
 
     expect(onStatusChangeJob.length).toBe(1);
   });
 });
-
 
 describe("findRelevantTools", () => {
   it("should return explicitly attached tools", async () => {

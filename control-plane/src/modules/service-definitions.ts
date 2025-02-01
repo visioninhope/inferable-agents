@@ -99,13 +99,11 @@ export async function upsertServiceDefinition({
   definition,
   owner,
   type = "ephemeral",
-  isWorkflow = false,
 }: {
   service: string;
   definition: ServiceDefinition;
   owner: { clusterId: string };
   type?: "ephemeral" | "permanent";
-  isWorkflow?: boolean; // because I used type to signal permanence like an idiot
 }) {
   validateServiceRegistration({
     service,
@@ -123,7 +121,6 @@ export async function upsertServiceDefinition({
       definition,
       cluster_id: owner.clusterId,
       timestamp,
-      type: isWorkflow ? "workflow" : "tool",
     })
     .onConflictDoUpdate({
       target: [data.services.service, data.services.cluster_id],
@@ -355,13 +352,13 @@ export const updateServiceEmbeddings = async ({
 export const validateServiceName = (name: string) => {
   const parsed = z
     .string()
-    .regex(/^[a-zA-Z0-9.]+$/)
+    .regex(/^[a-zA-Z0-9.-]+$/)
     .min(1)
     .max(50)
     .safeParse(name);
 
   if (!parsed.success) {
-    throw new Error(`Service name must only contain letters, numbers, and periods. Got: ${name}`);
+    throw new Error(`Service name must match ^[a-zA-Z0-9.-]+$. Got: ${name}`);
   }
 };
 
@@ -421,13 +418,12 @@ export const getWorkflowServices = async ({
     .where(
       and(
         eq(data.services.cluster_id, clusterId),
-        eq(data.services.type, "workflow"),
-        like(data.services.service, `workflows.${workflowName}.%`)
+        like(data.services.service, `workflows-${workflowName}-%`)
       )
     )
     .then(r =>
       r.map(r => {
-        const version = r.service.replace(`workflows.${workflowName}.`, "");
+        const version = r.service.replace(`workflows-${workflowName}-`, "");
 
         const parsed = z.string().regex(/^\d+$/).safeParse(version);
 
