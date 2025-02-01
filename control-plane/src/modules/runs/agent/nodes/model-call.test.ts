@@ -200,7 +200,7 @@ describe("handleModelCall", () => {
     const supervisorMessage = assertMessageOfType("supervisor", result.messages![1]);
     expect(supervisorMessage.data).toHaveProperty(
       "message",
-      "Please provide a final result or a reason for stopping."
+      "Please provide a final result before stopping. Refer to the final_result_schema for the expected format. If you have insufficient information to provide a result, please provide a message describing why you can't provide a result."
     );
   });
 
@@ -233,7 +233,8 @@ describe("handleModelCall", () => {
         runId: run.id,
         type: "supervisor" as const,
         data: {
-          message: "Please provide a final result or a reason for stopping.",
+          message:
+            "Please provide a final result before stopping. Refer to the final_result_schema for the expected format. If you have insufficient information to provide a result, please provide a message describing why you can't provide a result.",
         },
       });
     }
@@ -268,7 +269,9 @@ describe("handleModelCall", () => {
 
     expect(supervisorMessage.data).toHaveProperty(
       "message",
-      expect.stringContaining("Provided object was invalid, check your input")
+      expect.stringContaining(
+        "You provided an invalid output. Refer to the final_result_schema for the expected format. The validation errors are mentioned below."
+      )
     );
     expect(supervisorMessage.data.details).toHaveProperty("errors");
   });
