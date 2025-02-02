@@ -1206,6 +1206,7 @@ export const definition = {
           tags: z.record(z.string()).nullable().optional(),
           attachedFunctions: z.array(z.string()).nullable(),
           name: z.string().nullable(),
+          systemPrompt: z.string().nullable(),
         }),
         blobs: z.array(blobSchema),
       }),
