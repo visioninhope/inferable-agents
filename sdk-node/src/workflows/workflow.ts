@@ -18,6 +18,18 @@ type WorkflowConfig<TInput extends WorkflowInput, name extends string> = {
   inputSchema: z.ZodType<TInput>;
 };
 
+type onFail = (error: {
+  type: "workflow"
+  description: string;
+  error?: Error;
+} | {
+  type: "agent";
+  description: string;
+  agentName: string;
+  agentRunId: string;
+  error?: Error;
+}) => void;
+
 type AgentConfig<TResult> = {
   name: string;
   systemPrompt?: string;
@@ -76,6 +88,7 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
   > = new Map();
   private inferable: Inferable;
   private services: RegisteredService[] = [];
+  private onFail?: onFail;
 
   constructor(config: WorkflowConfig<TInput, name>) {
     this.name = config.name;
@@ -83,6 +96,10 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
     this.inferable = config.inferable;
   }
 
+  /**
+   * @param version - The version of the workflow to run
+   * @returns The workflow object
+   */
   version(version: number) {
     return {
       define: (
@@ -155,7 +172,12 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
         });
 
         if (result.status !== 200) {
-          throw new Error("Failed to set effect");
+          this.onFail?.({
+            type: "workflow",
+            description: `Failed to set effect ${name}`,
+            error: new InferableAPIError("Failed to set effect", result),
+          });
+          return;
         }
 
         const canRun = result.body.value === rand;
@@ -166,7 +188,12 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
             await fn(ctx);
             log(`Effect ${name} ran successfully`);
           } catch (e) {
-            log(`Effect ${name} failed`, { error: e });
+            this.onFail?.({
+              type: "workflow",
+              description: `Failed to run effect ${name}`,
+              error: e as Error,
+            });
+            return;
           }
         } else {
           log(`Effect ${name} has already been run`);
@@ -221,6 +248,18 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
                 },
                 initialPrompt: JSON.stringify(params.data),
               },
+            }).catch((e) => {
+              this.onFail?.({
+                type: "agent",
+                agentName: config.name,
+                agentRunId: runId,
+                description: "Failed to create agent run",
+                error: e as Error,
+              });
+
+              throw new WorkflowTerminableError(
+                `Failed to create run: ${result.status}`,
+              );
             });
 
             log("Agent run completed", {
@@ -234,10 +273,19 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
             });
 
             if (result.status !== 201) {
-              // TODO: Add better error handling
-              throw new InferableAPIError(
+              this.onFail?.({
+                type: "agent",
+                agentName: config.name,
+                agentRunId: runId,
+                description: "Failed to create agent run",
+                error: new InferableAPIError(
+                  `Failed to create run: ${result.status}`,
+                  result,
+                ),
+              });
+
+              throw new WorkflowTerminableError(
                 `Failed to create run: ${result.status}`,
-                result,
               );
             }
 
@@ -246,11 +294,23 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
                 result: result.body.result as TAgentResult,
               };
             } else if (result.body.status === "failed") {
+              this.onFail?.({
+                type: "agent",
+                agentName: config.name,
+                agentRunId: runId,
+                description: "Agent run failed",
+                error: new WorkflowTerminableError(
+                  `Run ${runId} failed. As a result, we've failed the entire workflow (executionId: ${executionId}).`,
+                ),
+              });
+
               throw new WorkflowTerminableError(
-                `Run ${runId} failed. As a result, we've failed the entire workflow (executionId: ${executionId}). Please refer to run failure details for more information.`,
+                `Run ${runId} failed. As a result, we've failed the entire workflow (executionId: ${executionId}).`,
               );
             } else {
-              throw new WorkflowPausableError(`Run ${runId} is not done.`);
+              throw new WorkflowPausableError(
+                `Run ${runId} is not done.`,
+              );
             }
           },
         };
@@ -259,11 +319,17 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
     };
   }
 
-  async listen() {
+  async listen(config?: {
+    timeoutSeconds?: number;
+    retryCountOnStall?: number;
+    onFail?: onFail;
+  }) {
     log("Starting workflow listeners", {
       name: this.name,
       versions: Array.from(this.versionHandlers.keys()),
     });
+
+    this.onFail = config?.onFail;
 
     this.versionHandlers.forEach((handler, version) => {
       const s = this.inferable.service({
@@ -283,6 +349,10 @@ export class Workflow<TInput extends WorkflowInput, name extends string> {
         name: DEFAULT_FUNCTION_NAME,
         schema: {
           input: this.inputSchema,
+        },
+        config: {
+          timeoutSeconds: config?.timeoutSeconds ?? 300,
+          retryCountOnStall: config?.retryCountOnStall ?? 2,
         },
       });
 
