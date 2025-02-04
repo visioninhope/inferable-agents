@@ -907,10 +907,19 @@ export const definition = {
       authorization: z.string(),
     }),
     responses: {
-      200: RunSchema.omit({
-        test: true,
-      }).extend({
+      200: z.object({
+        id: z.string(),
+        userId: z.string().nullable(),
+        status: z.enum(["pending", "running", "paused", "done", "failed"]).nullable(),
+        failureReason: z.string().nullable(),
+        test: z.boolean(),
+        feedbackComment: z.string().nullable(),
+        feedbackScore: z.number().nullable(),
+        context: z.any().nullable(),
+        authContext: z.any().nullable(),
         result: anyObject.nullable(),
+        tags: z.record(z.string()).nullable(),
+        attachedFunctions: z.array(z.string()).nullable(),
       }),
       401: z.undefined(),
     },
@@ -1233,6 +1242,38 @@ export const definition = {
       .passthrough(),
     responses: {
       201: z.object({ jobId: z.string() }),
+    },
+  },
+  setClusterKV: {
+    method: "PUT",
+    path: "/clusters/:clusterId/keys/:key",
+    pathParams: z.object({
+      clusterId: z.string(),
+      key: z.string(),
+    }),
+    body: z.object({
+      onConflict: z.enum(["replace", "doNothing"]),
+      value: z.string(),
+    }),
+    headers: z.object({ authorization: z.string() }),
+    responses: {
+      200: z.object({
+        value: z.string(),
+      }),
+    },
+  },
+  getClusterKV: {
+    method: "GET",
+    path: "/clusters/:clusterId/keys/:key/value",
+    pathParams: z.object({
+      clusterId: z.string(),
+      key: z.string(),
+    }),
+    headers: z.object({ authorization: z.string() }),
+    responses: {
+      200: z.object({
+        value: z.string(),
+      }),
     },
   },
 } as const;
