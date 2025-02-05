@@ -443,11 +443,3 @@ export const start = () =>
   cron.registerCron(cleanExpiredServiceDefinitions, "clean-service-definitions", {
     interval: 1000 * 10,
   }); // 10 seconds
-
-export const normalizeFunctionReference = (fn: string | { service: string; function: string }) =>
-  typeof fn === "object"
-    ? serviceFunctionEmbeddingId({
-        serviceName: fn.service,
-        functionName: fn.function,
-      })
-    : fn;

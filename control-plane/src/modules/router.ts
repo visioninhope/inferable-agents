@@ -11,7 +11,7 @@ import * as events from "./observability/events";
 import { posthog } from "./posthog";
 import { addMessageAndResume, getRunResult } from "./runs";
 import { getRunMessagesForDisplayWithPolling } from "./runs/messages";
-import { getServiceDefinitions } from "./service-definitions";
+import { getServiceDefinitions, serviceFunctionEmbeddingId } from "./service-definitions";
 import { unqualifiedEntityId } from "./auth/auth";
 import { upsertMachine } from "./machines";
 import { ILLEGAL_SERVICE_NAMES } from "./machines/constants";
@@ -29,7 +29,6 @@ import { recordServicePoll } from "./service-definitions";
 import { getJob } from "./jobs/jobs";
 import { BadRequestError, NotFoundError, AuthenticationError } from "../utilities/errors";
 import { createRun, deleteRun, getClusterRuns, getRunDetails, updateRunFeedback } from "./runs";
-import { normalizeFunctionReference } from "./service-definitions";
 import { getClusterDetails } from "./cluster";
 import { JsonSchemaInput } from "inferable/bin/types";
 import { getRunsByTag } from "./runs/tags";
@@ -195,11 +194,33 @@ export const router = initServer().router(contract, {
       }
     }
 
+    const flags = await flagsmith?.getIdentityFlags(clusterId, {
+      clusterId: clusterId,
+    });
+
+    const toolsV2 = flags?.isFeatureEnabled("use_tools_v2");
+
+    const normalizeFunctionReference = (fn: string | { service: string; function: string }) =>
+      typeof fn === "object"
+        ? serviceFunctionEmbeddingId({
+          serviceName: fn.service,
+          functionName: fn.function,
+        })
+        : fn;
+
+
+    let attachedFunctions: string[] | undefined;
+    if (toolsV2) {
+      attachedFunctions = body.attachedFunctions?.map((f) => typeof f === "string" ? f : f.function);
+    } else {
+      attachedFunctions = body.attachedFunctions?.map(normalizeFunctionReference);
+    }
+
     const runOptions: RunOptions = {
       id: body.id || body.runId || ulid(),
       initialPrompt: body.initialPrompt,
       systemPrompt: body.systemPrompt,
-      attachedFunctions: body.attachedFunctions?.map(normalizeFunctionReference),
+      attachedFunctions,
       resultSchema: body.resultSchema
         ? (dereferenceSync(body.resultSchema) as JsonSchemaInput)
         : undefined,
