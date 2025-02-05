@@ -10,6 +10,7 @@ import { getActivityByJobId, getActivityForTimeline } from "../observability/eve
 import { getRunsByTag } from "../runs/tags";
 import { getWorkflowTools } from "../tools";
 import { logger } from "../observability/logger";
+import { flagsmith } from "../flagsmith";
 
 export const createWorkflowExecution = async (
   clusterId: string,
@@ -136,19 +137,46 @@ export const resumeWorkflowExecution = async ({
     );
   }
 
-  // create a new job for the workflow execution
-  // and feed in the existing job's args
-  const job = await jobs.createJob({
-    owner: {
-      clusterId,
-    },
-    service: existingJob.service,
-    targetFn: existingJob.targetFn,
-    targetArgs: existingJob.targetArgs,
-    runId: existingJob.runId,
+  const flags = await flagsmith?.getIdentityFlags(clusterId, {
+    clusterId: clusterId,
   });
 
-  return { jobId: job.id };
+  const toolsV2 = flags?.isFeatureEnabled("use_tools_v2");
+
+  let jobId: string;
+  if (toolsV2) {
+    logger.info("Using tools V2 for resuming workflow execution");
+    // create a new job for the workflow execution
+    // and feed in the existing job's args
+    const job = await jobs.createJobV2({
+      owner: {
+        clusterId,
+      },
+      service: existingJob.service,
+      targetFn: existingJob.targetFn,
+      targetArgs: existingJob.targetArgs,
+      runId: existingJob.runId,
+    });
+
+    jobId = job.id;
+  } else {
+    // create a new job for the workflow execution
+    // and feed in the existing job's args
+    const job = await jobs.createJob({
+      owner: {
+        clusterId,
+      },
+      service: existingJob.service,
+      targetFn: existingJob.targetFn,
+      targetArgs: existingJob.targetArgs,
+      runId: existingJob.runId,
+    });
+
+    jobId = job.id;
+  }
+
+
+  return { jobId };
 };
 
 export const getWorkflowExecutionEvents = async ({

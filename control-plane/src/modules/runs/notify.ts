@@ -143,7 +143,6 @@ export const notifyStatusChange = async ({
         jobId: id,
       });
 
-
     } else {
       const { id } = await jobs.createJob({
         service: onStatusChangeDefinition.function.service,
