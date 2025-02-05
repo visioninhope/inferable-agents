@@ -424,7 +424,12 @@ export const router = initServer().router(contract, {
 
       return {
         status: 200,
-        body: result,
+        body: result.map(run => ({
+          ...run,
+          tags: {
+            [key]: value,
+          }
+        })),
       };
     }
 
