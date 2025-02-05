@@ -1,16 +1,35 @@
 import { createOwner } from "../test/util";
-import { createJob, getJobStatusSync, persistJobResult } from "./jobs";
+import { createJobV2, getJobStatusSync, persistJobResult } from "./jobs";
 import { acknowledgeJob } from "./job-results";
 import * as redis from "../redis";
 import { getClusterBackgroundRun } from "../runs";
-jest.mock("../service-definitions", () => ({
-  ...jest.requireActual("../service-definitions"),
-  parseJobArgs: jest.fn(),
-}));
+import { upsertToolDefinition } from "../tools";
+
+const mockTargetSchema = JSON.stringify({
+  type: "object",
+  properties: {
+    test: {
+      type: "string",
+    },
+  },
+});
 
 describe("persistJobResult", () => {
+  let owner: Awaited<ReturnType<typeof createOwner>>;
   beforeAll(async () => {
+    owner = await createOwner();
     await redis.start();
+    await upsertToolDefinition({
+      name: "testTargetFn",
+      schema: mockTargetSchema,
+      clusterId: owner.clusterId,
+    });
+
+    await upsertToolDefinition({
+      name: "machineStallTestFn",
+      schema: mockTargetSchema,
+      clusterId: owner.clusterId,
+    })
   });
 
   afterAll(async () => {
@@ -18,11 +37,10 @@ describe("persistJobResult", () => {
   });
 
   it("should persist the result of a job", async () => {
-    const owner = await createOwner();
     const targetFn = "testTargetFn";
     const targetArgs = "testTargetArgs";
 
-    const createJobResult = await createJob({
+    const createJobResult = await createJobV2({
       targetFn,
       targetArgs,
       owner,
@@ -63,12 +81,11 @@ describe("persistJobResult", () => {
   });
 
   it("should only accept the machine that's assigned to the job", async () => {
-    const owner = await createOwner();
     const targetFn = "machineStallTestFn";
     const targetArgs = "testTargetArgs";
     const service = "testService";
 
-    const createJobResult = await createJob({
+    const createJobResult = await createJobV2({
       targetFn,
       targetArgs,
       owner,
@@ -115,12 +132,11 @@ describe("persistJobResult", () => {
   });
 
   it("should not accept result for already resolved job", async () => {
-    const owner = await createOwner();
     const targetFn = "machineStallTestFn";
     const targetArgs = "testTargetArgs";
     const service = "testService";
 
-    const createJobResult = await createJob({
+    const createJobResult = await createJobV2({
       targetFn,
       targetArgs,
       owner,
