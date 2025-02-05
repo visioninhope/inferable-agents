@@ -205,17 +205,23 @@ export async function upsertToolDefinition({
 
   // Check if definition has changed
   const [existing] = await data.db
-    .select({ id: data.tools.name })
-    .from(data.tools)
+    .update(data.tools)
+    .set({ last_ping_at: new Date() })
     .where(
       and(
         eq(data.tools.cluster_id, clusterId),
         eq(data.tools.name, name),
         eq(data.tools.hash, hash),
       )
-    );
+    )
+    .returning({
+      name: data.tools.name,
+      hash: data.tools.hash,
+    });
 
-  if (existing) {
+  const changed = existing?.hash !== hash;
+
+  if (!changed) {
     return;
   }
 

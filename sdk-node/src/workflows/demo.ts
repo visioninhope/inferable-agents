@@ -54,7 +54,7 @@ import { helpers } from "./workflow";
       }),
     });
 
-    const records = await recordsAgent.run({
+    const records = await recordsAgent.trigger({
       data: {
         customerId: input.customerId,
       },
@@ -88,7 +88,7 @@ import { helpers } from "./workflow";
           );
         });
 
-        return agent2.run({
+        return agent2.trigger({
           data: {
             loanId: record.id,
             customerId: input.customerId,
@@ -115,7 +115,7 @@ import { helpers } from "./workflow";
           summary: z.string(),
         }),
       })
-      .run({
+      .trigger({
         data: {
           customerId: input.customerId,
           assetClassDetails: processedRecords,
@@ -131,7 +131,7 @@ import { helpers } from "./workflow";
 
   await workflow.listen();
 
-  await inferable.workflows.run("records", {
+  await inferable.workflows.trigger("records", {
     executionId: Date.now().toString(),
     customerId: "customerId-123",
   });
