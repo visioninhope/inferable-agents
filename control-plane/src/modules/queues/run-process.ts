@@ -81,6 +81,10 @@ export async function handleRunProcess(message: unknown) {
     });
 
     const toolsV2 = flags?.isFeatureEnabled("use_tools_v2");
+    if (toolsV2) {
+      logger.info("Using tools v2 for Run processing")
+    }
+
 
     await processRun(run, tags, undefined, toolsV2);
   } finally {

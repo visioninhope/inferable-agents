@@ -1492,6 +1492,10 @@ export const router = initServer().router(contract, {
 
     const toolsV2 = flags?.isFeatureEnabled("use_tools_v2");
 
+    if (toolsV2) {
+      logger.info("Using tools v2 for Workflow Execution")
+    }
+
     const result = await createWorkflowExecution(clusterId, workflowName, request.body, toolsV2);
 
     return {
