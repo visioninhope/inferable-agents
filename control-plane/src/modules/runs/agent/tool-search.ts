@@ -12,6 +12,7 @@ import { buildAbstractServiceFunctionTool } from "./tools/functions";
 import { availableStdlib } from "./tools/stdlib";
 import { z } from "zod";
 import { getToolDefinition, searchTools } from "../../tools";
+import { NotFoundError } from "../../../utilities/errors";
 
 function anonymize<T>(value: T): T {
   if (typeof value === "string") {
@@ -217,6 +218,10 @@ export const findRelevantTools = async (state: RunGraphState, toolsV2?: boolean)
           name: tool,
           clusterId: run.clusterId
         });
+
+        if (!definition) {
+          throw new NotFoundError(`Tool ${tool} not found in cluster ${run.clusterId}`);
+        }
 
         tools.push(
           new AgentTool({
