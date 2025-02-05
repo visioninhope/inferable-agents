@@ -11,6 +11,7 @@ import AsyncRetry from "async-retry";
 import { onStatusChangeSchema } from "../contract";
 import { z } from "zod";
 import { resumeWorkflowExecution } from "../workflows/executions";
+import { flagsmith } from "../flagsmith";
 
 export const notifyApprovalRequest = async ({
   jobId,
@@ -116,21 +117,51 @@ export const notifyStatusChange = async ({
       }
     );
   } else if (onStatusChangeDefinition.type === "function") {
-    const { id } = await jobs.createJob({
-      service: onStatusChangeDefinition.function.service,
-      targetFn: onStatusChangeDefinition.function.function,
-      targetArgs: packer.pack(await getRunPayload()),
-      authContext: run.authContext,
-      runContext: run.context,
-      owner: {
-        clusterId: run.clusterId,
-      },
-      runId: getClusterBackgroundRun(run.clusterId),
+
+    const flags = await flagsmith?.getIdentityFlags(run.clusterId, {
+      clusterId: run.clusterId,
     });
 
-    logger.info("Created job with run result", {
-      jobId: id,
-    });
+    const toolsV2 = flags?.isFeatureEnabled("use_tools_v2");
+
+    if (toolsV2) {
+      logger.info("Using tools v2 for OnStatusChange")
+
+      const { id } = await jobs.createJobV2({
+        service: onStatusChangeDefinition.function.service,
+        targetFn: onStatusChangeDefinition.function.function,
+        targetArgs: packer.pack(await getRunPayload()),
+        authContext: run.authContext,
+        runContext: run.context,
+        owner: {
+          clusterId: run.clusterId,
+        },
+        runId: getClusterBackgroundRun(run.clusterId),
+      });
+
+      logger.info("Created job with run result", {
+        jobId: id,
+      });
+
+
+    } else {
+      const { id } = await jobs.createJob({
+        service: onStatusChangeDefinition.function.service,
+        targetFn: onStatusChangeDefinition.function.function,
+        targetArgs: packer.pack(await getRunPayload()),
+        authContext: run.authContext,
+        runContext: run.context,
+        owner: {
+          clusterId: run.clusterId,
+        },
+        runId: getClusterBackgroundRun(run.clusterId),
+      });
+
+      logger.info("Created job with run result", {
+        jobId: id,
+      });
+    }
+
   } else if (onStatusChangeDefinition.type === "workflow") {
     const { jobId } = await resumeWorkflowExecution({
       clusterId: run.clusterId,
