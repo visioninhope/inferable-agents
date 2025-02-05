@@ -76,6 +76,8 @@ export const verify = async ({
   let authService: string | undefined;
   let authFunction: string | undefined;
 
+  let id: string | undefined;
+
   try {
     if (toolsV2) {
       const definition = await getToolDefinition({
@@ -92,6 +94,22 @@ export const verify = async ({
 
       authService = "v2";
       authFunction = definition.name;
+
+
+      const result = await jobs.createJobV2({
+        service: authService,
+        targetFn: authFunction,
+        targetArgs: packer.pack({
+          token,
+        }),
+        owner: {
+          clusterId,
+        },
+        runId: getClusterBackgroundRun(clusterId),
+      });
+
+      id = result.id
+
     } else {
       [authService, authFunction] = handleCustomAuthFunction?.split("_") ?? [];
 
@@ -110,26 +128,21 @@ export const verify = async ({
           "https://docs.inferable.ai/pages/custom-auth"
         );
       }
+
+      const result = await jobs.createJob({
+        service: authService,
+        targetFn: authFunction,
+        targetArgs: packer.pack({
+          token,
+        }),
+        owner: {
+          clusterId,
+        },
+        runId: getClusterBackgroundRun(clusterId),
+      });
+
+      id = result.id
     }
-
-  if (!authService || !authFunction) {
-    throw new AuthenticationError(
-      "Custom auth is not configured",
-      "https://docs.inferable.ai/pages/custom-auth"
-    )
-  }
-
-  const { id } = await jobs.createJob({
-    service: authService,
-    targetFn: authFunction,
-    targetArgs: packer.pack({
-      token,
-    }),
-    owner: {
-      clusterId,
-    },
-    runId: getClusterBackgroundRun(clusterId),
-  });
 
   const result = await getJobStatusSync({
     jobId: id,
