@@ -1,48 +1,39 @@
 import { initServer } from "@ts-rest/fastify";
 import { generateOpenApi } from "@ts-rest/open-api";
+import { dereferenceSync } from "dereference-json-schema";
 import fs from "fs";
+import { JsonSchemaInput } from "inferable/bin/types";
 import path from "path";
 import { ulid } from "ulid";
 import util from "util";
-import { getBlobData } from "./blobs";
-import * as data from "./data";
-import * as management from "./management";
-import * as events from "./observability/events";
-import { posthog } from "./posthog";
-import { addMessageAndResume, getRunResult } from "./runs";
-import { getRunMessagesForDisplayWithPolling } from "./runs/messages";
+import { env } from "../utilities/env";
+import { AuthenticationError, BadRequestError, NotFoundError } from "../utilities/errors";
+import { safeParse } from "../utilities/safe-parse";
 import { unqualifiedEntityId } from "./auth/auth";
+import { createApiKey, listApiKeys, revokeApiKey } from "./auth/cluster";
+import { createBlob, getBlobData, getBlobsForJobs } from "./blobs";
+import { getClusterDetails } from "./cluster";
+import { contract, interruptSchema } from "./contract";
+import * as data from "./data";
+import { getIntegrations, upsertIntegrations } from "./integrations/integrations";
+import { getSession, nango, webhookSchema } from "./integrations/nango";
+import { validateConfig } from "./integrations/toolhouse";
+import * as jobs from "./jobs/jobs";
+import { getJob, getJobReferences } from "./jobs/jobs";
+import { kv } from "./kv";
 import { upsertMachine } from "./machines";
 import { ILLEGAL_SERVICE_NAMES } from "./machines/constants";
-import { dereferenceSync } from "dereference-json-schema";
-import { safeParse } from "../utilities/safe-parse";
-import { createApiKey, listApiKeys, revokeApiKey } from "./auth/cluster";
-import { packer } from "./packer";
-import * as jobs from "./jobs/jobs";
-import { getClusterBackgroundRun } from "./runs";
-import { contract, interruptSchema } from "./contract";
+import * as management from "./management";
+import * as events from "./observability/events";
 import { logger } from "./observability/logger";
-import { createBlob } from "./blobs";
-import { getJob } from "./jobs/jobs";
-import { BadRequestError, NotFoundError, AuthenticationError } from "../utilities/errors";
-import { createRun, deleteRun, getClusterRuns, getRunDetails, updateRunFeedback } from "./runs";
-import { getClusterDetails } from "./cluster";
-import { JsonSchemaInput } from "inferable/bin/types";
+import { packer } from "./packer";
+import { posthog } from "./posthog";
+import { addMessageAndResume, createRun, deleteRun, getClusterBackgroundRun, getClusterRuns, getRunDetails, getRunResult, RunOptions, updateRunFeedback, validateSchema } from "./runs";
+import { getRunMessagesForDisplayWithPolling } from "./runs/messages";
 import { getRunsByTag } from "./runs/tags";
 import { timeline } from "./timeline";
-import { getBlobsForJobs } from "./blobs";
-import { getJobReferences } from "./jobs/jobs";
-import { getIntegrations, upsertIntegrations } from "./integrations/integrations";
-import { validateConfig } from "./integrations/toolhouse";
-import { getSession, nango, webhookSchema } from "./integrations/nango";
-import { env } from "../utilities/env";
-import { integrationByConnectionId } from "./email";
-import { NEW_CONNECTION_ID } from "./integrations/constants";
+import { listTools, recordPoll, upsertToolDefinition } from "./tools";
 import { createWorkflowExecution, getWorkflowExecutionEvents } from "./workflows/executions";
-import { RunOptions, validateSchema } from "./runs";
-import { kv } from "./kv";
-import { getToolDefinitions, recordPoll } from "./tools";
-import { upsertToolDefinition } from "./tools";
 
 const readFile = util.promisify(fs.readFile);
 
@@ -907,26 +898,7 @@ export const router = initServer().router(contract, {
     }
 
     if (request.body.email) {
-      const existing = await getIntegrations({ clusterId });
-
-      const connectionId = request.body.email.connectionId;
-
-      if (connectionId === NEW_CONNECTION_ID) {
-        const connectionId = crypto.randomUUID();
-        const collision = await integrationByConnectionId(connectionId);
-        if (collision) {
-          // This is so unlikely that we will fail the request if we experience a collision
-          logger.error("Unexpected connectionId collision", {
-            clusterId,
-            connectionId,
-          });
-          throw new Error("Unexpected connectionId collision");
-        }
-
-        request.body.email.connectionId = connectionId;
-      } else if (connectionId !== existing?.email?.connectionId) {
-        throw new BadRequestError("Email connectionId is not user editable");
-      }
+      throw new BadRequestError("Email integration is not supported");
     }
 
     if (request.body.toolhouse) {
@@ -1373,32 +1345,6 @@ export const router = initServer().router(contract, {
       body: machines,
     };
   },
-  listServices: async request => {
-    const { clusterId } = request.params;
-    const user = request.request.getAuth();
-    await user.canAccess({ cluster: { clusterId } });
-
-    const tools = await getToolDefinitions({
-      clusterId,
-    });
-
-    return {
-      status: 200,
-      body: [
-        {
-          name: "default",
-          timestamp: new Date(),
-          description: "default",
-          functions: tools.map(tool => ({
-            name: tool.name,
-            description: tool.description ?? undefined,
-            schema: tool.schema ?? undefined,
-            config: tool.config ?? undefined,
-          }))
-        }
-      ],
-    };
-  },
   getBlobData: async request => {
     const { clusterId, blobId } = request.params;
 
@@ -1491,6 +1437,21 @@ export const router = initServer().router(contract, {
     return {
       status: 200,
       body: events,
+    };
+  },
+  listTools: async request => {
+    const { clusterId } = request.params;
+
+    const auth = request.request.getAuth();
+    await auth.canAccess({ cluster: { clusterId } });
+
+    const tools = await listTools({
+      clusterId,
+    });
+
+    return {
+      status: 200,
+      body: tools,
     };
   },
 });
