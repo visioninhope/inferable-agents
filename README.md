@@ -1,55 +1,53 @@
-![Inferable Hero](./assets/hero.png)
-
 <div align="center">
+
+<img src="./assets/logo.png" alt="Inferable Logo" width="200" />
 
 # Inferable
 
-Inferable is the easiest way to convert your existing internal APIs, functions, and scripts into <br/> autonomous agents that you can have a conversation with.
+Build production-ready AI Agents with Durable Execution.
 
 ![NPM Version](https://img.shields.io/npm/v/inferable?color=32CD32&style=for-the-badge) ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/inferablehq/inferable?filename=sdk-go%2Fgo.mod&color=32CD32&style=for-the-badge) ![NuGet Version](https://img.shields.io/nuget/v/inferable?color=32CD32&style=for-the-badge)
 ![License](https://img.shields.io/github/license/inferablehq/inferable?color=32CD32&style=for-the-badge)
 
-[![Demo Video](./assets/thumbnail.png)](https://www.youtube.com/watch?v=B8Rl8FT8DpM)
-
 </div>
 
-## ✨ Features
+## What is Inferable?
 
-### Agent Runtime
-- Open Source, MIT licensed and [self-hostable](https://docs.inferable.ai/pages/self-hosting)
-- Fully managed Re-Act (reasoning + acting) [agent control-plane](https://docs.inferable.ai/pages/control-plane)
-- Composable agents with [structured outputs](https://docs.inferable.ai/pages/structured-output) support
-- Trigger agents from [Slack](https://docs.inferable.ai/pages/slack), [E-mail](https://docs.inferable.ai/pages/email) and more
+Inferable is a platform for building production-ready AI Agents. At a high level, it allows you to:
 
-### Distributed tool calling with fault-tolerance
-- [Durable tool calls](https://docs.inferable.ai/pages/resilient-functions) with fault-tolerance, load balancing, and caching
-- Built-in [tool discovery](https://docs.inferable.ai/pages/functions) across your internal infrastructure
-- [Dynamic tool attachment](https://docs.inferable.ai/pages/runs#function-selection) based on conversational context
+- Register **Tools** from your new or existing distributed systems.
+- Define **Agents** that can use these tools to perform multi-step reasoning and take actions.
+- Create **Durable Workflows** that compose agent intractions with "workflow as code".
 
-### Security & Human oversight
-- Primitives for BYO [custom Authentication and Authorization](https://docs.inferable.ai/pages/custom-auth)
-- [Human-in-the-loop](https://docs.inferable.ai/pages/human-in-the-loop) with explicit approvals driven by code
-- [No inbound connections](https://docs.inferable.ai/pages/enterprise#private-networking) or ingress required with long-polling SDKs
+<p align="center">
+<img src="./assets/deployment.png" alt="Inferable Deployment" width="800" />
+</p>
 
-### Integrations & SDKs
-- Native SDKs for [TypeScript](./sdk-node/README.md), [Go](./sdk-go/README.md), [.NET](./sdk-dotnet/README.md) and more coming up
-- Trigger agents from [Zapier](https://docs.inferable.ai/pages/zapier), [HTTP APIs](https://docs.inferable.ai/pages/api/create-run) for advanced integrations
-- [Adapters](./adapters/) to convert Postgres, GraphQL, tRPC into tools
+## 👉 High-level Features
 
+### 🧰 Tools
+- Wrap your existing code as [tools](https://docs.inferable.ai/pages/tools), and let agents trigger them with our SDKs.
+- Tools run on your [own infrastructure](https://docs.inferable.ai/pages/enterprise#on-premise-tool-execution-and-data-localization), Inferable takes care of the orchestration.
+- Built-in [retry, caching](https://docs.inferable.ai/pages/tool-configuration), and [failover](https://docs.inferable.ai/pages/tool-failures) support for tools.
+
+### 🤖 Agents
+- [Multi-step reasoning agents](https://docs.inferable.ai/pages/agents) who can iteratively design their own execution plan.
+- Context-aware [tool selection](https://docs.inferable.ai/pages/agent-tools) and built-in Service Discovery for tools.
+- [Composable agents](https://docs.inferable.ai/pages/multiple-agents) with structured outputs.
+
+### 📜 Workflows
+- Define "[workflow as code](https://docs.inferable.ai/pages/workflows)" to orchestrate agents and tools.
+- Mix agent reasoning with deterministic code execution to build [complex workflows](https://docs.inferable.ai/pages/multiple-agents).
+- All workflows are [durable](https://docs.inferable.ai/pages/workflow-durability), and run on your own infrastructure.
+
+**...with minimal adoption curve**
+- [No network ingress](https://docs.inferable.ai/pages/enterprise#private-networking) needed. Everything works via long-polling HTTP endpoints.
+- [Trigger workflows](https://docs.inferable.ai/pages/your-first-workflow#triggering-workflows) from external events, or from other workflows. It's just HTTP.
+- Fully [open-source](https://github.com/inferablehq/inferable) and self-hostable.
 
 ## ⚡️ Quick Start
 
 The easiest way to get started is by following the [Quickstart](https://docs.inferable.ai/pages/quick-start).
-
-[![Quickstart](https://img.shields.io/badge/Follow-Quickstart-8A2BE2?style=for-the-badge)](https://docs.inferable.ai/pages/quick-start)
-
-## 🔗 Demos
-
-- **[Text to SQL Agent](https://github.com/inferablehq/inferable/blob/main/demos/typescript/sql-to-text/service.ts)**: Let Inferable access a database (read-only or read/write), and ask it to perform actions.
-- **[Terminal Copilot](https://github.com/inferablehq/inferable/blob/main/demos/typescript/terminal-copilot/service.ts)**: Run commands in your terminal, with explicit human approvals.
-- **[Data Connector](https://www.inferable.ai/use-cases/data-connector)**: Deploy a docker container in your infrastructure, and let Inferable take actions with your REST / GraphQL APIs.
-
-![Demo](./assets/demo.png)
 
 ## 📚 Language Support
 
@@ -77,12 +75,6 @@ This repository contains the Inferable control-plane, as well as SDKs for variou
 - `/sdk-go` - Go SDK
 - `/sdk-dotnet` - .NET SDK
 - `/sdk-react` - React SDK
-
-**Bootstrap templates:**
-
-- `/bootstrap-node` - Node.js bootstrap application template
-- `/bootstrap-go` - Go bootstrap application template
-- `/bootstrap-dotnet` - .NET bootstrap application template
 
 ## 💾 Self Hosting
 
