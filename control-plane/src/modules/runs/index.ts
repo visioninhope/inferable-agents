@@ -339,6 +339,10 @@ export const getRunDetails = async ({ clusterId, runId }: { clusterId: string; r
         reasoningTraces: runs.reasoning_traces,
         resultSchema: runs.result_schema,
         onStatusChange: runs.on_status_change,
+        interactive: runs.interactive,
+        workflowExecutionId: runs.workflow_execution_id,
+        workflowVersion: runs.workflow_version,
+        workflowName: runs.workflow_name,
       })
       .from(runs)
       .where(and(eq(runs.cluster_id, clusterId), eq(runs.id, runId))),

@@ -209,43 +209,28 @@ process.on("SIGTERM", async () => {
     pid: process.pid,
   });
 
-  // stop each one by one
+  if (env.ENVIRONMENT === "dev") {
+    // forcibly exit after 1s
+    setTimeout(() => {
+      console.log("Forcing exit");
+      process.exit(0);
+    }, 1000);
+  }
 
-  console.log("Stopping app");
-  await app.close();
-  console.log("App closed");
+  await Promise.all([
+    app.close(),
+    flagsmith?.close(),
+    hdx?.shutdown(),
+    queues.stop(),
+    slack.stop(),
+    thirdPartyIntegrations.stop(),
+    cron.stop(),
+  ])
 
-  console.log("Stopping flagsmith");
-  await flagsmith?.close();
-  console.log("Flagsmith closed");
-
-  console.log("Stopping hdx");
-  await hdx?.shutdown();
-  console.log("Hdx closed");
-
-  console.log("Stopping queues");
-  await queues.stop();
-  console.log("Queues stopped");
-
-  console.log("Stopping slack");
-  await slack.stop();
-  console.log("Slack stopped");
-
-  console.log("Stopping third party integrations");
-  await thirdPartyIntegrations.stop();
-  console.log("Third party integrations stopped");
-
-  console.log("Stopping cron");
-  await cron.stop();
-  console.log("Cron stopped");
-
-  console.log("Stopping postgres");
-  pg.stop();
-  console.log("Postgres stopped");
-
-  console.log("Stopping redis");
-  redis.stop();
-  console.log("Redis stopped");
+  await Promise.all([
+    pg.stop(),
+    redis.stop(),
+  ]);
 
   logger.info("Shutdown complete");
 

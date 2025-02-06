@@ -143,7 +143,7 @@ export function RunList({ clusterId }: WorkflowListProps) {
             <ExternalLinkIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>
-        <ScrollArea className="rounded-lg bg-white shadow-sm transition-all duration-200 overflow-y-auto h-[calc(100vh-16rem)] ">
+        <ScrollArea className="rounded-lg bg-white shadow-sm transition-all duration-200 overflow-y-auto h-[calc(100vh-15rem)] border-b border-border/50">
           {(!!runFilters.test) && (
             <div className="flex flex-row space-x-2 mb-4 pb-3 border-b border-border/50 items-center justify-between">
               {runFilters.test && (
@@ -162,7 +162,7 @@ export function RunList({ clusterId }: WorkflowListProps) {
               )}
             </div>
           )}
-          <div className="rounded-none">
+          <div className="rounder-none">
             <RunTab
               workflows={workflows}
               onGoToWorkflow={goToWorkflow}
