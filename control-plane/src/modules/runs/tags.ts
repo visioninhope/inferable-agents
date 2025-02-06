@@ -26,6 +26,9 @@ export const getRunsByTag = async ({
       debug: runs.debug,
       test: runs.test,
       feedbackScore: runs.feedback_score,
+      workflowExecutionId: runs.workflow_execution_id,
+      workflowVersion: runs.workflow_version,
+      workflowName: runs.workflow_name,
     })
     .from(runTags)
     .where(

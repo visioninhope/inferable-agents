@@ -41,7 +41,7 @@ import { NEW_CONNECTION_ID } from "./integrations/constants";
 import { createWorkflowExecution, getWorkflowExecutionEvents } from "./workflows/executions";
 import { RunOptions, validateSchema } from "./runs";
 import { kv } from "./kv";
-import { getToolDefinition, getToolDefinitions, recordPoll } from "./tools";
+import { getToolDefinitions, recordPoll } from "./tools";
 import { upsertToolDefinition } from "./tools";
 
 const readFile = util.promisify(fs.readFile);

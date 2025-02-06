@@ -29,7 +29,7 @@ const statusToCircle: {
 type WorkflowGroup = {
   executionId: string | null;
   workflowName: string | null;
-  workflowVersion: string | null;
+  workflowVersion: number | null;
   workflows: Workflow[];
 };
 
@@ -37,17 +37,17 @@ function groupWorkflowsByExecution(workflows: Workflow[]): WorkflowGroup[] {
   const groups: { [key: string]: {
     workflows: Workflow[];
     workflowName: string | null;
-    workflowVersion: string | null;
+    workflowVersion: number | null;
   } } = {};
 
   workflows.forEach(workflow => {
-    const executionId = workflow.tags?.['workflow.executionId'];
+    const executionId = workflow.workflowExecutionId;
     if (executionId) {
       if (!groups[executionId]) {
         groups[executionId] = {
           workflows: [],
-          workflowName: workflow.tags?.['workflow.name'] ?? null,
-          workflowVersion: workflow.tags?.['workflow.version'] ?? null
+          workflowName: workflow.workflowName ?? null,
+          workflowVersion: workflow.workflowVersion ?? null
         };
       }
       groups[executionId].workflows.push(workflow);
@@ -245,15 +245,6 @@ function RunPill({
               {workflow.name ? (workflow.name.length > 40 ? workflow.name.slice(0, 40) + '...' : workflow.name) : '...'}
             </p>
             <div className="flex flex-wrap mt-1 gap-1">
-              {workflow.tags && Object.entries(workflow.tags)
-                .filter(([key]) => !['workflow.name', 'workflow.version', 'workflow.executionId'].includes(key))
-                .map(([key, value]) => (
-                  <Tag
-                    key={key}
-                    label={key}
-                    value={value}
-                  />
-              ))}
               {workflow.test && (
                 <Tag
                   label={<TestTubeIcon className="h-3 w-3" />}

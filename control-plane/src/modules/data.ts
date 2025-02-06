@@ -372,6 +372,9 @@ export const runs = pgTable(
     enable_result_grounding: boolean("enable_result_grounding").default(false).notNull(),
     auth_context: json("auth_context").$type<unknown>(),
     context: json("context"),
+    workflow_execution_id: varchar("workflow_execution_id", { length: 1024 }),
+    workflow_version: integer("workflow_version"),
+    workflow_name: varchar("workflow_name", { length: 1024 }),
   },
   table => ({
     pk: primaryKey({
