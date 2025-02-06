@@ -46,6 +46,9 @@ export const createRun = async ({
   authContext,
   context,
   enableResultGrounding,
+  workflowExecutionId,
+  workflowVersion,
+  workflowName,
 }: {
   id?: string;
   userId?: string;
@@ -70,6 +73,9 @@ export const createRun = async ({
   authContext?: Record<string, unknown>;
   context?: unknown;
   enableResultGrounding?: boolean;
+  workflowExecutionId?: string;
+  workflowVersion?: number;
+  workflowName?: string;
 }) => {
   const resultSet = {
     id: runs.id,
@@ -113,6 +119,10 @@ export const createRun = async ({
       },
       context: context,
       enable_result_grounding: enableResultGrounding,
+      // Temporary hack to make the sdk be backwards compatible
+      workflow_execution_id: workflowExecutionId ?? tags?.["workflow.executionId"],
+      workflow_version: workflowVersion ?? tags?.["workflow.version"] ? Number(tags?.["workflow.version"]) : null,
+      workflow_name: workflowName ?? tags?.["workflow.name"],
     })
     .onConflictDoNothing()
     .returning(resultSet);
@@ -288,11 +298,11 @@ export const getClusterRuns = async ({
       authContext: runs.auth_context,
       context: runs.context,
       enableResultGrounding: runs.enable_result_grounding,
-      tagKey: runTags.key,
-      tagValue: runTags.value,
+      workflowExecutionId: runs.workflow_execution_id,
+      workflowVersion: runs.workflow_version,
+      workflowName: runs.workflow_name,
     })
     .from(runs)
-    .leftJoin(runTags, eq(runs.id, runTags.run_id))
     .where(
       and(
         eq(runs.cluster_id, clusterId),
@@ -303,18 +313,7 @@ export const getClusterRuns = async ({
     .orderBy(desc(runs.created_at))
     .limit(limit);
 
-  const resultWithTags = result.reduce((acc, run) => {
-    acc[run.id] = {
-      ...run,
-      tags: {
-        ...(acc[run.id]?.tags ?? {}),
-        ...(run.tagKey && run.tagValue ? { [run.tagKey]: run.tagValue } : {}),
-      },
-    };
-    return acc;
-  }, {} as Record<string, typeof result[number] & { tags: Record<string, string> }>);
-
-  return Object.values(resultWithTags);
+  return result;
 };
 
 export const getRunDetails = async ({ clusterId, runId }: { clusterId: string; runId: string }) => {
