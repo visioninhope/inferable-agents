@@ -4,7 +4,6 @@ import { client, clientWithAbortController } from "@/client/client";
 import { contract } from "@/client/contract";
 import FunctionCall from "@/components/chat/function-call";
 import RunEvent from "@/components/chat/workflow-event";
-import { Button } from "@/components/ui/button";
 import { ClientInferResponseBody } from "@ts-rest/core";
 import { RefreshCcw, TestTube2Icon, WorkflowIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
@@ -13,22 +12,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ulid } from "ulid";
 import { Textarea } from "./ui/textarea";
 
-import { cn, createErrorToast } from "@/lib/utils";
+import { createErrorToast } from "@/lib/utils";
 import { useAuth, useOrganization, useUser } from "@clerk/nextjs";
 import { useQueue } from "@uidotdev/usehooks";
 import { MessageCircleWarning } from "lucide-react";
-import { FeedbackDialog } from "./bug-report-dialog";
 import { DebugEvent } from "./debug-event";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SendButton } from "@/components/ui/send-button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ExternalLink } from "lucide-react";
 import { Blob } from "./chat/blob";
 
 const messageSkeleton = (
@@ -518,8 +509,6 @@ export function Run({ clusterId, runId }: { clusterId: string; runId: string }) 
       .map(item => item!.element);
   }, [runTimeline, clusterId, runId, focusedJobId, wipMessages.queue]);
 
-  const isEditable = isAdmin || isOwner;
-
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -531,25 +520,24 @@ export function Run({ clusterId, runId }: { clusterId: string; runId: string }) 
     }, 100); // add a small delay because inline elements are not rendered immediately
   }, [elements.length]);
 
-  const composerDisabled = !runTimeline || !isEditable;
+  const showComposer = runTimeline?.run.interactive === true;
 
   return (
     <div className="overflow-hidden rounded-sm">
       <div
         ref={scrollContainerRef}
-        className="h-[calc(100vh-25rem)] border rounded-sm text-sm overflow-y-auto scroll-smooth"
+        className="h-[calc(100vh-12rem)] border rounded-sm text-sm overflow-y-auto scroll-smooth"
       >
         {elements.length > 0 ? <div className="flex flex-col">{elements}</div> : messageSkeleton}
-      </div>
-      <div
-        className={cn(
-          "flex flex-col space-y-2 p-2 bg-slate-50 border",
-          composerDisabled ? "opacity-50 animate-pulse" : ""
-        )}
-      >
-        <div className="flex flex-col space-y-2">
+        {showComposer && (
+        <div
+          className={"flex flex-col space-y-2 ml-8 mr-4 mb-4"}
+        >
+          <p className="text-xs text-gray-500">
+            This run is marked as <span className="font-mono">interactive</span>. You can send messages to the agent.
+          </p>
           <Textarea
-            disabled={composerDisabled}
+            disabled={runTimeline?.run.status === "running"}
             rows={3}
             placeholder={"Message Inferable"}
             className="focus-visible:ring-offset-0"
@@ -577,55 +565,10 @@ export function Run({ clusterId, runId }: { clusterId: string; runId: string }) 
                   "Send"
                 )}
               </SendButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-1">
-                    or via <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem asChild>
-                    <a
-                      href="https://docs.inferable.ai/pages/api"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      Run via API <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a
-                      href="https://docs.inferable.ai/pages/slack"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      Run via Slack <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a
-                      href="https://docs.inferable.ai/pages/email"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      Run via Email <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="flex-grow">&nbsp;</div>
-            <FeedbackDialog
-              runId={runId}
-              clusterId={clusterId}
-              comment={runTimeline?.run.feedbackComment}
-              score={runTimeline?.run.feedbackScore}
-            />
+              </div>
           </div>
         </div>
+      )}
       </div>
     </div>
   );

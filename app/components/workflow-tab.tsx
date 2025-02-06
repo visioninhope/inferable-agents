@@ -239,54 +239,49 @@ function RunPill({
             {formatRelative(new Date(workflow.createdAt).getTime(), new Date().getTime())}
           </p>
         </span>
-        <div className="flex justify-between items-end gap-1">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-none mt-0.5">
-              {workflow.name ? (workflow.name.length > 40 ? workflow.name.slice(0, 40) + '...' : workflow.name) : '...'}
-            </p>
-            <div className="flex flex-wrap mt-1 gap-1">
-              {workflow.test && (
-                <Tag
-                  label={<TestTubeIcon className="h-3 w-3" />}
-                  value=""
-                  onClick={e => {
-                    e.stopPropagation();
-                    router.push(
-                      `/clusters/${clusterId}/runs?filters=${encodeURIComponent(
-                        JSON.stringify({
-                          test: true,
-                        })
-                      )}`
-                    );
-                  }}
-                />
-              )}
-              {workflow.feedbackScore !== null && (
-                <Tag
-                  label={
-                    workflow.feedbackScore > 0 ? (
-                      <ThumbsUpIcon className="h-3 w-3" />
-                    ) : (
-                      <ThumbsDownIcon className="h-3 w-3" />
-                    )
-                  }
-                  value={""}
-                />
-              )}
-            </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-none py-0.5 w-[300px] truncate">
+            {workflow.name}
+          </p>
+          <div className="flex flex-wrap mt-1 gap-1">
+            {workflow.test && (
+              <Tag
+                label={<TestTubeIcon className="h-3 w-3" />}
+                value=""
+                onClick={e => {
+                  e.stopPropagation();
+                  router.push(
+                    `/clusters/${clusterId}/runs?filters=${encodeURIComponent(
+                      JSON.stringify({
+                        test: true,
+                      })
+                    )}`
+                  );
+                }}
+              />
+            )}
+            {workflow.feedbackScore !== null && (
+              <Tag
+                label={
+                  workflow.feedbackScore > 0 ? (
+                    <ThumbsUpIcon className="h-3 w-3" />
+                  ) : (
+                    <ThumbsDownIcon className="h-3 w-3" />
+                  )
+                }
+                value={""}
+              />
+            )}
           </div>
-          <Button
-            className="opacity-30 hover:opacity-100"
+          <button
             onClick={e => {
               e.stopPropagation();
               onDeleteWorkflow(workflow.id, clusterId);
             }}
-            size="icon"
-            variant="ghost"
-            asChild
+            className="mt-1 text-xs text-slate-400 hover:text-red-500 hover:underline"
           >
-            <TrashIcon className="h-4 w-4" />
-          </Button>
+            delete
+          </button>
         </div>
       </div>
     </div>
