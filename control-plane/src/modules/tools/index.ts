@@ -3,7 +3,7 @@ import * as crypto from "crypto";
 import * as data from "../data";
 import { ToolConfigSchema } from "../contract";
 import { z } from "zod";
-import { and, desc, cosineDistance, eq, inArray, lte, sql, like } from "drizzle-orm";
+import { and, desc, cosineDistance, eq, inArray, lte, sql, like, or } from "drizzle-orm";
 import { buildModel } from "../models";
 import { InvalidServiceRegistrationError as InvalidToolRegistrationError } from "../../utilities/errors";
 import jsonpath from "jsonpath";
@@ -77,7 +77,10 @@ export const getWorkflowTools = async ({
     .where(
       and(
         eq(data.tools.cluster_id, clusterId),
-        like(data.tools.name, `workflows_${workflowName}_%`)
+        or(
+          like(data.tools.name, `workflows_${workflowName}_%`),
+          like(data.tools.name, `workflows.${workflowName}.%`)
+        )
       )
     )
     .then(r =>
