@@ -3,7 +3,7 @@ import * as crypto from "crypto";
 import * as data from "../data";
 import { ToolConfigSchema } from "../contract";
 import { z } from "zod";
-import { and, desc, cosineDistance, eq, inArray, lte, sql, like } from "drizzle-orm";
+import { and, desc, cosineDistance, eq, inArray, lte, sql, like, or } from "drizzle-orm";
 import { buildModel } from "../models";
 import { InvalidServiceRegistrationError as InvalidToolRegistrationError } from "../../utilities/errors";
 import jsonpath from "jsonpath";
@@ -77,12 +77,15 @@ export const getWorkflowTools = async ({
     .where(
       and(
         eq(data.tools.cluster_id, clusterId),
-        like(data.tools.name, `workflows.${workflowName}.%`)
+        or(
+          like(data.tools.name, `workflows_${workflowName}_%`),
+          like(data.tools.name, `workflows.${workflowName}.%`) // for backwards compatibility
+        )
       )
     )
     .then(r =>
       r.map(r => {
-        const version = r.name.replace(`workflows.${workflowName}.`, "");
+        const version = r.name.replace(`workflows_${workflowName}_`, "");
 
         const parsed = z.string().regex(/^\d+$/).safeParse(version);
 
