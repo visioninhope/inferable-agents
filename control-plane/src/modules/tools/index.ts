@@ -79,7 +79,7 @@ export const getWorkflowTools = async ({
         eq(data.tools.cluster_id, clusterId),
         or(
           like(data.tools.name, `workflows_${workflowName}_%`),
-          like(data.tools.name, `workflows.${workflowName}.%`)
+          like(data.tools.name, `workflows.${workflowName}.%`) // for backwards compatibility
         )
       )
     )
