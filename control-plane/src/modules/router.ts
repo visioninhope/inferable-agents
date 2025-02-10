@@ -139,6 +139,7 @@ export const router = initServer().router(contract, {
         id: run.id,
         userId: run.userId ?? null,
         status: run.status,
+        type: run.type,
         failureReason: run.failureReason ?? null,
         test: run.test ?? false,
         feedbackComment: run.feedbackComment ?? null,
@@ -181,6 +182,18 @@ export const router = initServer().router(contract, {
       logger.warn("Using deprecated attachedFunctions field");
     }
 
+    if (body.type === "single-step") {
+      if (body.attachedFunctions || body.tools) {
+        throw new BadRequestError("Single Step runs cannot have attached tools");
+      }
+      if (body.reasoningTraces) {
+        throw new BadRequestError("Single step runs cannot have reasoning traces");
+      }
+      if (body.enableResultGrounding) {
+        throw new BadRequestError("Single step runs cannot have result grounding");
+      }
+    }
+
     if (body.resultSchema) {
       const validationError = validateSchema({
         schema: body.resultSchema,
@@ -199,6 +212,7 @@ export const router = initServer().router(contract, {
       initialPrompt: body.initialPrompt,
       systemPrompt: body.systemPrompt,
       attachedFunctions,
+      type: body.type,
       resultSchema: body.resultSchema
         ? (dereferenceSync(body.resultSchema) as JsonSchemaInput)
         : undefined,
@@ -224,6 +238,8 @@ export const router = initServer().router(contract, {
 
       name: body.name,
       tags: body.tags,
+
+      runType: runOptions.type,
 
       // Customer Auth context (In the future all auth types should inject context into the run)
       authContext: customAuth?.context,
