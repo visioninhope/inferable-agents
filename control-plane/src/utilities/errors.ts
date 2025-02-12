@@ -19,6 +19,7 @@ const retryableErrorMessages = [
   // Bedrock Errors
   "503 bedrock is unable to process your request",
   "429 too many requests",
+  "403 You don't have access to the model with the specified model ID",
 ];
 
 export const isRetryableError = (error: unknown) => {
