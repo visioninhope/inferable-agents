@@ -3,7 +3,7 @@
 import { WorkflowTimeline, Node } from "@/components/workflow-timeline";
 import { Run } from "@/components/run";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Bot, Terminal, Clock, Zap, Ban, Pause, Check } from "lucide-react";
+import { Bot, Terminal, Clock, Zap, Ban, Pause, Check, ServerIcon } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { client } from "@/client/client";
@@ -21,32 +21,47 @@ const eventToNode = (event: ClientInferResponseBody<typeof contract.getWorkflowE
   }
 
   switch (event.type) {
-    case "jobResulted": {
+    case "jobAcknowledged": {
       return {
         ...base,
-        title: "Workflow Completed",
-        color: "bg-green-200",
-        icon: React.createElement(Check),
+        title: "Machine Acknowledged",
+        debug: true,
+        tooltip: "The Workflow was picked up by a Machine for processing",
+        ...(event.machineId && { label: event.machineId }),
+        icon: React.createElement(ServerIcon),
       }
     }
+    case "jobResulted":
     case "functionResulted": {
+      if (event.resultType === "resolution") {
+        return {
+          ...base,
+          title: "Workflow Completed",
+          tooltip: "Workflow execution finished successfully",
+          color: "bg-green-200",
+          icon: React.createElement(Check),
+        }
+      }
+
       return {
         ...base,
-        title: "Workflow Completed",
-        color: "bg-green-200",
-        icon: React.createElement(Check),
+        title: "Workflow Failed",
+        tooltip: "Workflow handler produced an error",
+        color: "bg-red-200",
+        icon: React.createElement(Ban),
       }
     }
     case "jobCreated": {
       return {
         ...base,
-        title: "Workflow Started",
+        title: "Workflow Triggered",
         icon: React.createElement(Zap),
       }
     }
     case "approvalRequested": {
       return {
         ...base,
+        tooltip: "The Workflow is waiting for approval",
         title: "Approval Requested",
         icon: React.createElement(Pause),
       }
@@ -55,6 +70,7 @@ const eventToNode = (event: ClientInferResponseBody<typeof contract.getWorkflowE
       return {
         ...base,
         title: "Approval Granted",
+        tooltip: "The Workflow was approved and will continue",
         icon: React.createElement(Check),
       }
     }
@@ -62,6 +78,7 @@ const eventToNode = (event: ClientInferResponseBody<typeof contract.getWorkflowE
       return {
         ...base,
         title: "Approval Denied",
+        tooltip: "The Workflow was denied and will not continue",
         color: "bg-red-200",
         icon: React.createElement(Ban),
       }
@@ -97,7 +114,9 @@ export default function WorkflowExecutionDetailsPage({
   const user = useUser();
 
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [timeline, setTimeline] =
     useState<ClientInferResponseBody<typeof contract.getWorkflowExecutionTimeline>>();
 
@@ -105,7 +124,7 @@ export default function WorkflowExecutionDetailsPage({
     if (!params.clusterId || !user.isLoaded) {
       return;
     }
-    setIsLoading(true);
+
     try {
       const result = await client.getWorkflowExecutionTimeline({
         headers: {
@@ -131,13 +150,24 @@ export default function WorkflowExecutionDetailsPage({
   }, [params.clusterId, params.workflowName, params.executionId, user.isLoaded, getToken]);
 
   useEffect(() => {
+    // Initial fetch
     fetchWorkflowExecution();
-  }, [fetchWorkflowExecution]);
+
+    // Set up polling every 10 seconds
+    const pollingInterval = setInterval(() => {
+      fetchWorkflowExecution();
+    }, 10000); // 10 seconds
+
+    // Cleanup interval on component unmount
+    return () => {
+      clearInterval(pollingInterval);
+    };
+  }, [fetchWorkflowExecution, timeline?.execution.job.status]);
 
   const submitApproval = useCallback(
     async ({ approved }: { approved: boolean }) => {
       const clusterId = params.clusterId;
-      const jobId = timeline?.job.id;
+      const jobId = timeline?.execution.job.id;
 
       if (!clusterId || !jobId) {
         return;
@@ -164,7 +194,7 @@ export default function WorkflowExecutionDetailsPage({
         }, 1000);
       }
     },
-    [fetchWorkflowExecution, getToken, params.clusterId, timeline?.job.id]
+    [fetchWorkflowExecution, getToken, params.clusterId, timeline?.execution.job.id]
   );
 
   const nodes = [
@@ -224,12 +254,12 @@ export default function WorkflowExecutionDetailsPage({
           </div>
           <div>
             <div className="text-sm text-gray-500">Status</div>
-            <div className="font-medium">{timeline.job.status}</div>
+            <div className="font-medium">{timeline.execution.job.status}</div>
           </div>
         </div>
       </div>
 
-      {timeline.job.approvalRequested && timeline.job.approved === null && (
+      {timeline.execution.job.approvalRequested && timeline.execution.job.approved === null && (
         <div className="p-6 mb-6 rounded-lg border flex items-center justify-between">
           The Workflow is currently paused awaiting approval.
           <div className="flex gap-2">

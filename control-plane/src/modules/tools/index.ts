@@ -72,6 +72,8 @@ export const getWorkflowTools = async ({
   return data.db
     .select({
       name: data.tools.name,
+      description: data.tools.description,
+      schema: data.tools.schema,
     })
     .from(data.tools)
     .where(
@@ -94,6 +96,8 @@ export const getWorkflowTools = async ({
           name,
           toolName: r.name,
           version: parseInt(parsed.data),
+          description: r.description,
+          schema: r.schema
         };
       })
     );
