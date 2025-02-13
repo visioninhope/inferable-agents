@@ -1,9 +1,9 @@
 "use client";
 
-import { WorkflowTimeline, DeploymentNode } from "@/components/workflow-timeline";
+import { WorkflowTimeline, Node } from "@/components/workflow-timeline";
 import { Run } from "@/components/run";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Bot, Terminal, Clock } from "lucide-react";
+import { Bot, Terminal, Clock, Zap, Ban, Pause, Check } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { client } from "@/client/client";
@@ -11,6 +11,78 @@ import { createErrorToast } from "@/lib/utils";
 import { ClientInferResponseBody } from "@ts-rest/core";
 import { contract } from "@/client/contract";
 import { formatRelative } from "date-fns";
+import { Button } from "@/components/ui/button";
+
+const eventToNode = (event: ClientInferResponseBody<typeof contract.getWorkflowExecutionTimeline, 200>["events"][number]): Node | null => {
+  const base = {
+    id: event.id,
+    time: new Date(event.createdAt),
+    interactive: false,
+  }
+
+  switch (event.type) {
+    case "jobResulted": {
+      return {
+        ...base,
+        title: "Workflow Completed",
+        color: "bg-green-200",
+        icon: React.createElement(Check),
+      }
+    }
+    case "functionResulted": {
+      return {
+        ...base,
+        title: "Workflow Completed",
+        color: "bg-green-200",
+        icon: React.createElement(Check),
+      }
+    }
+    case "jobCreated": {
+      return {
+        ...base,
+        title: "Workflow Started",
+        icon: React.createElement(Zap),
+      }
+    }
+    case "approvalRequested": {
+      return {
+        ...base,
+        title: "Approval Requested",
+        icon: React.createElement(Pause),
+      }
+    }
+    case "approvalGranted": {
+      return {
+        ...base,
+        title: "Approval Granted",
+        icon: React.createElement(Check),
+      }
+    }
+    case "approvalDenied": {
+      return {
+        ...base,
+        title: "Approval Denied",
+        color: "bg-red-200",
+        icon: React.createElement(Ban),
+      }
+    }
+    default: {
+      return null
+    }
+  }
+};
+
+const runToNode = (run: ClientInferResponseBody<typeof contract.getWorkflowExecutionTimeline, 200>["runs"][number]): Node => {
+  return {
+    id: run.id,
+    title: run.type === "single-step" ? "Single Step Agent" : "Multi Step Agent",
+    label: run.name,
+    time: new Date(run.createdAt),
+    color: run.status === "failed" ? "bg-red-200" : "bg-gray-200",
+    icon: React.createElement(Bot),
+    interactive: true,
+  }
+}
 
 export default function WorkflowExecutionDetailsPage({
   params,
@@ -62,17 +134,45 @@ export default function WorkflowExecutionDetailsPage({
     fetchWorkflowExecution();
   }, [fetchWorkflowExecution]);
 
-  const deploymentNodes =
-    timeline?.runs.map(run => ({
-      id: run.id,
-      title: run.type === "single-step" ? "Single Step Agent" : "Multi Step Agent",
-      label: run.name,
-      color: run.status === "failed" ? "bg-red-200" : "bg-gray-200",
-      icon: React.createElement(Bot),
-      interactive: true,
-    })) ?? [];
+  const submitApproval = useCallback(
+    async ({ approved }: { approved: boolean }) => {
+      const clusterId = params.clusterId;
+      const jobId = timeline?.job.id;
 
-  const handleNodeClick = (node: DeploymentNode) => {
+      if (!clusterId || !jobId) {
+        return;
+      }
+
+      const result = await client.createJobApproval({
+        body: {
+          approved,
+        },
+        headers: {
+          authorization: `Bearer ${await getToken()}`,
+        },
+        params: {
+          clusterId,
+          jobId,
+        },
+      });
+
+      if (result.status !== 204) {
+        createErrorToast(result, "Failed to approve call");
+      } else {
+        setTimeout(() => {
+          fetchWorkflowExecution();
+        }, 1000);
+      }
+    },
+    [fetchWorkflowExecution, getToken, params.clusterId, timeline?.job.id]
+  );
+
+  const nodes = [
+    ...(timeline?.runs.map(runToNode) || []),
+    ...(timeline?.events.map(eventToNode) || []),
+  ].filter(Boolean) as Node[];
+
+  const handleNodeClick = (node: Node) => {
     setSelectedRunId(selectedRunId ? null : node.id);
   };
 
@@ -129,6 +229,32 @@ export default function WorkflowExecutionDetailsPage({
         </div>
       </div>
 
+      {timeline.job.approvalRequested && timeline.job.approved === null && (
+        <div className="p-6 mb-6 rounded-lg border flex items-center justify-between">
+          The Workflow is currently paused awaiting approval.
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => {
+                submitApproval({ approved: true });
+              }}
+            >
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                submitApproval({ approved: false });
+              }}
+            >
+              Deny
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Dialog open={!!selectedRunId} onOpenChange={() => setSelectedRunId(null)}>
         <DialogContent className="max-w-[90vw] w-[1200px] p-1">
           <div className="flex-1 overflow-hidden">
@@ -140,7 +266,7 @@ export default function WorkflowExecutionDetailsPage({
       </Dialog>
 
       <WorkflowTimeline
-        nodes={deploymentNodes}
+        nodes={nodes}
         onNodeClick={handleNodeClick}
         className="w-full h-[70vh] p-10 rounded-lg border shadow-sm"
       />
