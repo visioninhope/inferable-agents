@@ -106,11 +106,11 @@ export const getRunMessagesForDisplay = async ({
       // Handle invocation-result messages before resutlType and toolName were added
       if (message.type === "invocation-result") {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ('resultType' ! in (message.data as any)) {
+        if (!('resultType' in (message.data as any))) {
           (message.data as any).resultType = "resolution";
         }
 
-        if ('toolName' ! in (message.data as any)) {
+        if (!('toolName' in (message.data as any))) {
           // Intentionally setting this to a "falsy" value as it will calculated below
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (message.data as any).toolName = "";
