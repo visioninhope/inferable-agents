@@ -185,14 +185,6 @@ export function PromptTextarea({ clusterId }: { clusterId: string }) {
     tools.some(tool => tool.name.includes("sqlite")) &&
     tools.some(tool => tool.name.includes("terminal"));
 
-  const [isConfigCollapsed, setIsConfigCollapsed] = useState(false);
-
-  useEffect(() => {
-    if (isDemoService) {
-      setIsConfigCollapsed(true);
-    }
-  }, [isDemoService]);
-
   const handleDemoPromptClick = (prompt: DemoPrompt) => {
     setPrompt(prompt.text);
     if (textareaRef.current) {
@@ -298,47 +290,49 @@ export function PromptTextarea({ clusterId }: { clusterId: string }) {
         </div>
       )}
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <PlusCircleIcon className="h-5 w-5 text-gray-600" />
-          <h2 className="text-lg font-medium tracking-tight text-gray-600">Start a new run</h2>
-          <span className="text-xs text-muted-foreground mt-1">Press ⌘ + Enter to send</span>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <PlusCircleIcon className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold text-gray-800">Chat with your tools</h2>
+            </div>
+            <div className="flex items-center px-2 py-0.5 rounded-md bg-gray-100">
+              <span className="text-xs text-gray-600">⌘ + Enter to send</span>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Chat with your tools in natural language. Use the playground to test out agent behavior.
+          </p>
         </div>
-        <Textarea
-          ref={textareaRef}
-          rows={1}
-          placeholder="What would you like me to help you with?"
-          value={prompt}
-          onChange={e => {
-            setPrompt(e.target.value);
-          }}
-          onKeyDown={handleKeyDown}
-          className="resize-none overflow-hidden react-joyride-prompt-textarea"
-        />
-        {!noServicesAndMachines && (
-          <button
-            onClick={() => setIsConfigCollapsed(!isConfigCollapsed)}
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-          >
-            <Settings2Icon className="h-3 w-3" />
-            {isConfigCollapsed ? "Show configuration" : "Hide configuration"}
-          </button>
-        )}
+        <div className="space-y-2">
+          <Textarea
+            ref={textareaRef}
+            rows={1}
+            placeholder="Chat with your tools to test out agent behavior"
+            value={prompt}
+            onChange={e => {
+              setPrompt(e.target.value);
+            }}
+            onKeyDown={handleKeyDown}
+            className="resize-none overflow-hidden react-joyride-prompt-textarea text-base"
+          />
+        </div>
       </div>
 
       <div
         className={cn(
-          "space-y-2 border rounded-lg bg-gray-50/30",
-          (noServicesAndMachines || isConfigCollapsed) && "hidden"
+          "space-y-3 border rounded-lg bg-gray-50/50 shadow-sm",
+          noServicesAndMachines && "hidden"
         )}
       >
-        <div className="p-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground w-full">
-            <Settings2Icon className="h-3.5 w-3.5" />
-            <span className="font-medium uppercase tracking-wider">Configuration</span>
+        <div className="p-4">
+          <div className="flex items-center gap-2 text-xs w-full mb-2">
+            <Settings2Icon className="h-3.5 w-3.5 text-primary" />
+            <span className="font-semibold uppercase tracking-wide text-gray-700">Configuration</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Configure how Inferable will process your request and interact with available tools.
+          <p className="text-sm text-gray-600">
+            Optional configurations to customize how Inferable will process your request and interact with available tools.
           </p>
         </div>
 
