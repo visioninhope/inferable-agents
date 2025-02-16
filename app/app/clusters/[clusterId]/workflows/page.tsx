@@ -170,6 +170,7 @@ export default function WorkflowsPage({ params }: { params: { clusterId: string 
         },
         query: {
           type: "workflow",
+          limit: 100,
         },
       });
 
