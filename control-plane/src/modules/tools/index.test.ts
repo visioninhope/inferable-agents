@@ -49,6 +49,26 @@ describe("getWorkflowTools", () => {
     ]))
   });
 
+  it("should fetch all tools if no workflow name is provided", async () => {
+    const tools = await getWorkflowTools({
+      clusterId,
+    });
+
+    expect(tools.length).toBe(2);
+    expect(tools).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "mySearchWorkflow",
+        toolName: "workflows_mySearchWorkflow_1",
+        version: 1,
+      }),
+      expect.objectContaining({
+        name: "mySearchWorkflow",
+        toolName: "workflows_mySearchWorkflow_2",
+        version: 2,
+      }),
+    ]))
+  });
+
   it("should not return a non-matching workflow", async () => {
     const tools = await getWorkflowTools({
       clusterId,

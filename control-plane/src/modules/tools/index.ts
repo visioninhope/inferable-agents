@@ -100,7 +100,7 @@ export const getWorkflowTools = async ({
           schema: r.schema
         };
       })
-      .filter(t => t.name == workflowName)
+      .filter(t => workflowName === undefined || t.name == workflowName)
     );
 };
 
