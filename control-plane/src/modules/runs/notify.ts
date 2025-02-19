@@ -186,7 +186,6 @@ export const notifyStatusChange = async ({
       jobId: id,
     });
   } else if (onStatusChangeDefinition.type === "tool") {
-    logger.warn("OnStatusChange handler registerd with deprecated function type");
     const { id } = await jobs.createJobV2({
       targetFn: onStatusChangeDefinition.tool,
       targetArgs: packer.pack(await getRunPayload()),
